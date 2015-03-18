@@ -8,7 +8,7 @@ import android.view.MenuItem;
 
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.EventItem;
-import ru.nekit.android.nowapp.modelView.IEventItemSelectListener;
+import ru.nekit.android.nowapp.modelView.listeners.IEventItemSelectListener;
 
 
 public class EventCollectionActivity extends ActionBarActivity implements IEventItemSelectListener {

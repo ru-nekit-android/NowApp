@@ -10,9 +10,7 @@ import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.view.GestureDetector;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -25,9 +23,11 @@ import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.EventItemsLoader;
 import ru.nekit.android.nowapp.model.EventItemsModel;
-import ru.nekit.android.nowapp.modelView.EndlessRecyclerOnScrollListener;
+import ru.nekit.android.nowapp.modelView.listeners.EndlessRecyclerOnScrollListener;
 import ru.nekit.android.nowapp.modelView.EventCollectionAdapter;
-import ru.nekit.android.nowapp.modelView.IEventItemSelectListener;
+import ru.nekit.android.nowapp.modelView.decoration.GridItemDecoration;
+import ru.nekit.android.nowapp.modelView.listeners.IEventItemSelectListener;
+import ru.nekit.android.nowapp.modelView.listeners.RecyclerItemClickListener;
 
 public class EventCollectionFragment extends Fragment implements LoaderManager.LoaderCallbacks<Void> {
 
@@ -213,39 +213,5 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         mLoadingType = LOADING_TYPES.PULL_TO_REFRESH;
         mEventCollectionAdapter.setEventItems(null);
         mRefreshFrame.refreshComplete();
-    }
-
-    public static class RecyclerItemClickListener implements RecyclerView.OnItemTouchListener {
-        private OnItemClickListener mListener;
-
-        public interface OnItemClickListener {
-            void onItemClick(View view, int position);
-        }
-
-        private GestureDetector mGestureDetector;
-
-        public RecyclerItemClickListener(Context context, OnItemClickListener listener) {
-            mListener = listener;
-            mGestureDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
-                @Override
-                public boolean onSingleTapUp(MotionEvent e) {
-                    return true;
-                }
-            });
-        }
-
-        @Override
-        public boolean onInterceptTouchEvent(RecyclerView view, MotionEvent e) {
-            View childView = view.findChildViewUnder(e.getX(), e.getY());
-            if (childView != null && mListener != null && mGestureDetector.onTouchEvent(e)) {
-                mListener.onItemClick(childView, view.getChildPosition(childView));
-                return true;
-            }
-            return false;
-        }
-
-        @Override
-        public void onTouchEvent(RecyclerView view, MotionEvent motionEvent) {
-        }
     }
 }
