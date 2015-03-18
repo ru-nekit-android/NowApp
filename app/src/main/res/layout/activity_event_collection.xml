@@ -1,0 +1,8 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/event_place_holder"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".EventCollectionActivity"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+</FrameLayout>

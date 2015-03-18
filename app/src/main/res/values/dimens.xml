@@ -1,0 +1,10 @@
+<resources>
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="event_collection_list_spacing">16dp</dimen>
+    <dimen name="event_collection_item_height">140dp</dimen>
+    <dimen name="event_collection_item_shadow_size">4dp</dimen>
+    <dimen name="event_collection_item_catalog_type_shift">4dp</dimen>
+
+</resources>
