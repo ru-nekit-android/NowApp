@@ -7,7 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.squareup.picasso.Picasso;
+import com.bumptech.glide.Glide;
 
 import java.util.ArrayList;
 
@@ -56,7 +56,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<EventCollection
         final EventItem event = mEventItems.get(position);
         holder.getPlaceView().setText(event.placeName);
         holder.getNameView().setText(event.name);
-        Picasso.with(mContext).load(event.posterThumb).fit().centerCrop().into(holder.getPosterView());
+        Glide.with(mContext).load(event.posterBlur).centerCrop().into(holder.getPosterView());
         int categoryDrawableId = EventItemsModel.CATALOG_TYPE.get(event.category);
         if (categoryDrawableId != 0) {
             holder.getCatalogIcon().setImageDrawable(mContext.getResources().getDrawable(categoryDrawableId));

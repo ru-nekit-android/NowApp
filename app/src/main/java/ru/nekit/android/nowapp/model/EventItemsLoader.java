@@ -27,6 +27,8 @@ import ru.nekit.android.nowapp.NowApplication;
 public class EventItemsLoader extends AsyncTaskLoader<Void> {
 
     private static final String TAG_EVENTS = "events";
+    private static final String SITE_NAME = "nowapp.ru";
+    private static final String API_ROOT = "api/events.get";
 
     private DefaultHttpClient httpClient = new DefaultHttpClient();
     private HttpEntity httpEntity = null;
@@ -45,9 +47,10 @@ public class EventItemsLoader extends AsyncTaskLoader<Void> {
         ArrayList<EventItem> eventItems = new ArrayList<>();
         Uri.Builder uriBuilder = new Uri.Builder()
                 .scheme("http")
-                .authority("nowapp.ru")
-                .path("api/events.get");
+                .authority(SITE_NAME)
+                .path(API_ROOT);
         String lastEventItemId = String.format("%d", model.getLastEventId());
+        String currentTimeSecs = String.format("%d", System.currentTimeMillis()/1000);
         String type = null;
         if (mArgs != null) {
             type = mArgs.getString(EventItemsModel.TYPE);
@@ -55,12 +58,12 @@ public class EventItemsLoader extends AsyncTaskLoader<Void> {
         if (EventItemsModel.REFRESH_EVENT_ITEMS.equals(type) || type == null) {
             uriBuilder
                     .appendQueryParameter("fl", "1")
-                    .appendQueryParameter("date", "1426377600")
+                    .appendQueryParameter("date", currentTimeSecs)
                     .appendQueryParameter("startAt", "64800");
         } else {
             uriBuilder
                     .appendQueryParameter("fl", "0")
-                    .appendQueryParameter("date", "1426377600")
+                    .appendQueryParameter("date", currentTimeSecs)
                     .appendQueryParameter("startAt", "64800")
                     .appendQueryParameter("id", lastEventItemId);
         }

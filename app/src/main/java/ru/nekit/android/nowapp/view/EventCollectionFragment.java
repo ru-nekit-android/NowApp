@@ -34,7 +34,6 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     private static final int LOADER_ID = 1;
     public static final String TAG = "ru.nekit.android.event_collection_fragment";
 
-
     enum LOADING_TYPES {
         PULL_TO_REFRESH,
         REQUEST_NEW_EVENT_ITEMS

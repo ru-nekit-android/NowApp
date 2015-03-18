@@ -44,9 +44,10 @@ public class EventItemsModel {
         } else {
             for (int i = 0; i < eventItems.size(); i++) {
                 EventItem eventItem = eventItems.get(i);
-                if (hasEventWithId(eventItem.id)) {
-                    mEventItemsList.remove(i);
-                    mEventItemsList.add(i, eventItem);
+                int index = getIndexWithId(eventItem.id);
+                if (index > -1) {
+                    mEventItemsList.remove(index);
+                    mEventItemsList.add(index, eventItem);
                 } else {
                     mEventItemsList.add(eventItem);
                 }
@@ -67,13 +68,13 @@ public class EventItemsModel {
         return mEventItemsList;
     }
 
-    public Boolean hasEventWithId(int id) {
-        for (EventItem item : mEventItemsList) {
-            if (item.id == id) {
-                return true;
+    public int getIndexWithId(int id) {
+        for (int i = 0; i < mEventItemsList.size(); i++) {
+            if (mEventItemsList.get(i).id == id) {
+                return i;
             }
         }
-        return false;
+        return -1;
     }
 
     public void setEventItemCountOnServer(int count) {
