@@ -57,7 +57,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<EventCollection
         holder.getPlaceView().setText(event.placeName);
         holder.getNameView().setText(event.name);
         Glide.with(mContext).load(event.posterBlur).centerCrop().into(holder.getPosterView());
-        int categoryDrawableId = EventItemsModel.CATALOG_TYPE.get(event.category);
+        int categoryDrawableId = EventItemsModel.getCategoryDrawable(event.category);
         if (categoryDrawableId != 0) {
             holder.getCatalogIcon().setImageDrawable(mContext.getResources().getDrawable(categoryDrawableId));
         }

@@ -15,7 +15,8 @@ public class EventItemsModel {
     public static final String REQUEST_NEW_EVENT_ITEMS = "request_new_event_items";
     public static final String REFRESH_EVENT_ITEMS = "refresh_event_items";
 
-    public static final HashMap<String, Integer> CATALOG_TYPE = new HashMap();
+    private static final HashMap<String, Integer> CATEGORY_TYPE = new HashMap();
+    private static final HashMap<String, Integer> CATEGORY_TYPE_BIG = new HashMap();
 
     private static final EventItemsModel instance;
 
@@ -28,10 +29,23 @@ public class EventItemsModel {
 
     private EventItemsModel() {
         mEventItemsList = new ArrayList<>();
-        CATALOG_TYPE.put("category_sport", R.drawable.cat_sport);
-        CATALOG_TYPE.put("category_entertainment", R.drawable.cat_drink);
-        CATALOG_TYPE.put("category_other", R.drawable.cat_crown);
-        CATALOG_TYPE.put("category_education", R.drawable.cat_book);
+        CATEGORY_TYPE.put("category_sport", R.drawable.cat_sport);
+        CATEGORY_TYPE.put("category_entertainment", R.drawable.cat_drink);
+        CATEGORY_TYPE.put("category_other", R.drawable.cat_crown);
+        CATEGORY_TYPE.put("category_education", R.drawable.cat_book);
+        CATEGORY_TYPE_BIG.put("category_sport", R.drawable.cat_sport_big);
+        CATEGORY_TYPE_BIG.put("category_entertainment", R.drawable.cat_drink_big);
+        CATEGORY_TYPE_BIG.put("category_other", R.drawable.cat_crown_big);
+        CATEGORY_TYPE_BIG.put("category_education", R.drawable.cat_book_big);
+    }
+
+    public static int getCategoryDrawable(String category) {
+        return CATEGORY_TYPE.get(category);
+
+    }
+
+    public static int getCategoryBigDrawable(String category) {
+        return CATEGORY_TYPE_BIG.get(category);
     }
 
     public static EventItemsModel getInstance() {

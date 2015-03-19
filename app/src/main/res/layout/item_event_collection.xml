@@ -25,12 +25,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:background="@color/event_item_background_color"
+            android:background="@color/event_item_background"
             android:layout_marginBottom="@dimen/event_collection_item_shadow_size"
             android:layout_alignParentBottom="true"
             android:baselineAligned="true"
             android:layout_marginLeft="@dimen/event_collection_item_catalog_type_shift"
             android:layout_marginStart="@dimen/event_collection_item_catalog_type_shift"
+            android:gravity="bottom"
             android:paddingTop="4dp"
             android:paddingLeft="4dp"
             android:paddingBottom="4dp">
@@ -55,7 +56,7 @@
             android:id="@+id/poster_thumb_view"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:background="@color/event_item_poster_thumb_background_color"
+            android:background="@color/event_item_poster_thumb_background"
             android:layout_alignParentTop="true"
             android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"
@@ -69,7 +70,7 @@
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/icon_catalog_view" />
+            android:id="@+id/category_type_view" />
 
         <me.grantland.widget.AutofitTextView
             android:id="@+id/name_view"
@@ -79,8 +80,8 @@
             android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"
             android:layout_alignParentTop="true"
-            android:layout_toRightOf="@+id/icon_catalog_view"
-            android:layout_toEndOf="@+id/icon_catalog_view"
+            android:layout_toRightOf="@+id/category_type_view"
+            android:layout_toEndOf="@+id/category_type_view"
             android:layout_above="@+id/bottom_layout" />
 
     </RelativeLayout>

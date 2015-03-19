@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <color name="event_item_background_color">#FFE4E4E4</color>
-    <color name="event_item_shadow_color">#AA9B9B9B</color>
-    <color name="event_item_poster_thumb_background_color">#FFFFFFFF</color>
-    <color name="main_color">#FF1169A0</color>
+    <color name="event_item_background">#FFE4E4E4</color>
+    <color name="event_item_shadow">#AA9B9B9B</color>
+    <color name="event_item_poster_thumb_background">#FFFFFFFF</color>
+    <color name="main">#FF1169A0</color>
+    <color name="divide_line">#FF333333</color>
 
 </resources>

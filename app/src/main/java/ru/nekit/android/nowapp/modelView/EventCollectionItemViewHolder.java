@@ -39,7 +39,7 @@ public class EventCollectionItemViewHolder extends RecyclerView.ViewHolder {
         mPlaceView = (TextView) view.findViewById(R.id.place_view);
         mNameView = (TextView) view.findViewById(R.id.name_view);
         mPosterView = (ImageView) view.findViewById(R.id.poster_thumb_view);
-        mCatalogIcon = (ImageView) view.findViewById(R.id.icon_catalog_view);
+        mCatalogIcon = (ImageView) view.findViewById(R.id.category_type_view);
     }
 }
 

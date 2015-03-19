@@ -4,7 +4,7 @@
         android:left="@dimen/event_collection_item_shadow_size"
         android:top="@dimen/event_collection_item_shadow_size">
         <shape android:shape="rectangle">
-            <solid android:color="@color/event_item_shadow_color" />
+            <solid android:color="@color/event_item_shadow" />
         </shape>
     </item>
 
@@ -12,7 +12,7 @@
         android:right="@dimen/event_collection_item_shadow_size"
         android:bottom="@dimen/event_collection_item_shadow_size">
         <shape android:shape="rectangle">
-            <solid android:color="@color/event_item_background_color" />
+            <solid android:color="@color/event_item_background" />
         </shape>
     </item>
 </layer-list>
