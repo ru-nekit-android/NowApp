@@ -17,72 +17,73 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginRight="@dimen/event_collection_item_shadow_size"
-        android:layout_marginEnd="@dimen/event_collection_item_shadow_size">
+        android:layout_marginEnd="@dimen/event_collection_item_shadow_size"
+        android:layout_marginRight="@dimen/event_collection_item_shadow_size">
 
-        <LinearLayout
+        <RelativeLayout
             android:id="@+id/bottom_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:background="@color/event_item_background"
-            android:layout_marginBottom="@dimen/event_collection_item_shadow_size"
             android:layout_alignParentBottom="true"
-            android:baselineAligned="true"
+            android:layout_marginBottom="@dimen/event_collection_item_shadow_size"
             android:layout_marginLeft="@dimen/event_collection_item_catalog_type_shift"
             android:layout_marginStart="@dimen/event_collection_item_catalog_type_shift"
-            android:gravity="bottom"
-            android:paddingTop="4dp"
+            android:background="@color/event_item_background"
+            android:paddingBottom="4dp"
             android:paddingLeft="4dp"
-            android:paddingBottom="4dp">
+            android:paddingTop="4dp">
 
             <ImageView
                 android:id="@+id/icon_view"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:src="@drawable/map_marker"
+                android:layout_marginEnd="4dp"
                 android:layout_marginRight="4dp"
-                android:layout_marginEnd="4dp" />
+                android:src="@drawable/map_marker" />
 
             <me.grantland.widget.AutofitTextView
                 android:id="@+id/place_view"
-                style="@style/EventPlaceTextStyle"
+                style="@style/PlaceTextStyle"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:layout_alignBottom="@+id/icon_view"
+                android:layout_toEndOf="@+id/icon_view"
+                android:layout_toRightOf="@+id/icon_view"
+                android:text="1111" />
 
-        </LinearLayout>
+        </RelativeLayout>
 
         <ImageView
             android:id="@+id/poster_thumb_view"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:background="@color/event_item_poster_thumb_background"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentEnd="true"
             android:layout_above="@+id/bottom_layout"
-            android:layout_marginTop="@dimen/event_collection_item_catalog_type_shift"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
             android:layout_marginLeft="@dimen/event_collection_item_catalog_type_shift"
             android:layout_marginStart="@dimen/event_collection_item_catalog_type_shift"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true" />
+            android:layout_marginTop="@dimen/event_collection_item_catalog_type_shift"
+            android:background="@color/event_item_poster_thumb_background" />
 
         <ImageView
+            android:id="@+id/category_type_view"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/category_type_view" />
+            android:layout_height="wrap_content" />
 
         <me.grantland.widget.AutofitTextView
             android:id="@+id/name_view"
             style="@style/EventNameTextStyle"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_alignParentRight="true"
+            android:layout_above="@+id/bottom_layout"
             android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
             android:layout_alignParentTop="true"
-            android:layout_toRightOf="@+id/category_type_view"
             android:layout_toEndOf="@+id/category_type_view"
-            android:layout_above="@+id/bottom_layout" />
+            android:layout_toRightOf="@+id/category_type_view" />
 
     </RelativeLayout>
 

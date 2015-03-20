@@ -3,11 +3,11 @@ package ru.nekit.android.nowapp.view;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
 import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.TextAppearanceSpan;
@@ -26,7 +26,6 @@ import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.EventItem;
 import ru.nekit.android.nowapp.model.EventItemsModel;
 import ru.nekit.android.nowapp.utils.TextViewUtils;
-import ru.nekit.android.nowapp.view.textDecoration.SuperscriptSpanAdjuster;
 
 @SuppressWarnings("ResourceType")
 public class EventItemDetailFragment extends Fragment {
@@ -77,25 +76,41 @@ public class EventItemDetailFragment extends Fragment {
         TextView dayOfWeekView = (TextView) view.findViewById(R.id.day_of_week_view);
         TextView timeView = (TextView) view.findViewById(R.id.time_view);
         TextView entranceView = (TextView) view.findViewById(R.id.entrance_view);
+        TextView descriptionView = (TextView) view.findViewById(R.id.description_view);
 
         Calendar cl = Calendar.getInstance();
         cl.setTimeInMillis(eventItem.date * 1000);
         dayDateView.setText(String.format("%d", cl.get(Calendar.DAY_OF_MONTH)));
         monthView.setText(new DateFormatSymbols().getMonths()[cl.get(Calendar.MONTH)]);
-        dayOfWeekView.setText(getResources().getTextArray(R.array.day_of_week)[cl.get(Calendar.DAY_OF_WEEK)]);
+        int dayOfWeek = cl.get(Calendar.DAY_OF_WEEK) - 1;
+        dayOfWeekView.setText(getResources().getTextArray(R.array.day_of_week)[dayOfWeek]);
         createEventTimeTextBlock(context, timeView, cl.get(Calendar.HOUR_OF_DAY), cl.get(Calendar.MINUTE));
 
+        createEventEntranceTextBlock(context, entranceView, eventItem.entrance);
+
+        descriptionView.setText(eventItem.eventDescription);
+
         return view;
+    }
+
+    private void createEventEntranceTextBlock(Context context, TextView entranceView, String entrance) {
+        String title = "ВХОД:";
+        SpannableString titleSpan = new SpannableString(title);
+        titleSpan.setSpan(new TextAppearanceSpan(context, R.style.EntranceTitleTextStyle), 0, title.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+        SpannableString entranceSpan = new SpannableString(entrance);
+        entranceSpan.setSpan(new TextAppearanceSpan(context, R.style.EntranceTextStyle), 0, entrance.length(), SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+        CharSequence finalText = TextUtils.concat(titleSpan, "\n", entranceSpan);
+        entranceView.setText(finalText);
     }
 
 
     private void createEventTimeTextBlock(Context context, TextView timeView, int hour, int minute) {
         String hourTextValue = String.format("%d", hour);
         String minuteTextValue = String.format("%d", minute);
-        if(hour < 9){
+        if (hour < 9) {
             hourTextValue = "0".concat(hourTextValue);
         }
-        if(minute < 9){
+        if (minute < 9) {
             minuteTextValue = "0".concat(minuteTextValue);
         }
         TypedArray attrArray = context.obtainStyledAttributes(R.style.HourTextStyle, R.styleable.StyleAttributes);
@@ -108,13 +123,12 @@ public class EventItemDetailFragment extends Fragment {
             attrArray.recycle();
         }
 
-        float scaledDensity = context.getResources().getDisplayMetrics().scaledDensity;
-        int baseHeight = TextViewUtils.getTextBounds(hourTextValue, hourTextSize - 2 * scaledDensity, Typeface.DEFAULT).height();
         SpannableString hourValueSpan = new SpannableString(hourTextValue);
         hourValueSpan.setSpan(new TextAppearanceSpan(context, R.style.HourTextStyle), 0, hourTextValue.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
-        SpannableString minuteValueSpan = new SpannableString(minuteTextValue);
-        minuteValueSpan.setSpan(new SuperscriptSpanAdjuster(context, R.style.MinuteTextStyle, baseHeight), 0, minuteTextValue.length(), SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
-        CharSequence finalText = TextUtils.concat(hourValueSpan, minuteValueSpan);
+        SpannableStringBuilder minuteSpanBuilder = new SpannableStringBuilder(minuteTextValue);
+        minuteSpanBuilder.setSpan(new TextAppearanceSpan(context, R.style.MinuteTextStyle), 0, minuteTextValue.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+        minuteSpanBuilder.setSpan(TextViewUtils.getSuperscriptSpanAdjuster(context, hourTextValue, hourTextSize), 0, minuteTextValue.length(), SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+        CharSequence finalText = TextUtils.concat(hourValueSpan, minuteSpanBuilder);
         timeView.setText(finalText);
     }
 
