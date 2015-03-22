@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
@@ -14,20 +15,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import in.srain.cube.views.ptr.PtrClassicFrameLayout;
-import in.srain.cube.views.ptr.PtrDefaultHandler;
-import in.srain.cube.views.ptr.PtrFrameLayout;
-import in.srain.cube.views.ptr.PtrHandler;
-import in.srain.cube.views.ptr.header.MaterialHeader;
 import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.EventItemsLoader;
 import ru.nekit.android.nowapp.model.EventItemsModel;
-import ru.nekit.android.nowapp.modelView.listeners.EndlessRecyclerOnScrollListener;
 import ru.nekit.android.nowapp.modelView.EventCollectionAdapter;
-import ru.nekit.android.nowapp.modelView.decoration.GridItemDecoration;
 import ru.nekit.android.nowapp.modelView.listeners.IEventItemSelectListener;
-import ru.nekit.android.nowapp.modelView.listeners.RecyclerItemClickListener;
 
 public class EventCollectionFragment extends Fragment implements LoaderManager.LoaderCallbacks<Void> {
 
@@ -39,14 +32,20 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         REQUEST_NEW_EVENT_ITEMS
     }
 
+    enum LOADING_STATE {
+        LOADING, LOADED
+    }
+
     private RecyclerView mEventCollectionList;
     private EventCollectionAdapter mEventCollectionAdapter;
     private GridLayoutManager mEventCollectionLayoutManager;
-    private EndlessRecyclerOnScrollListener mScrollListener;
     private IEventItemSelectListener mEventItemSelectListener;
-    private PtrClassicFrameLayout mRefreshFrame;
+    private SwipeRefreshLayout mSwipeRefreshLayout;
     private EventItemsModel mEventModel;
+
+    private LOADING_STATE mState = LOADING_STATE.LOADED;
     private LOADING_TYPES mLoadingType = LOADING_TYPES.PULL_TO_REFRESH;
+
 
     public EventCollectionFragment() {
     }
@@ -79,69 +78,66 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         mEventCollectionList = (RecyclerView) view.findViewById(R.id.event_collection_list);
         mEventCollectionList.setHasFixedSize(true);
         mEventCollectionList.setItemAnimator(new DefaultItemAnimator());
-        int spacingInPixels = getResources().getDimensionPixelSize(R.dimen.event_collection_list_spacing);
-        mEventCollectionList.addItemDecoration(new GridItemDecoration(spacingInPixels, spacingInPixels));
         int listColumn = getResources().getInteger(R.integer.event_collection_column_count);
 
         mEventCollectionLayoutManager = new GridLayoutManager(context, listColumn);
-        mEventCollectionAdapter = new EventCollectionAdapter(context);
+        mEventCollectionAdapter = new EventCollectionAdapter(context, mEventModel.getEventItemsList(), listColumn);
         mEventCollectionList.setAdapter(mEventCollectionAdapter);
         mEventCollectionList.setLayoutManager(mEventCollectionLayoutManager);
-
-        mRefreshFrame = (PtrClassicFrameLayout) view.findViewById(R.id.refresh_frame);
-        mRefreshFrame.setLastUpdateTimeRelateObject(this);
-        mRefreshFrame.setPtrHandler(new PtrHandler() {
+        mEventCollectionAdapter.setOnItemClickListener(mEventItemSelectListener);
+        mEventCollectionLayoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
             @Override
-            public void onRefreshBegin(PtrFrameLayout frame) {
-                performLoad();
-            }
-
-            @Override
-            public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View header) {
-                return PtrDefaultHandler.checkContentCanBePulledDown(frame, content, header);
+            public int getSpanSize(int position) {
+                return mEventCollectionAdapter.getSpanSize(position);
             }
         });
-        final MaterialHeader header = new MaterialHeader(context);
-        int[] colors = {0xff0000, 0x00ff00, 0x0000ff};
-        header.setColorSchemeColors(colors);
-        header.setLayoutParams(new PtrFrameLayout.LayoutParams(-1, -2));
-        header.setPtrFrameLayout(mRefreshFrame);
 
-        mRefreshFrame.setLoadingMinTime(1000);
-        mRefreshFrame.setHeaderView(header);
-        mRefreshFrame.addPtrUIHandler(header);
-        mRefreshFrame.setResistance(1.7f);
-        mRefreshFrame.setRatioOfHeaderHeightToRefresh(1.2f);
-        mRefreshFrame.setDurationToClose(200);
-        mRefreshFrame.setDurationToCloseHeader(700);
-        mRefreshFrame.setPullToRefresh(false);
-        mRefreshFrame.setKeepHeaderWhenRefresh(true);
-        mScrollListener = new EndlessRecyclerOnScrollListener(mEventCollectionLayoutManager) {
+        mSwipeRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.refresh_layout);
+
+        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
-            public void onLoadMore(int currentPage) {
-                mLoadingType = LOADING_TYPES.REQUEST_NEW_EVENT_ITEMS;
-                mRefreshFrame.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        mRefreshFrame.autoRefresh(true);
-                    }
-                }, 100);
+            public void onRefresh() {
+                mLoadingType = LOADING_TYPES.PULL_TO_REFRESH;
+                performLoad();
             }
-        };
-
-        mEventCollectionList.addOnItemTouchListener(
-                new RecyclerItemClickListener(context, new RecyclerItemClickListener.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(View view, int position) {
-                        mLoadingType = LOADING_TYPES.PULL_TO_REFRESH;
-                        mEventItemSelectListener.onEventItemSelect(mEventModel.getEventItemsList().get(position));
-                    }
-                })
-        );
+        });
 
         mEventCollectionList.setOnScrollListener(mScrollListener);
-        mEventCollectionAdapter.setEventItems(mEventModel.getEventItemsList());
+        mEventCollectionAdapter.setItems(mEventModel.getEventItemsList());
         return view;
+    }
+
+    private RecyclerView.OnScrollListener mScrollListener = new RecyclerView.OnScrollListener() {
+        public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+            int totalItemCount = mEventCollectionLayoutManager.getItemCount();
+            int lastVisibleItem = mEventCollectionLayoutManager.findLastVisibleItemPosition();
+
+            if (totalItemCount > 1) {
+                if (lastVisibleItem >= totalItemCount - 1) {
+                    mLoadingType = LOADING_TYPES.REQUEST_NEW_EVENT_ITEMS;
+                    setState(LOADING_STATE.LOADING);
+                }
+            }
+        }
+    };
+
+    private void setState(LOADING_STATE state) {
+        if (mState == state) return;
+        mState = state;
+        switch (mState) {
+            case LOADING:
+                if (!mEventCollectionAdapter.isLoading()) {
+                    mEventCollectionAdapter.addLoading();
+                }
+                mEventCollectionList.smoothScrollToPosition(mEventModel.getEventItemsList().size());
+                performLoad();
+                break;
+            case LOADED:
+                if (mEventCollectionAdapter.isLoading()) {
+                    mEventCollectionAdapter.removeLoading();
+                }
+                break;
+        }
     }
 
     private void performLoad() {
@@ -181,6 +177,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
 
     @Override
     public void onPause() {
+
         super.onPause();
     }
 
@@ -196,21 +193,17 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
 
     @Override
     public void onLoadFinished(Loader<Void> loader, Void data) {
-        if (mLoadingType == LOADING_TYPES.PULL_TO_REFRESH) {
-            mScrollListener.reset();
-        }
+        setState(LOADING_STATE.LOADED);
         mLoadingType = LOADING_TYPES.PULL_TO_REFRESH;
-        mEventCollectionAdapter.setEventItems(mEventModel.getEventItemsList());
-        mRefreshFrame.refreshComplete();
+        mEventCollectionAdapter.setItems(mEventModel.getEventItemsList());
+        mSwipeRefreshLayout.setRefreshing(false);
     }
 
     @Override
     public void onLoaderReset(Loader<Void> loader) {
-        if (mLoadingType == LOADING_TYPES.PULL_TO_REFRESH) {
-            mScrollListener.reset();
-        }
+        setState(LOADING_STATE.LOADED);
         mLoadingType = LOADING_TYPES.PULL_TO_REFRESH;
-        mEventCollectionAdapter.setEventItems(null);
-        mRefreshFrame.refreshComplete();
+        mEventCollectionAdapter.setItems(null);
+        mSwipeRefreshLayout.setRefreshing(false);
     }
 }

@@ -27,7 +27,6 @@ public class TextViewUtils {
         return new SuperscriptSpanAdjuster(baseHeight);
     }
 
-
     static class SuperscriptSpanAdjuster extends SuperscriptSpan {
 
         private int baseHeight;

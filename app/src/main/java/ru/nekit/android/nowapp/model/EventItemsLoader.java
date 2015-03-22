@@ -4,7 +4,6 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.content.AsyncTaskLoader;
-import android.util.Log;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -98,9 +97,6 @@ public class EventItemsLoader extends AsyncTaskLoader<Void> {
                         eventItem.placeName = jsonEventItem.optString(JSONDictionary.PLACE_NAME);
                         eventItem.placeId = jsonEventItem.optInt(JSONDictionary.PLACE_ID);
                         eventItem.id = id;
-                        if(model.getIndexWithId(id) > -1){
-                            Log.d("tdfgijdfls;jg", "klk");
-                        }
                         eventItem.category = jsonEventItem.optString(JSONDictionary.EVENT_CATEGORY);
                         eventItem.entrance = jsonEventItem.optString(JSONDictionary.ENTRANCE);
                         eventItem.address = jsonEventItem.optString(JSONDictionary.ADDRESS);

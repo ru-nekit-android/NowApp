@@ -173,7 +173,7 @@ public class AutofitTextView extends TextView implements AutofitHelper.OnTextSiz
 
     /**
      * Set the amount of precision used to calculate the correct text size to fit within its
-     * bounds. Lower precision is more precise and takes more time.
+     * bounds. Lower precision is more precise and takes more event_start_time_view_background.
      *
      * @param precision The amount of precision.
      */

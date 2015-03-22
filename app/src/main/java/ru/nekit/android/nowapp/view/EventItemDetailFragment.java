@@ -18,6 +18,16 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMapOptions;
+import com.google.android.gms.maps.MapView;
+import com.google.android.gms.maps.MapsInitializer;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.text.DateFormatSymbols;
 import java.util.Calendar;
@@ -34,6 +44,11 @@ public class EventItemDetailFragment extends Fragment {
 
     private static final String ARG_EVENT_ITEM = "ru.nekit.android.event_item";
 
+    private GoogleMap mMap;
+    private MapView mMapView;
+    private EventItem mEventItem;
+    private boolean mHasMap;
+
     public EventItemDetailFragment() {
     }
 
@@ -45,28 +60,34 @@ public class EventItemDetailFragment extends Fragment {
     }
 
     @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        createMap(getActivity(), savedInstanceState, mEventItem);
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         Bundle arg = getArguments();
         Context context = getActivity();
-        EventItem eventItem = arg.getParcelable(ARG_EVENT_ITEM);
+        mEventItem = arg.getParcelable(ARG_EVENT_ITEM);
         View view = inflater.inflate(R.layout.fragment_event_item_detail, container, false);
         TextView titleView = (TextView) view.findViewById(R.id.title_view);
-        titleView.setText(eventItem.name);
-        Glide.with(getActivity()).load(eventItem.posterThumb).into((ImageView) view.findViewById(R.id.poster_thumb_view));
-        String logoThumb = eventItem.logoThumb;
+        titleView.setText(mEventItem.name);
+        Glide.with(getActivity()).load(mEventItem.posterThumb).into((ImageView) view.findViewById(R.id.poster_thumb_view));
+        String logoThumb = mEventItem.logoThumb;
         ImageView logoThumbView = (ImageView) view.findViewById(R.id.logo_view);
         TextView placeView = (TextView) view.findViewById(R.id.place_view);
         if ("".equals(logoThumb)) {
             logoThumbView.setVisibility(View.GONE);
             placeView.setVisibility(View.VISIBLE);
-            placeView.setText(eventItem.placeName);
+            placeView.setText(mEventItem.placeName);
         } else {
             logoThumbView.setVisibility(View.VISIBLE);
             placeView.setVisibility(View.GONE);
-            Glide.with(context).load(eventItem.logoThumb).into(logoThumbView);
+            Glide.with(context).load(mEventItem.logoThumb).into(logoThumbView);
         }
-        int categoryDrawableId = EventItemsModel.getCategoryBigDrawable(eventItem.category);
+        int categoryDrawableId = EventItemsModel.getCategoryBigDrawable(mEventItem.category);
         if (categoryDrawableId != 0) {
             ((ImageView) view.findViewById(R.id.category_type_view)).setImageDrawable(getActivity().getResources().getDrawable(categoryDrawableId));
         }
@@ -79,18 +100,56 @@ public class EventItemDetailFragment extends Fragment {
         TextView descriptionView = (TextView) view.findViewById(R.id.description_view);
 
         Calendar cl = Calendar.getInstance();
-        cl.setTimeInMillis(eventItem.date * 1000);
+        cl.setTimeInMillis(mEventItem.date * 1000);
         dayDateView.setText(String.format("%d", cl.get(Calendar.DAY_OF_MONTH)));
         monthView.setText(new DateFormatSymbols().getMonths()[cl.get(Calendar.MONTH)]);
         int dayOfWeek = cl.get(Calendar.DAY_OF_WEEK) - 1;
         dayOfWeekView.setText(getResources().getTextArray(R.array.day_of_week)[dayOfWeek]);
         createEventTimeTextBlock(context, timeView, cl.get(Calendar.HOUR_OF_DAY), cl.get(Calendar.MINUTE));
 
-        createEventEntranceTextBlock(context, entranceView, eventItem.entrance);
+        createEventEntranceTextBlock(context, entranceView, mEventItem.entrance);
 
-        descriptionView.setText(eventItem.eventDescription);
+        descriptionView.setText(mEventItem.eventDescription);
+
+        mMapView = (MapView) view.findViewById(R.id.map_view);
 
         return view;
+    }
+
+
+    private void createMap(Context context, Bundle savedInstanceState, EventItem eventitem) {
+        View view = getView();
+        boolean hasPlaceCoordinates = eventitem.lat != Double.NaN && eventitem.lng != Double.NaN;
+        mHasMap = getView() != null && hasPlaceCoordinates;
+        if (mHasMap) {
+            //try {
+
+            GoogleMapOptions options = new GoogleMapOptions().liteMode(true);
+            mMapView.onCreate(savedInstanceState);
+            mMap = mMapView.getMap();
+            mMap.getUiSettings().setMyLocationButtonEnabled(false);
+            mMap.setMyLocationEnabled(true);
+
+            MapsInitializer.initialize(context);
+
+            BitmapDescriptor defaultMarker =
+                    BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED);
+            LatLng position = new LatLng(eventitem.lat, eventitem.lng);
+            mMap.addMarker(new MarkerOptions()
+                    .position(position)
+                    .title("Some title here")
+                    .snippet("Some description here")
+                    .icon(defaultMarker));
+
+
+            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(position, 15);
+            mMap.moveCamera(cameraUpdate);
+
+
+            //} catch (Exception exp) {
+            //Log.d(TAG, exp.getMessage());
+            //}
+        }
     }
 
     private void createEventEntranceTextBlock(Context context, TextView entranceView, String entrance) {
@@ -147,5 +206,29 @@ public class EventItemDetailFragment extends Fragment {
         Bundle arg = new Bundle();
         arg.putParcelable(ARG_EVENT_ITEM, eventItem);
         setArguments(arg);
+    }
+
+    @Override
+    public void onResume() {
+        if (mHasMap) {
+            mMapView.onResume();
+        }
+        super.onResume();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (mHasMap) {
+            mMapView.onDestroy();
+        }
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        if (mHasMap) {
+            mMapView.onLowMemory();
+        }
     }
 }
