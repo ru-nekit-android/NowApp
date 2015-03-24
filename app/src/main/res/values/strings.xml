@@ -5,7 +5,7 @@
 
     <string name="title_activity_splash_screen">SplashScreenActivity</string>
 
-    <string name="hello_world">Hello world!</string>
+    <string name="going_right_now">уже идет!</string>
     <string name="action_settings">Settings</string>
 
     <string-array name="day_of_week">

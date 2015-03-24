@@ -16,4 +16,8 @@
         <attr name="android:textStyle" />
     </declare-styleable>
 
+    <declare-styleable name="FontFitTextView">
+        <attr name="maxFontSize" format="dimension" />
+    </declare-styleable>
+
 </resources>

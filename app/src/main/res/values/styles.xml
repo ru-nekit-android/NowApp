@@ -11,15 +11,17 @@
     </style>
 
     <style name="EventNameTextStyle">
-        <item name="android:textSize">28sp</item>
+        <item name="android:textSize">18sp</item>
         <item name="android:textStyle">bold</item>
         <item name="android:gravity">bottom</item>
-        <item name="android:textColor">@android:color/white</item>
+        <item name="android:textColor">@android:color/black</item>
+        <item name="android:lineSpacingMultiplier">.8</item>
+        <item name="android:background">@color/event_title_background</item>
     </style>
 
     <style name="EventNameTextStyle.DetailTitle">
         <item name="android:textSize">36sp</item>
-        <item name="android:textColor">@android:color/darker_gray</item>
+        <item name="android:textColor">@android:color/black</item>
     </style>
 
     <style name="MonthStyle">
@@ -29,11 +31,8 @@
     </style>
 
     <style name="EventStartTimeView">
-        <item name="android:textSize">18sp</item>
-        <item name="android:singleLine">true</item>
-        <item name="android:textStyle">italic</item>
-        <item name="android:textColor">@android:color/black</item>
-        <item name="android:background">@drawable/event_start_time_view_background</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@android:color/white</item>
         <item name="android:scaleType">fitXY</item>
     </style>
 
@@ -105,7 +104,7 @@
     </style>
 
     <style name="EventDescription">
-        <item name="android:textSize">18sp</item>
+        <item name="android:textSize">20sp</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 

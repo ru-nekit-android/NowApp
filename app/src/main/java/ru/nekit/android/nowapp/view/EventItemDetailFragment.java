@@ -2,10 +2,13 @@ package ru.nekit.android.nowapp.view;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.TypedArray;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
+import android.telephony.TelephonyManager;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -14,6 +17,7 @@ import android.text.style.TextAppearanceSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -21,7 +25,6 @@ import com.bumptech.glide.Glide;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.model.BitmapDescriptor;
@@ -38,7 +41,7 @@ import ru.nekit.android.nowapp.model.EventItemsModel;
 import ru.nekit.android.nowapp.utils.TextViewUtils;
 
 @SuppressWarnings("ResourceType")
-public class EventItemDetailFragment extends Fragment {
+public class EventItemDetailFragment extends Fragment implements View.OnClickListener {
 
     public static final String TAG = "ru.nekit.android.event_item_detail_fragment";
 
@@ -73,7 +76,7 @@ public class EventItemDetailFragment extends Fragment {
         mEventItem = arg.getParcelable(ARG_EVENT_ITEM);
         View view = inflater.inflate(R.layout.fragment_event_item_detail, container, false);
         TextView titleView = (TextView) view.findViewById(R.id.title_view);
-        titleView.setText(mEventItem.name);
+        titleView.setText(mEventItem.name.toUpperCase());
         Glide.with(getActivity()).load(mEventItem.posterThumb).into((ImageView) view.findViewById(R.id.poster_thumb_view));
         String logoThumb = mEventItem.logoThumb;
         ImageView logoThumbView = (ImageView) view.findViewById(R.id.logo_view);
@@ -98,6 +101,25 @@ public class EventItemDetailFragment extends Fragment {
         TextView timeView = (TextView) view.findViewById(R.id.time_view);
         TextView entranceView = (TextView) view.findViewById(R.id.entrance_view);
         TextView descriptionView = (TextView) view.findViewById(R.id.description_view);
+        Button phoneButton = (Button) view.findViewById(R.id.phone_button);
+        Button emailButton = (Button) view.findViewById(R.id.email_button);
+        phoneButton.setVisibility(View.GONE);
+        emailButton.setVisibility(View.GONE);
+        if (!"".equals(mEventItem.email)) {
+            emailButton.setVisibility(View.VISIBLE);
+            emailButton.setOnClickListener(this);
+            emailButton.setText(mEventItem.email);
+        }
+        if (!"".equals(mEventItem.phone)) {
+            TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+            if (tm.getPhoneType() == TelephonyManager.PHONE_TYPE_NONE) {
+
+            } else {
+                phoneButton.setOnClickListener(this);
+            }
+            phoneButton.setVisibility(View.VISIBLE);
+            phoneButton.setText(mEventItem.phone);
+        }
 
         Calendar cl = Calendar.getInstance();
         cl.setTimeInMillis(mEventItem.date * 1000);
@@ -118,13 +140,9 @@ public class EventItemDetailFragment extends Fragment {
 
 
     private void createMap(Context context, Bundle savedInstanceState, EventItem eventitem) {
-        View view = getView();
         boolean hasPlaceCoordinates = eventitem.lat != Double.NaN && eventitem.lng != Double.NaN;
         mHasMap = getView() != null && hasPlaceCoordinates;
         if (mHasMap) {
-            //try {
-
-            GoogleMapOptions options = new GoogleMapOptions().liteMode(true);
             mMapView.onCreate(savedInstanceState);
             mMap = mMapView.getMap();
             mMap.getUiSettings().setMyLocationButtonEnabled(false);
@@ -141,14 +159,8 @@ public class EventItemDetailFragment extends Fragment {
                     .snippet("Some description here")
                     .icon(defaultMarker));
 
-
             CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(position, 15);
             mMap.moveCamera(cameraUpdate);
-
-
-            //} catch (Exception exp) {
-            //Log.d(TAG, exp.getMessage());
-            //}
         }
     }
 
@@ -229,6 +241,28 @@ public class EventItemDetailFragment extends Fragment {
         super.onLowMemory();
         if (mHasMap) {
             mMapView.onLowMemory();
+        }
+    }
+
+    @Override
+    public void onClick(View view) {
+        Intent intent = null;
+        switch (view.getId()) {
+            case R.id.phone_button:
+                intent = new Intent(Intent.ACTION_CALL);
+                intent.setData(Uri.parse("tel:" + mEventItem.phone));
+                getActivity().startActivity(intent);
+                break;
+
+            case R.id.email_button:
+
+                intent = new Intent(Intent.ACTION_VIEW);
+                Uri data = Uri.parse("mailto:?to=" + mEventItem.email);
+                intent.setData(data);
+                startActivity(intent);
+                break;
+
+            default:
         }
     }
 }

@@ -48,7 +48,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         mColumns = columns;
         int screenWidth = getScreenWidth(context);
         mItemWidth = (screenWidth / columns);
-        mItemHeight = (int) (mItemWidth * .8);
+        mItemHeight = (int) (mItemWidth * (mColumns > 1 ? .9 : .6));
         mMargin = context.getResources().getDimensionPixelSize(R.dimen.event_collection_space);
         setItems(items);
     }
@@ -105,7 +105,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                     view = mInflater.inflate(R.layout.item_event, parent, false);
                     return new EventCollectionItemViewHolder(view);
             }
-        }catch(Exception exp){
+        } catch (Exception exp) {
             Log.e("ru.n.a", exp.getMessage());
         }
         return null;
@@ -117,18 +117,39 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         if (getItemViewType(position) == NORMAL) {
             layoutParams.height = mItemHeight;
             layoutParams.width = mItemWidth;
-            if (position % mColumns == 0) {
-                layoutParams.setMargins(mMargin, mMargin, mMargin / 2, 0);
+            if (mColumns > 1) {
+                if (position % mColumns == 0) {
+                    layoutParams.setMargins(mMargin, mMargin, mMargin / 2, 0);
+                } else {
+                    layoutParams.setMargins(mMargin / 2, mMargin, mMargin, 0);
+                }
             } else {
-                layoutParams.setMargins(mMargin / 2, mMargin, mMargin, 0);
+                layoutParams.setMargins(mMargin / 2, mMargin, mMargin / 2, 0);
             }
             EventCollectionItemViewHolder eventCollectionItemViewHolder = (EventCollectionItemViewHolder) viewHolder;
-            final EventItem event = mEventItems.get(position).eventItem;
-            eventCollectionItemViewHolder.getPlaceView().setText(event.placeName);
-            eventCollectionItemViewHolder.getNameView().setText(event.name);
-            Glide.with(mContext).load(event.posterBlur).centerCrop().into(eventCollectionItemViewHolder.getPosterView());
-
-            int categoryDrawableId = EventItemsModel.getCategoryDrawable(event.category);
+            final EventItem eventItem = mEventItems.get(position).eventItem;
+            eventCollectionItemViewHolder.getPlaceView().setText(eventItem.placeName);
+            String name = eventItem.name.toUpperCase().replace(" ", "\n");
+            eventCollectionItemViewHolder.getNameView().setText(name);
+            Glide.with(mContext).load(eventItem.posterBlur).centerCrop()./*placeholder(R.drawable.event_item_poster_place_holder).*/into(eventCollectionItemViewHolder.getPosterView());
+            long startAfterSeconds = eventItem.startAt;
+            if (startAfterSeconds == 0) {
+                eventCollectionItemViewHolder.getStartItemView().setText(mContext.getResources().getString(R.string.going_right_now));
+            } else {
+                long startAfterMinutesFull = eventItem.startAt / 60;
+                long startAfterHours = startAfterMinutesFull / 60;
+                long startAfterMinutes = startAfterMinutesFull % 60;
+                String startAfterString = "через";
+                if (startAfterHours > 0) {
+                    startAfterString += String.format(" %d ч", startAfterHours);
+                }
+                if (startAfterMinutes > 0) {
+                    startAfterString += String.format(" %d мин", startAfterMinutes);
+                }
+                TextView startItemView = eventCollectionItemViewHolder.getStartItemView();
+                startItemView.setText(startAfterString);
+            }
+            int categoryDrawableId = EventItemsModel.getCategoryDrawable(eventItem.category);
             if (categoryDrawableId != 0) {
                 eventCollectionItemViewHolder.getCatalogIcon().setImageDrawable(mContext.getResources().getDrawable(categoryDrawableId));
             }
@@ -221,8 +242,13 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             return mNameView;
         }
 
+        public TextView getStartItemView() {
+            return mStartItemView;
+        }
+
         private TextView mPlaceView;
         private TextView mNameView;
+        private TextView mStartItemView;
         private ImageView mPosterView;
         private ImageView mCatalogIcon;
 
@@ -232,6 +258,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             mNameView = (TextView) view.findViewById(R.id.name_view);
             mPosterView = (ImageView) view.findViewById(R.id.poster_thumb_view);
             mCatalogIcon = (ImageView) view.findViewById(R.id.category_view);
+            mStartItemView = (TextView) view.findViewById(R.id.event_start_time_view);
 
             view.setOnClickListener(this);
         }
