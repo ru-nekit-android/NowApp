@@ -2,9 +2,12 @@ package ru.nekit.android.nowapp.view;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v7.app.ActionBarActivity;
+
+import com.pnikosis.materialishprogress.ProgressWheel;
 
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.EventItemsLoader;
@@ -12,6 +15,7 @@ import ru.nekit.android.nowapp.model.EventItemsLoader;
 public class SplashScreenActivity extends ActionBarActivity implements LoaderManager.LoaderCallbacks<Void> {
 
     private static final int LOADER_ID = 1;
+    private ProgressWheel mProgressWheel;
 
     public SplashScreenActivity() {
 
@@ -23,6 +27,7 @@ public class SplashScreenActivity extends ActionBarActivity implements LoaderMan
         setContentView(R.layout.activity_splash_screen);
         LoaderManager loaderManager = getSupportLoaderManager();
         loaderManager.initLoader(LOADER_ID, null, this);
+        mProgressWheel = (ProgressWheel) findViewById(R.id.progress_wheel);
     }
 
     @Override
@@ -37,8 +42,14 @@ public class SplashScreenActivity extends ActionBarActivity implements LoaderMan
 
     @Override
     public void onLoadFinished(Loader<Void> loader, Void data) {
-        startActivity(new Intent(this, EventCollectionActivity.class));
-        finish();
+        mProgressWheel.stopSpinning();
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                startActivity(new Intent(SplashScreenActivity.this, EventCollectionActivity.class));
+                finish();
+            }
+        }, 100);
     }
 
     @Override

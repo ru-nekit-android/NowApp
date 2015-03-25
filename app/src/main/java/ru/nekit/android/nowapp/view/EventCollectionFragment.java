@@ -17,15 +17,25 @@ import android.view.ViewGroup;
 
 import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
+import ru.nekit.android.nowapp.model.EventItem;
 import ru.nekit.android.nowapp.model.EventItemsLoader;
 import ru.nekit.android.nowapp.model.EventItemsModel;
 import ru.nekit.android.nowapp.modelView.EventCollectionAdapter;
 import ru.nekit.android.nowapp.modelView.listeners.IEventItemSelectListener;
 
-public class EventCollectionFragment extends Fragment implements LoaderManager.LoaderCallbacks<Void> {
+public class EventCollectionFragment extends Fragment implements LoaderManager.LoaderCallbacks<Void>, IEventItemSelectListener {
 
     private static final int LOADER_ID = 1;
     public static final String TAG = "ru.nekit.android.event_collection_fragment";
+
+    @Override
+    public void onEventItemSelect(EventItem eventItem) {
+        if(mState == LOADING_STATE.LOADED) {
+            mEventItemSelectListener.onEventItemSelect(eventItem);
+        }else{
+            //strange behavior on usual user-case
+        }
+    }
 
     enum LOADING_TYPES {
         PULL_TO_REFRESH,
@@ -84,7 +94,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         mEventCollectionAdapter = new EventCollectionAdapter(context, mEventModel.getEventItemsList(), listColumn);
         mEventCollectionList.setAdapter(mEventCollectionAdapter);
         mEventCollectionList.setLayoutManager(mEventCollectionLayoutManager);
-        mEventCollectionAdapter.setOnItemClickListener(mEventItemSelectListener);
+        mEventCollectionAdapter.setOnItemClickListener(this);
         mEventCollectionLayoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
             @Override
             public int getSpanSize(int position) {
@@ -177,7 +187,9 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
 
     @Override
     public void onPause() {
-
+        mSwipeRefreshLayout.setRefreshing(false);
+        LoaderManager loaderManager = getLoaderManager();
+        loaderManager.destroyLoader(LOADER_ID);
         super.onPause();
     }
 

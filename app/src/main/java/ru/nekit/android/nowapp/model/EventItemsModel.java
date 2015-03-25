@@ -58,13 +58,13 @@ public class EventItemsModel {
         } else {
             for (int i = 0; i < eventItems.size(); i++) {
                 EventItem eventItem = eventItems.get(i);
-                //int index = getIndexWithId(eventItem.id);
-               // if (index > -1) {
-               //     mEventItemsList.remove(index);
-              //      mEventItemsList.add(index, eventItem);
-              //  } else {
+                int index = getIndexWithId(eventItem.id);
+                if (index > -1) {
+                    //mEventItemsList.remove(index);
+                    //mEventItemsList.add(index, eventItem);
+                } else {
                     mEventItemsList.add(eventItem);
-              //  }
+                }
             }
         }
     }

@@ -44,7 +44,7 @@ public class AutoResizeTextView extends RobotoTextView {
 
     private float mSpacingAdd = 0.0f;
 
-    private float mMinTextSize = 24;
+    private float mMinTextSize = 14;
 
     private int mWidthLimit;
 

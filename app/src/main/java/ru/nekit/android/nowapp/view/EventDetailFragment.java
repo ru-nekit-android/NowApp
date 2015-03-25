@@ -21,7 +21,8 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -31,6 +32,7 @@ import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.nostra13.universalimageloader.core.ImageLoader;
 
 import java.text.DateFormatSymbols;
 import java.util.Calendar;
@@ -38,21 +40,29 @@ import java.util.Calendar;
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.EventItem;
 import ru.nekit.android.nowapp.model.EventItemsModel;
+import ru.nekit.android.nowapp.modelView.listeners.IEventItemPosterSelectListener;
 import ru.nekit.android.nowapp.utils.TextViewUtils;
 
 @SuppressWarnings("ResourceType")
-public class EventItemDetailFragment extends Fragment implements View.OnClickListener {
+public class EventDetailFragment extends Fragment implements View.OnClickListener {
 
-    public static final String TAG = "ru.nekit.android.event_item_detail_fragment";
+    public static final String TAG = "ru.nekit.android.event_detail_fragment";
 
     private static final String ARG_EVENT_ITEM = "ru.nekit.android.event_item";
+
+    private static ImageLoader imageLoader;
+
+    static {
+        imageLoader = ImageLoader.getInstance();
+    }
 
     private GoogleMap mMap;
     private MapView mMapView;
     private EventItem mEventItem;
     private boolean mHasMap;
+    private IEventItemPosterSelectListener mEventItemPosterSelectListener;
 
-    public EventItemDetailFragment() {
+    public EventDetailFragment() {
     }
 
     @Override
@@ -74,10 +84,11 @@ public class EventItemDetailFragment extends Fragment implements View.OnClickLis
         Bundle arg = getArguments();
         Context context = getActivity();
         mEventItem = arg.getParcelable(ARG_EVENT_ITEM);
-        View view = inflater.inflate(R.layout.fragment_event_item_detail, container, false);
+        View view = inflater.inflate(R.layout.fragment_event_detail, container, false);
         TextView titleView = (TextView) view.findViewById(R.id.title_view);
         titleView.setText(mEventItem.name.toUpperCase());
-        Glide.with(getActivity()).load(mEventItem.posterThumb).into((ImageView) view.findViewById(R.id.poster_thumb_view));
+        ImageView posterThumbView = (ImageView) view.findViewById(R.id.poster_thumb_view);
+        imageLoader.displayImage(mEventItem.posterThumb, posterThumbView);
         String logoThumb = mEventItem.logoThumb;
         ImageView logoThumbView = (ImageView) view.findViewById(R.id.logo_view);
         TextView placeView = (TextView) view.findViewById(R.id.place_view);
@@ -88,12 +99,14 @@ public class EventItemDetailFragment extends Fragment implements View.OnClickLis
         } else {
             logoThumbView.setVisibility(View.VISIBLE);
             placeView.setVisibility(View.GONE);
-            Glide.with(context).load(mEventItem.logoThumb).into(logoThumbView);
+            imageLoader.displayImage(mEventItem.logoThumb, logoThumbView);
         }
         int categoryDrawableId = EventItemsModel.getCategoryBigDrawable(mEventItem.category);
         if (categoryDrawableId != 0) {
             ((ImageView) view.findViewById(R.id.category_type_view)).setImageDrawable(getActivity().getResources().getDrawable(categoryDrawableId));
         }
+
+        posterThumbView.setOnClickListener(this);
 
         TextView dayDateView = (TextView) view.findViewById(R.id.day_date_view);
         TextView monthView = (TextView) view.findViewById(R.id.month_view);
@@ -124,7 +137,7 @@ public class EventItemDetailFragment extends Fragment implements View.OnClickLis
         Calendar cl = Calendar.getInstance();
         cl.setTimeInMillis(mEventItem.date * 1000);
         dayDateView.setText(String.format("%d", cl.get(Calendar.DAY_OF_MONTH)));
-        monthView.setText(new DateFormatSymbols().getMonths()[cl.get(Calendar.MONTH)]);
+        monthView.setText(new DateFormatSymbols().getMonths()[cl.get(Calendar.MONTH)].toLowerCase());
         int dayOfWeek = cl.get(Calendar.DAY_OF_WEEK) - 1;
         dayOfWeekView.setText(getResources().getTextArray(R.array.day_of_week)[dayOfWeek]);
         createEventTimeTextBlock(context, timeView, cl.get(Calendar.HOUR_OF_DAY), cl.get(Calendar.MINUTE));
@@ -138,29 +151,40 @@ public class EventItemDetailFragment extends Fragment implements View.OnClickLis
         return view;
     }
 
-
     private void createMap(Context context, Bundle savedInstanceState, EventItem eventitem) {
         boolean hasPlaceCoordinates = eventitem.lat != Double.NaN && eventitem.lng != Double.NaN;
-        mHasMap = getView() != null && hasPlaceCoordinates;
-        if (mHasMap) {
-            mMapView.onCreate(savedInstanceState);
-            mMap = mMapView.getMap();
-            mMap.getUiSettings().setMyLocationButtonEnabled(false);
-            mMap.setMyLocationEnabled(true);
+        boolean hasEventLocation = getView() != null && hasPlaceCoordinates;
+        if (hasEventLocation) {
+            int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(context);
+            if (resultCode == ConnectionResult.SUCCESS) {
+                mMapView.onCreate(savedInstanceState);
+                mMap = mMapView.getMap();
+                if (mMap != null) {
+                    mMap.getUiSettings().setMyLocationButtonEnabled(false);
+                    mMap.setMyLocationEnabled(true);
 
-            MapsInitializer.initialize(context);
+                    MapsInitializer.initialize(context);
 
-            BitmapDescriptor defaultMarker =
-                    BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED);
-            LatLng position = new LatLng(eventitem.lat, eventitem.lng);
-            mMap.addMarker(new MarkerOptions()
-                    .position(position)
-                    .title("Some title here")
-                    .snippet("Some description here")
-                    .icon(defaultMarker));
+                    BitmapDescriptor defaultMarker =
+                            BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED);
+                    LatLng position = new LatLng(eventitem.lat, eventitem.lng);
+                    mMap.addMarker(new MarkerOptions()
+                            .position(position)
+                            .title("Some title here")
+                            .snippet("Some description here")
+                            .icon(defaultMarker));
 
-            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(position, 15);
-            mMap.moveCamera(cameraUpdate);
+                    CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(position, 15);
+                    mMap.moveCamera(cameraUpdate);
+                    mHasMap = true;
+                }
+            } else {
+                GooglePlayServicesUtil.getErrorDialog(resultCode, getActivity(), 1).show();
+                mHasMap = false;
+            }
+        }
+        if (!mHasMap) {
+            mMapView.setVisibility(View.GONE);
         }
     }
 
@@ -203,17 +227,6 @@ public class EventItemDetailFragment extends Fragment implements View.OnClickLis
         timeView.setText(finalText);
     }
 
-
-    @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-    }
-
     public void setEventItem(EventItem eventItem) {
         Bundle arg = new Bundle();
         arg.putParcelable(ARG_EVENT_ITEM, eventItem);
@@ -245,6 +258,23 @@ public class EventItemDetailFragment extends Fragment implements View.OnClickLis
     }
 
     @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        try {
+            mEventItemPosterSelectListener = (IEventItemPosterSelectListener) getActivity();
+        } catch (ClassCastException e) {
+            throw new ClassCastException(activity.toString()
+                    + " must implement OnSplashScreenCompleteListener");
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mEventItemPosterSelectListener = null;
+    }
+
+    @Override
     public void onClick(View view) {
         Intent intent = null;
         switch (view.getId()) {
@@ -262,7 +292,14 @@ public class EventItemDetailFragment extends Fragment implements View.OnClickLis
                 startActivity(intent);
                 break;
 
+            case R.id.poster_thumb_view:
+
+                mEventItemPosterSelectListener.onEventItemPosterSelect(mEventItem.posterOriginal);
+
+                break;
+
             default:
         }
     }
+
 }

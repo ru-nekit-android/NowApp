@@ -3,7 +3,7 @@
     <style name="NowTheme" parent="Theme.AppCompat.NoActionBar">
         <item name="android:windowBackground">@android:color/white</item>
         <item name="colorPrimary">@color/main</item>
-
+        <item name="typeface">roboto_light</item>
     </style>
 
     <style name="SplashScreenTheme" parent="Theme.AppCompat.NoActionBar">
@@ -11,21 +11,36 @@
     </style>
 
     <style name="EventNameTextStyle">
-        <item name="android:textSize">18sp</item>
+        <item name="android:textSize">16sp</item>
         <item name="android:textStyle">bold</item>
         <item name="android:gravity">bottom</item>
-        <item name="android:textColor">@android:color/black</item>
+        <item name="android:textColor">@android:color/white</item>
         <item name="android:lineSpacingMultiplier">.8</item>
         <item name="android:background">@color/event_title_background</item>
     </style>
 
     <style name="EventNameTextStyle.DetailTitle">
-        <item name="android:textSize">36sp</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:lineSpacingMultiplier">.8</item>
+        <item name="android:textColor">@android:color/black</item>
+    </style>
+
+    <style name="DayTextStyle">
+        <item name="android:textSize">48sp</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:gravity">center_horizontal</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
     <style name="MonthStyle">
-        <item name="android:textSize">24sp</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:textColor">@android:color/black</item>
+    </style>
+
+    <style name="DayOfWeekStyle">
+        <item name="android:textSize">20sp</item>
         <item name="android:singleLine">true</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
@@ -36,59 +51,45 @@
         <item name="android:scaleType">fitXY</item>
     </style>
 
-    <style name="DayOfWeekStyle">
-        <item name="android:textSize">36sp</item>
-        <item name="android:singleLine">true</item>
-        <item name="android:textColor">@android:color/black</item>
-    </style>
-
     <style name="TimeStyle">
+        <item name="android:textSize">48sp</item>
         <item name="android:gravity">center_horizontal</item>
     </style>
 
     <style name="HourTextStyle">
-        <item name="android:textSize">72sp</item>
-        <item name="android:textStyle">normal</item>
-        <item name="android:singleLine">true</item>
-        <item name="android:textColor">@android:color/darker_gray</item>
-    </style>
-
-    <style name="EntranceTitleTextStyle">
-        <item name="android:textSize">36sp</item>
+        <item name="android:textSize">48sp</item>
         <item name="android:textStyle">normal</item>
         <item name="android:singleLine">true</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
-    <style name="EntranceStyle">
-        <item name="android:textSize">36sp</item>
-        <item name="android:gravity">center</item>
-
-    </style>
-
-    <style name="EntranceTextStyle">
-        <item name="android:layout_marginTop">28dp</item>
+    <style name="MinuteTextStyle">
         <item name="android:textSize">18sp</item>
         <item name="android:textStyle">normal</item>
         <item name="android:singleLine">true</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
-    <style name="DayTextStyle">
-        <item name="android:textSize">72sp</item>
-        <item name="android:textStyle">normal</item>
-        <item name="android:singleLine">true</item>
-        <item name="android:gravity">center_horizontal</item>
-        <item name="android:textColor">@android:color/darker_gray</item>
-    </style>
-
-    <style name="MinuteTextStyle">
-        <item name="android:textSize">36sp</item>
+    <style name="EntranceTitleTextStyle">
+        <item name="android:textSize">20sp</item>
         <item name="android:textStyle">normal</item>
         <item name="android:singleLine">true</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
+    <style name="EntranceStyle">
+        <item name="android:textSize">18sp</item>
+        <item name="android:gravity">center</item>
+
+    </style>
+
+    <style name="EntranceTextStyle">
+        <item name="android:layout_marginTop">28dp</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:textColor">@android:color/black</item>
+    </style>
 
     <style name="PlaceTextStyle">
         <item name="android:textSize">18sp</item>
@@ -104,8 +105,14 @@
     </style>
 
     <style name="EventDescription">
-        <item name="android:textSize">20sp</item>
+        <item name="android:textSize">14sp</item>
         <item name="android:textColor">@android:color/black</item>
+    </style>
+
+    <style name="ActionButton">
+        <item name="android:textSize">18sp</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:background">@android:color/black</item>
     </style>
 
 </resources>

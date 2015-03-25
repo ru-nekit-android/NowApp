@@ -23,8 +23,9 @@
 
     <ImageView
         android:id="@+id/poster_thumb_view"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
         android:layout_alignParentEnd="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentRight="true"
@@ -41,7 +42,6 @@
     <com.devspark.robototextview.widget.RobotoTextView
         android:id="@+id/event_start_time_view"
         android:theme="@style/EventStartTimeView"
-        a:typeface="roboto_italic"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@drawable/event_start_time_view_background"
@@ -51,12 +51,10 @@
         android:layout_alignParentEnd="true"
         android:layout_toRightOf="@+id/category_view"
         android:layout_toEndOf="@+id/category_view"
-        android:layout_marginTop="2dp"
-        android:layout_marginBottom="4dp"
+        android:layout_marginTop="4dp"
         android:layout_marginLeft="-4dp"
         android:layout_marginStart="-4dp"
-        android:layout_alignRight="@+id/poster_thumb_view"
-        android:layout_alignEnd="@+id/poster_thumb_view" />
+         />
 
     <ImageView
         android:id="@+id/icon_view"
@@ -72,26 +70,24 @@
     <ru.nekit.android.nowapp.widget.FontFitTextView
         android:id="@+id/place_view"
         style="@style/PlaceTextStyle"
-        a:typeface="roboto_light"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:singleLine="false"
-        android:layout_alignParentBottom="true"
+        android:ellipsize="none"
+        android:singleLine="true"
+        android:maxLines="1"
         android:layout_toRightOf="@+id/icon_view"
         android:layout_toEndOf="@+id/icon_view"
         android:layout_alignRight="@+id/poster_thumb_view"
         android:layout_alignEnd="@+id/poster_thumb_view"
         android:layout_alignBaseline="@+id/icon_view"
-        android:layout_marginBottom="@dimen/event_item_view_shadow_size"
         android:paddingRight="4dp"
+        android:paddingEnd="4dp"
         a:maxFontSize="20sp"
-        />
+        android:layout_alignBottom="@+id/icon_view" />
 
     <ru.nekit.android.nowapp.widget.AutoResizeTextView
         android:id="@+id/name_view"
         style="@style/EventNameTextStyle"
-        a:typeface="roboto_light"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_above="@+id/event_start_time_view"
@@ -103,7 +99,9 @@
 
     <ImageView
         android:id="@+id/category_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:adjustViewBounds="true"
+        android:scaleType="fitXY"
+        android:layout_width="@dimen/event_category_view_size"
+        android:layout_height="@dimen/event_category_view_size" />
 
 </RelativeLayout>

@@ -6,7 +6,6 @@ import android.graphics.Point;
 import android.os.Build;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,7 +14,7 @@ import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
+import com.nostra13.universalimageloader.core.ImageLoader;
 
 import java.util.ArrayList;
 
@@ -37,6 +36,12 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     private ArrayList<WrapperEventItem> mEventItems = new ArrayList<>();
     private IEventItemSelectListener mItemClickListener;
+
+    private static ImageLoader imageLoader;
+
+    static {
+        imageLoader = ImageLoader.getInstance();
+    }
 
     public void setOnItemClickListener(IEventItemSelectListener listener) {
         mItemClickListener = listener;
@@ -95,20 +100,15 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view;
-        try {
-            switch (viewType) {
-                case LOADING:
-                    view = mInflater.inflate(R.layout.item_event_loading, parent, false);
-                    return new LoadingHolder(view, mItemHeight);
-                case NORMAL:
-                default:
-                    view = mInflater.inflate(R.layout.item_event, parent, false);
-                    return new EventCollectionItemViewHolder(view);
-            }
-        } catch (Exception exp) {
-            Log.e("ru.n.a", exp.getMessage());
+        switch (viewType) {
+            case LOADING:
+                view = mInflater.inflate(R.layout.item_event_loading, parent, false);
+                return new LoadingHolder(view, mItemHeight);
+            case NORMAL:
+            default:
+                view = mInflater.inflate(R.layout.item_event, parent, false);
+                return new EventCollectionItemViewHolder(view);
         }
-        return null;
     }
 
     @Override
@@ -128,10 +128,15 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             }
             EventCollectionItemViewHolder eventCollectionItemViewHolder = (EventCollectionItemViewHolder) viewHolder;
             final EventItem eventItem = mEventItems.get(position).eventItem;
+
             eventCollectionItemViewHolder.getPlaceView().setText(eventItem.placeName);
             String name = eventItem.name.toUpperCase().replace(" ", "\n");
             eventCollectionItemViewHolder.getNameView().setText(name);
-            Glide.with(mContext).load(eventItem.posterBlur).centerCrop()./*placeholder(R.drawable.event_item_poster_place_holder).*/into(eventCollectionItemViewHolder.getPosterView());
+
+            if (eventItem.posterBlur != null && !eventItem.posterBlur.equals(eventCollectionItemViewHolder.posterBlur)) {
+                eventCollectionItemViewHolder.posterBlur = eventItem.posterBlur;
+                imageLoader.displayImage(eventItem.posterBlur, eventCollectionItemViewHolder.getPosterThumbView());
+            }
             long startAfterSeconds = eventItem.startAt;
             if (startAfterSeconds == 0) {
                 eventCollectionItemViewHolder.getStartItemView().setText(mContext.getResources().getString(R.string.going_right_now));
@@ -154,7 +159,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 eventCollectionItemViewHolder.getCatalogIcon().setImageDrawable(mContext.getResources().getDrawable(categoryDrawableId));
             }
         } else {
-            layoutParams.height = mItemWidth / 4;
+            layoutParams.height = mContext.getResources().getDimensionPixelOffset(R.dimen.progress_wheel_size);
             layoutParams.setMargins(mMargin, mMargin, mMargin, mMargin);
         }
 
@@ -226,12 +231,14 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     class EventCollectionItemViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
 
+        public String posterBlur;
+
         public TextView getPlaceView() {
             return mPlaceView;
         }
 
-        public ImageView getPosterView() {
-            return mPosterView;
+        public ImageView getPosterThumbView() {
+            return mPosterThumbView;
         }
 
         public ImageView getCatalogIcon() {
@@ -249,14 +256,14 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         private TextView mPlaceView;
         private TextView mNameView;
         private TextView mStartItemView;
-        private ImageView mPosterView;
+        private ImageView mPosterThumbView;
         private ImageView mCatalogIcon;
 
         public EventCollectionItemViewHolder(View view) {
             super(view);
             mPlaceView = (TextView) view.findViewById(R.id.place_view);
             mNameView = (TextView) view.findViewById(R.id.name_view);
-            mPosterView = (ImageView) view.findViewById(R.id.poster_thumb_view);
+            mPosterThumbView = (ImageView) view.findViewById(R.id.poster_thumb_view);
             mCatalogIcon = (ImageView) view.findViewById(R.id.category_view);
             mStartItemView = (TextView) view.findViewById(R.id.event_start_time_view);
 
