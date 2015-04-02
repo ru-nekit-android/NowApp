@@ -1,6 +1,5 @@
 package ru.nekit.android.nowapp.view;
 
-import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
@@ -9,8 +8,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
-import com.nostra13.universalimageloader.core.ImageLoader;
-import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.drawable.GlideDrawable;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.pnikosis.materialishprogress.ProgressWheel;
 
 import ru.nekit.android.nowapp.R;
@@ -22,13 +23,7 @@ public class EventPosterViewFragment extends Fragment {
 
     private static final String IMAGE_URL = "ru.nekit.android.image_url";
 
-    private static ImageLoader imageLoader;
-
     private ProgressWheel mProgressWheel;
-
-    static {
-        imageLoader = ImageLoader.getInstance();
-    }
 
     private String mImageUrl;
 
@@ -57,12 +52,19 @@ public class EventPosterViewFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_poster_view, container, false);
         mProgressWheel = (ProgressWheel) view.findViewById(R.id.progress_wheel);
-        imageLoader.displayImage(mImageUrl, (ImageView) view.findViewById(R.id.poster_view), new SimpleImageLoadingListener() {
+        Glide.with(getActivity()).load(mImageUrl).listener(new RequestListener<String, GlideDrawable>() {
+
             @Override
-            public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
-                mProgressWheel.setVisibility(View.GONE);
+            public boolean onException(Exception e, String model, Target<GlideDrawable> target, boolean isFirstResource) {
+                return false;
             }
-        });
+
+            @Override
+            public boolean onResourceReady(GlideDrawable resource, String model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
+                mProgressWheel.setVisibility(View.GONE);
+                return false;
+            }
+        }).into((ImageView) view.findViewById(R.id.poster_view));
         return view;
     }
 }

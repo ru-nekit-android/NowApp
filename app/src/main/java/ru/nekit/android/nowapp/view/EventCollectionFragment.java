@@ -56,7 +56,6 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     private LOADING_STATE mState = LOADING_STATE.LOADED;
     private LOADING_TYPES mLoadingType = LOADING_TYPES.PULL_TO_REFRESH;
 
-
     public EventCollectionFragment() {
     }
 
@@ -121,11 +120,12 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
             int totalItemCount = mEventCollectionLayoutManager.getItemCount();
             int lastVisibleItem = mEventCollectionLayoutManager.findLastVisibleItemPosition();
-
-            if (totalItemCount > 1) {
-                if (lastVisibleItem >= totalItemCount - 1) {
-                    mLoadingType = LOADING_TYPES.REQUEST_NEW_EVENT_ITEMS;
-                    setState(LOADING_STATE.LOADING);
+            if(mEventModel.isAvailableLoad()) {
+                if (totalItemCount > 1) {
+                    if (lastVisibleItem >= totalItemCount - 1) {
+                        mLoadingType = LOADING_TYPES.REQUEST_NEW_EVENT_ITEMS;
+                        setState(LOADING_STATE.LOADING);
+                    }
                 }
             }
         }
@@ -139,7 +139,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                 if (!mEventCollectionAdapter.isLoading()) {
                     mEventCollectionAdapter.addLoading();
                 }
-                mEventCollectionList.smoothScrollToPosition(mEventModel.getEventItemsList().size());
+                mEventCollectionList.scrollToPosition(mEventModel.getEventItemsList().size());
                 performLoad();
                 break;
             case LOADED:
@@ -213,9 +213,9 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
 
     @Override
     public void onLoaderReset(Loader<Void> loader) {
-        setState(LOADING_STATE.LOADED);
+       setState(LOADING_STATE.LOADED);
         mLoadingType = LOADING_TYPES.PULL_TO_REFRESH;
-        mEventCollectionAdapter.setItems(null);
+        mEventCollectionAdapter.clearItems();
         mSwipeRefreshLayout.setRefreshing(false);
     }
 }

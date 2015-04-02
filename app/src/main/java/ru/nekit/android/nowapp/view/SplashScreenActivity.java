@@ -11,6 +11,7 @@ import com.pnikosis.materialishprogress.ProgressWheel;
 
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.EventItemsLoader;
+import ru.nekit.android.nowapp.utils.ConnectionUtil;
 
 public class SplashScreenActivity extends ActionBarActivity implements LoaderManager.LoaderCallbacks<Void> {
 
@@ -25,9 +26,14 @@ public class SplashScreenActivity extends ActionBarActivity implements LoaderMan
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash_screen);
-        LoaderManager loaderManager = getSupportLoaderManager();
-        loaderManager.initLoader(LOADER_ID, null, this);
         mProgressWheel = (ProgressWheel) findViewById(R.id.progress_wheel);
+        if(ConnectionUtil.isInternetAvailable(this)) {
+            LoaderManager loaderManager = getSupportLoaderManager();
+            loaderManager.initLoader(LOADER_ID, null, this);
+        }else{
+            //connection error
+        }
+
     }
 
     @Override

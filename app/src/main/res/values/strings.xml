@@ -1,12 +1,13 @@
 <resources>
 
     <string name="app_name">Сейчас</string>
-    <string name="action_about">О...</string>
-
-    <string name="title_activity_splash_screen">SplashScreenActivity</string>
+    <string name="action_about">О программе</string>
 
     <string name="going_right_now">уже идет!</string>
-    <string name="action_settings">Settings</string>
+    <string name="going_tomorrow">Завтра</string>
+    <string name="going_day_after_tomorrow">Послезавтра</string>
+    <string name="going_in">через</string>
+    <string name="about_text"><b>Твой город интересный сейчас</b>\n\nПрограмма доступна для использования лицам от 16 лет и старше\n\nЕсли хотите сообщить нам о предстоящем событии, свяжитесь с нами \n\n<a href="mailto:event@nowapp.ru">event@nowapp.ru</a>\n\n\u00A9 2014\u20132015 &quot;Джус&quot;</string>
 
     <string-array name="day_of_week">
         <item>ВС</item>
@@ -17,8 +18,5 @@
         <item>ПТ</item>
         <item>СБ</item>
     </string-array>
-    <string name="title_activity_maps">Map</string>
 
-<!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

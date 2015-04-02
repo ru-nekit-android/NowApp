@@ -31,8 +31,6 @@ public class EventItemsLoader extends AsyncTaskLoader<Void> {
     private static final String API_ROOT = "api/events.get";
 
     private DefaultHttpClient httpClient = new DefaultHttpClient();
-    private HttpEntity httpEntity = null;
-    private HttpResponse httpResponse = null;
     private Bundle mArgs;
 
     public EventItemsLoader(Context context, Bundle args) {
@@ -43,14 +41,14 @@ public class EventItemsLoader extends AsyncTaskLoader<Void> {
     @Override
     public Void loadInBackground() {
 
-        EventItemsModel model = ((NowApplication) getContext()).getEventModel();
+        Context context = getContext();
+        EventItemsModel model = ((NowApplication) context).getEventModel();
         ArrayList<EventItem> eventItems = new ArrayList<>();
         Uri.Builder uriBuilder = new Uri.Builder()
                 .scheme("http")
                 .authority(SITE_NAME)
                 .path(API_ROOT);
-        String lastEventItemId = String.format("%d", model.getLastEventId());
-        String currentTimeSecs = String.format("%d", System.currentTimeMillis()/1000);
+
         String type = null;
         if (mArgs != null) {
             type = mArgs.getString(EventItemsModel.TYPE);
@@ -58,14 +56,18 @@ public class EventItemsLoader extends AsyncTaskLoader<Void> {
         if (EventItemsModel.REFRESH_EVENT_ITEMS.equals(type) || type == null) {
             uriBuilder
                     .appendQueryParameter("fl", "1")
-                    .appendQueryParameter("date", currentTimeSecs)
-                    .appendQueryParameter("startAt", "64800");
+                    .appendQueryParameter("date", String.format("%d", EventItemsModel.getCurrentDateTimestamp(context, true)))
+                    .appendQueryParameter("startAt", String.format("%d", EventItemsModel.getCurrentTimestamp(context, true)));
         } else {
-            uriBuilder
-                    .appendQueryParameter("fl", "0")
-                    .appendQueryParameter("date", currentTimeSecs)
-                    .appendQueryParameter("startAt", "64800")
-                    .appendQueryParameter("id", lastEventItemId);
+            EventItem lastEventItem = model.getLastEvent();
+            if (lastEventItem != null) {
+                String lastEventItemId = String.format("%d", lastEventItem.id);
+                uriBuilder
+                        .appendQueryParameter("fl", "0")
+                        .appendQueryParameter("date", String.format("%d", lastEventItem.date))
+                        .appendQueryParameter("startAt", String.format("%d", lastEventItem.startAt))
+                        .appendQueryParameter("id", lastEventItemId);
+            }
         }
 
         Uri uri = uriBuilder.build();
@@ -75,8 +77,8 @@ public class EventItemsLoader extends AsyncTaskLoader<Void> {
         try {
 
             HttpGet httpGet = new HttpGet(query);
-            httpResponse = httpClient.execute(httpGet);
-            httpEntity = httpResponse.getEntity();
+            HttpResponse httpResponse = httpClient.execute(httpGet);
+            HttpEntity httpEntity = httpResponse.getEntity();
             String jsonString = EntityUtils.toString(httpEntity);
 
             try {
@@ -89,14 +91,13 @@ public class EventItemsLoader extends AsyncTaskLoader<Void> {
                     JSONArray eventJsonArray = jsonRootObject.getJSONArray(TAG_EVENTS);
                     for (int i = 0; i < eventJsonArray.length(); i++) {
                         JSONObject jsonEventItem = eventJsonArray.getJSONObject(i);
-                        int id = jsonEventItem.optInt(JSONDictionary.ID);
 
                         EventItem eventItem = new EventItem();
                         eventItem.date = jsonEventItem.optLong(JSONDictionary.DATE, 0);
                         eventItem.eventDescription = jsonEventItem.optString(JSONDictionary.EVENT_DESCRIPTION);
                         eventItem.placeName = jsonEventItem.optString(JSONDictionary.PLACE_NAME);
                         eventItem.placeId = jsonEventItem.optInt(JSONDictionary.PLACE_ID);
-                        eventItem.id = id;
+                        eventItem.id = jsonEventItem.optInt(JSONDictionary.ID);
                         eventItem.category = jsonEventItem.optString(JSONDictionary.EVENT_CATEGORY);
                         eventItem.entrance = jsonEventItem.optString(JSONDictionary.ENTRANCE);
                         eventItem.address = jsonEventItem.optString(JSONDictionary.ADDRESS);
@@ -136,7 +137,7 @@ public class EventItemsLoader extends AsyncTaskLoader<Void> {
         } else {
             model.setEvents(eventItems);
         }
-        model.setEventItemCountOnServer(eventsCount);
+        model.setAvailableEventCount(eventsCount);
 
         return null;
     }

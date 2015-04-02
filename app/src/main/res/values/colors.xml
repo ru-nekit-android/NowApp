@@ -6,5 +6,7 @@
     <color name="event_item_poster_thumb_background">#FF000000</color>
     <color name="main">#FF1169A0</color>
     <color name="divide_line">#FFAAAAAA</color>
-    <color name="event_title_background">@null</color>
+    <color name="poster_overlay">#DDAAAAAA</color>
+    <color name="action_button_stroke">#FF333333</color>
+    <color name="action_button_fill">#FFFFFFFF</color>
 </resources>

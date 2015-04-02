@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:a="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/card_view"
-    android:layout_width="200dp"
-    android:layout_height="200dp"
-    tools:context="ru.nekit.android.nowapp.modelView.EventCollectionItemViewHolder">
+    android:layout_width="0dp"
+    android:layout_height="0dp">
 
     <View
         android:id="@+id/background_view"
@@ -18,14 +16,12 @@
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
         android:layout_marginRight="@dimen/event_item_view_background_margin_right"
-        android:layout_marginEnd="@dimen/event_item_view_background_margin_right"
-        />
+        android:layout_marginEnd="@dimen/event_item_view_background_margin_right" />
 
     <ImageView
         android:id="@+id/poster_thumb_view"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:scaleType="centerCrop"
         android:layout_alignParentEnd="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentRight="true"
@@ -41,26 +37,26 @@
 
     <com.devspark.robototextview.widget.RobotoTextView
         android:id="@+id/event_start_time_view"
-        android:theme="@style/EventStartTimeView"
+        style="@style/EventStartTime"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@drawable/event_start_time_view_background"
         android:gravity="center_vertical"
         android:layout_above="@+id/icon_view"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
         android:layout_toRightOf="@+id/category_view"
         android:layout_toEndOf="@+id/category_view"
         android:layout_marginTop="4dp"
         android:layout_marginLeft="-4dp"
         android:layout_marginStart="-4dp"
-         />
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true" />
 
     <ImageView
         android:id="@+id/icon_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@drawable/map_marker"
+        android:layout_width="@dimen/icon_place_size"
+        android:layout_height="@dimen/icon_place_size"
+        android:src="@drawable/ic_map_marker"
+        android:scaleType="fitCenter"
         android:layout_alignParentBottom="true"
         android:layout_alignLeft="@+id/poster_thumb_view"
         android:layout_alignStart="@+id/poster_thumb_view"
@@ -69,33 +65,29 @@
 
     <ru.nekit.android.nowapp.widget.FontFitTextView
         android:id="@+id/place_view"
-        style="@style/PlaceTextStyle"
+        style="@style/PlaceText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:ellipsize="none"
-        android:singleLine="true"
-        android:maxLines="1"
         android:layout_toRightOf="@+id/icon_view"
         android:layout_toEndOf="@+id/icon_view"
         android:layout_alignRight="@+id/poster_thumb_view"
         android:layout_alignEnd="@+id/poster_thumb_view"
-        android:layout_alignBaseline="@+id/icon_view"
         android:paddingRight="4dp"
         android:paddingEnd="4dp"
         a:maxFontSize="20sp"
-        android:layout_alignBottom="@+id/icon_view" />
+        android:layout_alignBottom="@+id/icon_view"
+        android:layout_alignParentTop="true" />
 
     <ru.nekit.android.nowapp.widget.AutoResizeTextView
         android:id="@+id/name_view"
-        style="@style/EventNameTextStyle"
+        style="@style/EventNameText"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_above="@+id/event_start_time_view"
         android:layout_toRightOf="@+id/category_view"
         android:layout_toEndOf="@+id/category_view"
         android:layout_alignRight="@+id/poster_thumb_view"
-        android:layout_alignEnd="@+id/poster_thumb_view"
-        />
+        android:layout_alignEnd="@+id/poster_thumb_view" />
 
     <ImageView
         android:id="@+id/category_view"

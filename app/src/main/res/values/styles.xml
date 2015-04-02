@@ -10,109 +10,134 @@
         <item name="android:windowBackground">@color/main</item>
     </style>
 
-    <style name="EventNameTextStyle">
+    <style name="EventNameText">
         <item name="android:textSize">16sp</item>
-        <item name="android:textStyle">bold</item>
         <item name="android:gravity">bottom</item>
         <item name="android:textColor">@android:color/white</item>
         <item name="android:lineSpacingMultiplier">.8</item>
-        <item name="android:background">@color/event_title_background</item>
     </style>
 
-    <style name="EventNameTextStyle.DetailTitle">
+    <style name="EventNameText.DetailTitle">
         <item name="android:textSize">18sp</item>
         <item name="android:lineSpacingMultiplier">.8</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
-    <style name="DayTextStyle">
+    <style name="DayText">
         <item name="android:textSize">48sp</item>
-        <item name="android:textStyle">normal</item>
+        <item name="android:textStyle">bold</item>
         <item name="android:singleLine">true</item>
         <item name="android:gravity">center_horizontal</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
-    <style name="MonthStyle">
-        <item name="android:textSize">18sp</item>
-        <item name="android:singleLine">true</item>
-        <item name="android:textColor">@android:color/black</item>
-    </style>
-
-    <style name="DayOfWeekStyle">
+    <style name="MonthText">
         <item name="android:textSize">20sp</item>
         <item name="android:singleLine">true</item>
+        <item name="android:textStyle">bold</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
-    <style name="EventStartTimeView">
-        <item name="android:textSize">16sp</item>
+    <style name="DayOfWeekText">
+        <item name="android:textSize">20sp</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@android:color/black</item>
+    </style>
+
+    <style name="EventStartTime">
+        <item name="android:textSize">13sp</item>
         <item name="android:textColor">@android:color/white</item>
         <item name="android:scaleType">fitXY</item>
     </style>
 
-    <style name="TimeStyle">
+    <style name="TimeText">
         <item name="android:textSize">48sp</item>
         <item name="android:gravity">center_horizontal</item>
     </style>
 
-    <style name="HourTextStyle">
+    <style name="HourText">
         <item name="android:textSize">48sp</item>
         <item name="android:textStyle">normal</item>
         <item name="android:singleLine">true</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
-    <style name="MinuteTextStyle">
-        <item name="android:textSize">18sp</item>
-        <item name="android:textStyle">normal</item>
-        <item name="android:singleLine">true</item>
-        <item name="android:textColor">@android:color/black</item>
-    </style>
-
-    <style name="EntranceTitleTextStyle">
-        <item name="android:textSize">20sp</item>
-        <item name="android:textStyle">normal</item>
-        <item name="android:singleLine">true</item>
-        <item name="android:textColor">@android:color/black</item>
-    </style>
-
-    <style name="EntranceStyle">
-        <item name="android:textSize">18sp</item>
+    <style name="EntranceTextBlock">
         <item name="android:gravity">center</item>
-
     </style>
 
-    <style name="EntranceTextStyle">
-        <item name="android:layout_marginTop">28dp</item>
-        <item name="android:textSize">12sp</item>
-        <item name="android:textStyle">normal</item>
+    <style name="MinuteText">
+        <item name="android:textSize">20sp</item>
         <item name="android:singleLine">true</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
-    <style name="PlaceTextStyle">
+    <style name="EntranceTitleText">
+        <item name="android:textSize">20sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@android:color/black</item>
+    </style>
+
+    <style name="EntranceText">
+        <item name="android:layout_marginTop">28dp</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@android:color/black</item>
+    </style>
+
+    <style name="PlaceText">
         <item name="android:textSize">18sp</item>
         <item name="android:singleLine">true</item>
         <item name="android:maxLines">1</item>
+        <item name="android:gravity">bottom</item>
+        <item name="android:ellipsize">none</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
-    <style name="PlaceTextStyle.Detail">
+    <style name="PlaceText.Detail">
         <item name="android:textSize">18sp</item>
         <item name="android:singleLine">true</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
     <style name="EventDescription">
-        <item name="android:textSize">14sp</item>
+        <item name="android:textSize">16sp</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
     <style name="ActionButton">
         <item name="android:textSize">18sp</item>
-        <item name="android:textColor">@android:color/white</item>
-        <item name="android:background">@android:color/black</item>
+        <item name="android:layout_marginTop">8dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:textColor">@android:color/black</item>
+        <item name="android:background">@drawable/action_button_background</item>
+    </style>
+
+    <style name="AddressText">
+        <item name="android:textSize">16sp</item>
+        <item name="android:background">#AAFFFFFF</item>
+        <item name="android:textColor">@android:color/black</item>
+        <item name="android:gravity">center_horizontal</item>
+    </style>
+
+    <style name="NowLogoOnSplashScreen">
+        <item name="android:layout_marginRight">32dp</item>
+        <item name="android:layout_marginLeft">32dp</item>
+    </style>
+
+    <style name="NowLogoInToolbar">
+        <item name="android:layout_height">?android:attr/actionBarSize</item>
+        <item name="android:paddingBottom">4dp</item>
+        <item name="android:paddingTop">4dp</item>
+    </style>
+
+    <style name="AboutText">
+        <item name="android:textColor">@android:color/black</item>
     </style>
 
 </resources>

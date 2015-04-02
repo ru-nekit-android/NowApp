@@ -1,19 +1,18 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    xmlns:a="http://schemas.android.com/apk/res-auto"
+    xmlns:wheel="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
+    android:layout_height="match_parent"
+    android:id="@+id/scroll_view"
     tools:context="ru.nekit.android.nowapp.view.EventDetailFragment">
 
     <FrameLayout
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content">
 
-        <LinearLayout
-            android:orientation="vertical"
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:layout_marginRight="16dp"
             android:layout_marginLeft="16dp"
@@ -25,13 +24,26 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/top_layout">
 
-                <ImageView
-                    android:id="@+id/poster_thumb_view"
-                    android:layout_weight="2"
+                <FrameLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
+                    android:layout_weight="2"
                     android:layout_marginRight="8dp"
-                    android:layout_marginEnd="8dp" />
+                    android:layout_marginEnd="8dp">
+
+                    <com.pnikosis.materialishprogress.ProgressWheel
+                        android:id="@+id/progress_wheel"
+                        android:layout_width="@dimen/progress_wheel_size"
+                        android:layout_height="@dimen/progress_wheel_size"
+                        wheel:matProg_barColor="@color/main"
+                        wheel:matProg_progressIndeterminate="true"
+                        android:layout_gravity="center" />
+
+                    <ImageView
+                        android:id="@+id/poster_thumb_view"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
+                </FrameLayout>
 
                 <LinearLayout
                     android:layout_weight="3"
@@ -43,7 +55,7 @@
 
                     <me.grantland.widget.AutofitTextView
                         android:id="@+id/title_view"
-                        style="@style/EventNameTextStyle.DetailTitle"
+                        style="@style/EventNameText.DetailTitle"
                         android:layout_width="match_parent"
                         android:layout_height="108dp"
                         android:layout_marginBottom="16dp" />
@@ -62,7 +74,7 @@
 
                     <com.devspark.robototextview.widget.RobotoTextView
                         android:id="@+id/place_view"
-                        style="@style/PlaceTextStyle.Detail"
+                        style="@style/PlaceText.Detail"
                         android:layout_marginTop="4dp"
                         android:visibility="gone"
                         android:layout_width="wrap_content"
@@ -72,11 +84,12 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/information_layout"
                 android:orientation="horizontal"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:id="@+id/information_layout"
-                android:layout_gravity="center_vertical">
+                android:layout_gravity="center_vertical"
+                android:layout_below="@+id/top_layout">
 
                 <RelativeLayout
                     android:layout_weight="2"
@@ -85,7 +98,7 @@
 
                     <com.devspark.robototextview.widget.RobotoTextView
                         android:id="@+id/day_date_view"
-                        style="@style/DayTextStyle"
+                        style="@style/DayText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignParentLeft="true"
@@ -95,7 +108,7 @@
 
                     <me.grantland.widget.AutofitTextView
                         android:id="@+id/month_view"
-                        style="@style/MonthStyle"
+                        style="@style/MonthText"
                         android:layout_height="wrap_content"
                         android:layout_width="wrap_content"
                         android:layout_above="@+id/day_of_week_view"
@@ -106,7 +119,7 @@
 
                     <com.devspark.robototextview.widget.RobotoTextView
                         android:id="@+id/day_of_week_view"
-                        style="@style/DayOfWeekStyle"
+                        style="@style/DayOfWeekText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignBottom="@+id/day_date_view"
@@ -127,7 +140,7 @@
 
                 <com.devspark.robototextview.widget.RobotoTextView
                     android:id="@+id/time_view"
-                    style="@style/TimeStyle"
+                    style="@style/TimeText"
                     android:layout_weight="1.5"
                     android:layout_width="0dp"
                     android:layout_height="match_parent" />
@@ -141,7 +154,7 @@
 
                 <com.devspark.robototextview.widget.RobotoTextView
                     android:id="@+id/entrance_view"
-                    style="@style/EntranceStyle"
+                    style="@style/EntranceTextBlock"
                     android:layout_weight="1.5"
                     android:layout_width="0dp"
                     android:layout_height="match_parent" />
@@ -153,40 +166,59 @@
                 style="@style/EventDescription"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                />
+
+                android:layout_below="@+id/information_layout" />
 
             <com.devspark.robototextview.widget.RobotoButton
                 android:id="@+id/phone_button"
                 style="@style/ActionButton"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_below="@+id/description_view" />
 
             <com.devspark.robototextview.widget.RobotoButton
-                android:id="@+id/email_button"
+                android:id="@+id/site_button"
                 style="@style/ActionButton"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_below="@+id/phone_button" />
 
-            <com.google.android.gms.maps.MapView
-                android:layout_marginTop="8dp"
-                android:id="@+id/map_view"
-                android:minHeight="240dp"
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+                android:layout_marginTop="8dp"
+                android:layout_height="@dimen/map_view_height"
+                android:layout_below="@+id/site_button"
+                android:layout_alignParentBottom="true">
 
-        </LinearLayout>
+                <org.osmdroid.views.MapView
+                    android:id="@+id/map_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
+                <TextView
+                    android:id="@+id/address_view"
+                    style="@style/AddressText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <View
+                    android:id="@+id/map_scroll_fake_view"
+                    android:layout_margin="16dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:src="@android:color/transparent" />
+
+            </FrameLayout>
+
+        </RelativeLayout>
 
         <ImageView
             android:id="@+id/category_type_view"
-            android:layout_width="@dimen/event_category_view_size"
-            android:layout_height="@dimen/event_category_view_size"
+            android:layout_width="@dimen/event_category_big_view_size"
+            android:layout_height="@dimen/event_category_big_view_size"
             android:src="@drawable/cat_book_big"
             android:scaleType="fitXY"
-            android:layout_gravity="end" />
+            android:layout_gravity="end|top" />
 
     </FrameLayout>
-
 
 </ScrollView>
 

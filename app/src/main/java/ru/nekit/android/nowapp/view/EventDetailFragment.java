@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.TypedArray;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -15,26 +16,29 @@ import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.TextAppearanceSpan;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.maps.CameraUpdate;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapView;
-import com.google.android.gms.maps.MapsInitializer;
-import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.nostra13.universalimageloader.core.ImageLoader;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.drawable.GlideDrawable;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
+import com.pnikosis.materialishprogress.ProgressWheel;
+
+import org.osmdroid.DefaultResourceProxyImpl;
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
+import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.ItemizedIconOverlay;
+import org.osmdroid.views.overlay.OverlayItem;
 
 import java.text.DateFormatSymbols;
+import java.util.ArrayList;
 import java.util.Calendar;
 
 import ru.nekit.android.nowapp.R;
@@ -50,17 +54,10 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
     private static final String ARG_EVENT_ITEM = "ru.nekit.android.event_item";
 
-    private static ImageLoader imageLoader;
-
-    static {
-        imageLoader = ImageLoader.getInstance();
-    }
-
-    private GoogleMap mMap;
     private MapView mMapView;
     private EventItem mEventItem;
-    private boolean mHasMap;
     private IEventItemPosterSelectListener mEventItemPosterSelectListener;
+    private ProgressWheel mProgressWheel;
 
     public EventDetailFragment() {
     }
@@ -75,7 +72,25 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        createMap(getActivity(), savedInstanceState, mEventItem);
+        createMap();
+    }
+
+    private void createMap() {
+        mMapView.setBuiltInZoomControls(true);
+        mMapView.setMultiTouchControls(true);
+        mMapView.setTileSource(TileSourceFactory.MAPNIK);
+        GeoPoint geoPoint = new GeoPoint(mEventItem.lat, mEventItem.lng);
+        mMapView.getController().setZoom(17);
+        mMapView.getController().setCenter(geoPoint);
+        final ArrayList<OverlayItem> items = new ArrayList<OverlayItem>();
+        OverlayItem marker = new OverlayItem(null, null, geoPoint);
+        marker.setMarkerHotspot(OverlayItem.HotspotPlace.BOTTOM_CENTER);
+        items.add(marker);
+        Drawable newMarker = this.getResources().getDrawable(R.drawable.map_marker);
+        DefaultResourceProxyImpl resProxyImp = new DefaultResourceProxyImpl(getActivity().getApplicationContext());
+        ItemizedIconOverlay markersOverlay = new ItemizedIconOverlay<OverlayItem>(items, newMarker, null, resProxyImp);
+        mMapView.getOverlays().add(markersOverlay);
+        mMapView.invalidate();
     }
 
     @Override
@@ -88,7 +103,20 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         TextView titleView = (TextView) view.findViewById(R.id.title_view);
         titleView.setText(mEventItem.name.toUpperCase());
         ImageView posterThumbView = (ImageView) view.findViewById(R.id.poster_thumb_view);
-        imageLoader.displayImage(mEventItem.posterThumb, posterThumbView);
+        mProgressWheel = (ProgressWheel) view.findViewById(R.id.progress_wheel);
+        Glide.with(context).load(mEventItem.posterThumb).listener(new RequestListener<String, GlideDrawable>() {
+
+            @Override
+            public boolean onException(Exception e, String model, Target<GlideDrawable> target, boolean isFirstResource) {
+                return false;
+            }
+
+            @Override
+            public boolean onResourceReady(GlideDrawable resource, String model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
+                mProgressWheel.setVisibility(View.GONE);
+                return false;
+            }
+        }).into(posterThumbView);
         String logoThumb = mEventItem.logoThumb;
         ImageView logoThumbView = (ImageView) view.findViewById(R.id.logo_view);
         TextView placeView = (TextView) view.findViewById(R.id.place_view);
@@ -99,11 +127,11 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         } else {
             logoThumbView.setVisibility(View.VISIBLE);
             placeView.setVisibility(View.GONE);
-            imageLoader.displayImage(mEventItem.logoThumb, logoThumbView);
+            Glide.with(context).load(mEventItem.logoThumb).into(logoThumbView);
         }
         int categoryDrawableId = EventItemsModel.getCategoryBigDrawable(mEventItem.category);
         if (categoryDrawableId != 0) {
-            ((ImageView) view.findViewById(R.id.category_type_view)).setImageDrawable(getActivity().getResources().getDrawable(categoryDrawableId));
+            ((ImageView) view.findViewById(R.id.category_type_view)).setImageDrawable(context.getResources().getDrawable(categoryDrawableId));
         }
 
         posterThumbView.setOnClickListener(this);
@@ -114,33 +142,36 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         TextView timeView = (TextView) view.findViewById(R.id.time_view);
         TextView entranceView = (TextView) view.findViewById(R.id.entrance_view);
         TextView descriptionView = (TextView) view.findViewById(R.id.description_view);
+        TextView addressView = (TextView) view.findViewById(R.id.address_view);
         Button phoneButton = (Button) view.findViewById(R.id.phone_button);
-        Button emailButton = (Button) view.findViewById(R.id.email_button);
+        Button siteButton = (Button) view.findViewById(R.id.site_button);
         phoneButton.setVisibility(View.GONE);
-        emailButton.setVisibility(View.GONE);
-        if (!"".equals(mEventItem.email)) {
-            emailButton.setVisibility(View.VISIBLE);
-            emailButton.setOnClickListener(this);
-            emailButton.setText(mEventItem.email);
+        siteButton.setVisibility(View.GONE);
+        if (!"".equals(mEventItem.site)) {
+            siteButton.setVisibility(View.VISIBLE);
+            siteButton.setOnClickListener(this);
+            siteButton.setText(mEventItem.site);
+            siteButton.setTransformationMethod(null);
         }
         if (!"".equals(mEventItem.phone)) {
             TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
             if (tm.getPhoneType() == TelephonyManager.PHONE_TYPE_NONE) {
-
+                phoneButton.setEnabled(false);
             } else {
+                phoneButton.setEnabled(true);
                 phoneButton.setOnClickListener(this);
             }
             phoneButton.setVisibility(View.VISIBLE);
             phoneButton.setText(mEventItem.phone);
         }
 
-        Calendar cl = Calendar.getInstance();
-        cl.setTimeInMillis(mEventItem.date * 1000);
-        dayDateView.setText(String.format("%d", cl.get(Calendar.DAY_OF_MONTH)));
-        monthView.setText(new DateFormatSymbols().getMonths()[cl.get(Calendar.MONTH)].toLowerCase());
-        int dayOfWeek = cl.get(Calendar.DAY_OF_WEEK) - 1;
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(mEventItem.date * 1000);
+        dayDateView.setText(String.format("%d", calendar.get(Calendar.DAY_OF_MONTH)));
+        monthView.setText(new DateFormatSymbols().getMonths()[calendar.get(Calendar.MONTH)].toLowerCase());
+        int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK) - 1;
         dayOfWeekView.setText(getResources().getTextArray(R.array.day_of_week)[dayOfWeek]);
-        createEventTimeTextBlock(context, timeView, cl.get(Calendar.HOUR_OF_DAY), cl.get(Calendar.MINUTE));
+        createEventTimeTextBlock(context, timeView, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE));
 
         createEventEntranceTextBlock(context, entranceView, mEventItem.entrance);
 
@@ -148,56 +179,47 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
         mMapView = (MapView) view.findViewById(R.id.map_view);
 
-        return view;
-    }
+        final ScrollView scrollView = (ScrollView) view.findViewById(R.id.scroll_view);
+        View mapScrollFakeView = view.findViewById(R.id.map_scroll_fake_view);
 
-    private void createMap(Context context, Bundle savedInstanceState, EventItem eventitem) {
-        boolean hasPlaceCoordinates = eventitem.lat != Double.NaN && eventitem.lng != Double.NaN;
-        boolean hasEventLocation = getView() != null && hasPlaceCoordinates;
-        if (hasEventLocation) {
-            int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(context);
-            if (resultCode == ConnectionResult.SUCCESS) {
-                mMapView.onCreate(savedInstanceState);
-                mMap = mMapView.getMap();
-                if (mMap != null) {
-                    mMap.getUiSettings().setMyLocationButtonEnabled(false);
-                    mMap.setMyLocationEnabled(true);
+        mapScrollFakeView.setOnTouchListener(new View.OnTouchListener() {
 
-                    MapsInitializer.initialize(context);
+            @Override
+            public boolean onTouch(View view, MotionEvent event) {
+                int action = event.getAction();
+                switch (action) {
+                    case MotionEvent.ACTION_DOWN:
+                        scrollView.requestDisallowInterceptTouchEvent(true);
+                        return false;
 
-                    BitmapDescriptor defaultMarker =
-                            BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED);
-                    LatLng position = new LatLng(eventitem.lat, eventitem.lng);
-                    mMap.addMarker(new MarkerOptions()
-                            .position(position)
-                            .title("Some title here")
-                            .snippet("Some description here")
-                            .icon(defaultMarker));
+                    case MotionEvent.ACTION_UP:
+                        scrollView.requestDisallowInterceptTouchEvent(false);
+                        return true;
 
-                    CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(position, 15);
-                    mMap.moveCamera(cameraUpdate);
-                    mHasMap = true;
+                    case MotionEvent.ACTION_MOVE:
+                        scrollView.requestDisallowInterceptTouchEvent(true);
+                        return false;
+
+                    default:
+                        return true;
                 }
-            } else {
-                GooglePlayServicesUtil.getErrorDialog(resultCode, getActivity(), 1).show();
-                mHasMap = false;
             }
-        }
-        if (!mHasMap) {
-            mMapView.setVisibility(View.GONE);
-        }
+        });
+
+        addressView.setText(mEventItem.placeName);
+
+        return view;
     }
 
     private void createEventEntranceTextBlock(Context context, TextView entranceView, String entrance) {
         String title = "ВХОД:";
         SpannableString titleSpan = new SpannableString(title);
-        titleSpan.setSpan(new TextAppearanceSpan(context, R.style.EntranceTitleTextStyle), 0, title.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+        titleSpan.setSpan(new TextAppearanceSpan(context, R.style.EntranceTitleText), 0, title.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
         SpannableString entranceSpan = new SpannableString(entrance);
-        entranceSpan.setSpan(new TextAppearanceSpan(context, R.style.EntranceTextStyle), 0, entrance.length(), SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+        entranceSpan.setSpan(new TextAppearanceSpan(context, R.style.EntranceText), 0, entrance.length(), SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
         CharSequence finalText = TextUtils.concat(titleSpan, "\n", entranceSpan);
         entranceView.setText(finalText);
     }
-
 
     private void createEventTimeTextBlock(Context context, TextView timeView, int hour, int minute) {
         String hourTextValue = String.format("%d", hour);
@@ -208,7 +230,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         if (minute < 9) {
             minuteTextValue = "0".concat(minuteTextValue);
         }
-        TypedArray attrArray = context.obtainStyledAttributes(R.style.HourTextStyle, R.styleable.StyleAttributes);
+        TypedArray attrArray = context.obtainStyledAttributes(R.style.HourText, R.styleable.StyleAttributes);
         int hourTextSize = 0;
         try {
             hourTextSize = attrArray.getDimensionPixelOffset(0, -1);
@@ -219,9 +241,9 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         }
 
         SpannableString hourValueSpan = new SpannableString(hourTextValue);
-        hourValueSpan.setSpan(new TextAppearanceSpan(context, R.style.HourTextStyle), 0, hourTextValue.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+        hourValueSpan.setSpan(new TextAppearanceSpan(context, R.style.HourText), 0, hourTextValue.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
         SpannableStringBuilder minuteSpanBuilder = new SpannableStringBuilder(minuteTextValue);
-        minuteSpanBuilder.setSpan(new TextAppearanceSpan(context, R.style.MinuteTextStyle), 0, minuteTextValue.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+        minuteSpanBuilder.setSpan(new TextAppearanceSpan(context, R.style.MinuteText), 0, minuteTextValue.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
         minuteSpanBuilder.setSpan(TextViewUtils.getSuperscriptSpanAdjuster(context, hourTextValue, hourTextSize), 0, minuteTextValue.length(), SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
         CharSequence finalText = TextUtils.concat(hourValueSpan, minuteSpanBuilder);
         timeView.setText(finalText);
@@ -231,30 +253,6 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         Bundle arg = new Bundle();
         arg.putParcelable(ARG_EVENT_ITEM, eventItem);
         setArguments(arg);
-    }
-
-    @Override
-    public void onResume() {
-        if (mHasMap) {
-            mMapView.onResume();
-        }
-        super.onResume();
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        if (mHasMap) {
-            mMapView.onDestroy();
-        }
-    }
-
-    @Override
-    public void onLowMemory() {
-        super.onLowMemory();
-        if (mHasMap) {
-            mMapView.onLowMemory();
-        }
     }
 
     @Override
@@ -276,19 +274,18 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
     @Override
     public void onClick(View view) {
-        Intent intent = null;
+        Intent intent;
         switch (view.getId()) {
             case R.id.phone_button:
                 intent = new Intent(Intent.ACTION_CALL);
                 intent.setData(Uri.parse("tel:" + mEventItem.phone));
-                getActivity().startActivity(intent);
+                startActivity(intent);
                 break;
 
-            case R.id.email_button:
+            case R.id.site_button:
 
                 intent = new Intent(Intent.ACTION_VIEW);
-                Uri data = Uri.parse("mailto:?to=" + mEventItem.email);
-                intent.setData(data);
+                intent.setData(Uri.parse(mEventItem.site));
                 startActivity(intent);
                 break;
 
@@ -301,5 +298,4 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
             default:
         }
     }
-
 }

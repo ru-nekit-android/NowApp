@@ -9,7 +9,7 @@ android {
         minSdkVersion 11
         targetSdkVersion 21
         versionCode 1
-        versionName "1.0"
+        versionName "0.1"
     }
     buildTypes {
         release {
@@ -19,12 +19,28 @@ android {
     }
 }
 
+android.applicationVariants.all{ variant ->
+    variant.mergeAssets.doFirst {
+        File fonts = file("${projectDir}/build/intermediates/exploded-aar/com.github.johnkil.android-robototextview/robototextview/2.3.0/assets/fonts")
+        if (fonts.exists()) {
+            for (File file : fonts.listFiles()) {
+                if (!file.getName().contains("Roboto-Light")) {
+                    println("delete " + file.getName() + " font")
+                    file.delete()
+                };
+            }
+        }
+    }
+}
+
 dependencies {
     compile 'com.android.support:appcompat-v7:22.0.0'
+    compile 'com.github.bumptech.glide:glide:3.5.2'
     compile 'com.android.support:recyclerview-v7:22.0.0'
-    compile 'com.google.android.gms:play-services-maps:7.0.0'
     compile 'com.android.support:support-v4:22.0.0'
     compile 'com.pnikosis:materialish-progress:1.4'
-    compile 'com.nostra13.universalimageloader:universal-image-loader:1.9.3'
+    compile 'org.osmdroid:osmdroid-android:4.3'
+    compile 'org.slf4j:slf4j-simple:1.6.1'
+    compile 'com.afollestad:material-dialogs:0.6.7.1'
     compile project(":robototextview")
 }

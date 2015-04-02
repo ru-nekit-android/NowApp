@@ -1,7 +1,11 @@
 package ru.nekit.android.nowapp.model;
 
+import android.content.Context;
+
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 
 import ru.nekit.android.nowapp.R;
 
@@ -21,7 +25,7 @@ public class EventItemsModel {
     private static final EventItemsModel instance;
 
     private ArrayList<EventItem> mEventItemsList;
-    private int mEventItemCountOnServer;
+    private int mAvailableEventCount;
 
     static {
         instance = new EventItemsModel();
@@ -58,13 +62,7 @@ public class EventItemsModel {
         } else {
             for (int i = 0; i < eventItems.size(); i++) {
                 EventItem eventItem = eventItems.get(i);
-                int index = getIndexWithId(eventItem.id);
-                if (index > -1) {
-                    //mEventItemsList.remove(index);
-                    //mEventItemsList.add(index, eventItem);
-                } else {
-                    mEventItemsList.add(eventItem);
-                }
+                mEventItemsList.add(eventItem);
             }
         }
     }
@@ -74,32 +72,54 @@ public class EventItemsModel {
         mEventItemsList.addAll(eventList);
     }
 
-    public int getLastEventId() {
-        return mEventItemsList.size() > 0 ? mEventItemsList.get(mEventItemsList.size() - 1).id : 0;
+    public EventItem getLastEvent() {
+        return mEventItemsList.size() > 0 ? mEventItemsList.get(mEventItemsList.size() - 1) : null;
     }
 
     public ArrayList<EventItem> getEventItemsList() {
         return mEventItemsList;
     }
 
-    public int getIndexWithId(int id) {
+    /*public int getIndexWithId(int id) {
         for (int i = 0; i < mEventItemsList.size(); i++) {
             if (mEventItemsList.get(i).id == id) {
                 return i;
             }
         }
         return -1;
+    }*/
+
+    public static long getCurrentTimestamp(Context context, boolean usePrecision) {
+        Calendar calendar = Calendar.getInstance();
+        int minutes = calendar.get(Calendar.MINUTE);
+        int hours = calendar.get(Calendar.HOUR_OF_DAY);
+        long currentTimeTimestamp = TimeUnit.HOURS.toSeconds(hours) + TimeUnit.MINUTES.toSeconds(minutes);
+        if (usePrecision) {
+            long precision = TimeUnit.MINUTES.toSeconds(context.getResources().getInteger(R.integer.event_time_precision_in_minutes));
+            currentTimeTimestamp = ((int) currentTimeTimestamp / precision) * precision;
+        }
+        return currentTimeTimestamp;
     }
 
-    public void setEventItemCountOnServer(int count) {
-        mEventItemCountOnServer = count;
+    public static long getCurrentDateTimestamp(Context context, boolean usePrecision) {
+        Calendar calendar = Calendar.getInstance();
+        long currentDateTimestamp = TimeUnit.MILLISECONDS.toSeconds(calendar.getTimeInMillis()) - getCurrentTimestamp(context, false);
+        if (usePrecision) {
+            long precision = TimeUnit.MINUTES.toSeconds(context.getResources().getInteger(R.integer.event_time_precision_in_minutes));
+            currentDateTimestamp = ((int) currentDateTimestamp / precision) * precision;
+        }
+        return currentDateTimestamp;
     }
 
-    public int getEventItemCountOnServer() {
-        return mEventItemCountOnServer;
+    public void setAvailableEventCount(int count) {
+        mAvailableEventCount = count;
     }
 
     public boolean isEventItemsListEmpty() {
         return mEventItemsList.size() == 0;
+    }
+
+    public boolean isAvailableLoad() {
+        return mEventItemsList.size() < mAvailableEventCount;
     }
 }

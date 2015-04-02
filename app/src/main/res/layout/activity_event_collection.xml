@@ -17,8 +17,8 @@
             android:layout_height="wrap_content" />
 
         <ImageView
+            style="@style/NowLogoInToolbar"
             android:layout_width="wrap_content"
-            android:layout_height="?attr/actionBarSize"
             android:src="@drawable/now_big"
             android:layout_gravity="center" />
     </FrameLayout>

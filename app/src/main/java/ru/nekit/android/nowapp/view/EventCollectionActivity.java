@@ -5,7 +5,13 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.method.LinkMovementMethod;
+import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
+
+import com.afollestad.materialdialogs.MaterialDialog;
 
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.EventItem;
@@ -34,7 +40,6 @@ public class EventCollectionActivity extends ActionBarActivity implements IEvent
             mEventDetailFragment = new EventDetailFragment();
             mEventPosterViewFragment = new EventPosterViewFragment();
             getSupportFragmentManager().beginTransaction().add(R.id.event_place_holder, mEventCollectionFragment, EventCollectionFragment.TAG).commit();
-
         }
     }
 
@@ -48,6 +53,17 @@ public class EventCollectionActivity extends ActionBarActivity implements IEvent
                     fragmentManager.popBackStack();
                 }
                 return true;
+            case R.id.action_about:
+
+                MaterialDialog dialog = new MaterialDialog.Builder(this)
+                        .title(getResources().getString(R.string.action_about))
+                        .disableDefaultFonts()
+                        .customView(R.layout.about_layout, false)
+                        .show();
+                View view = dialog.getCustomView();
+                ((TextView) view.findViewById(R.id.text_view)).setMovementMethod(LinkMovementMethod.getInstance());
+
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -57,13 +73,19 @@ public class EventCollectionActivity extends ActionBarActivity implements IEvent
     @Override
     public void onEventItemSelect(EventItem eventItem) {
         mEventDetailFragment.setEventItem(eventItem);
-        getSupportFragmentManager().beginTransaction().replace(R.id.event_place_holder, mEventDetailFragment, EventDetailFragment.TAG).addToBackStack(null).commit();
+        getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left, R.anim.enter_from_left, R.anim.exit_to_right).replace(R.id.event_place_holder, mEventDetailFragment, EventDetailFragment.TAG).addToBackStack(null).commit();
 
     }
 
     @Override
     public void onEventItemPosterSelect(String posterUrl) {
         mEventPosterViewFragment.setEventPosterUrl(posterUrl);
-        getSupportFragmentManager().beginTransaction().replace(R.id.event_place_holder, mEventPosterViewFragment, EventPosterViewFragment.TAG).addToBackStack(null).commit();
+        getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left, R.anim.enter_from_left, R.anim.exit_to_right).replace(R.id.event_place_holder, mEventPosterViewFragment, EventPosterViewFragment.TAG).addToBackStack(null).commit();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_event_collection, menu);
+        return true;
     }
 }
