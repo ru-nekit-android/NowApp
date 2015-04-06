@@ -11,8 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:paddingRight="@dimen/event_collection_padding"
-        android:paddingLeft="@dimen/event_collection_padding"
-        />
+        android:paddingLeft="@dimen/event_collection_padding" />
 
 </android.support.v4.widget.SwipeRefreshLayout>
 

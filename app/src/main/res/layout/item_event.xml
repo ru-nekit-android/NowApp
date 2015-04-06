@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:a="http://schemas.android.com/apk/res-auto"
+
     android:id="@+id/card_view"
-    android:layout_width="0dp"
-    android:layout_height="0dp">
+    android:layout_width="200dp"
+    android:layout_height="200dp">
 
     <View
         android:id="@+id/background_view"
@@ -39,13 +39,11 @@
         android:id="@+id/event_start_time_view"
         style="@style/EventStartTime"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
         android:background="@drawable/event_start_time_view_background"
         android:gravity="center_vertical"
         android:layout_above="@+id/icon_view"
         android:layout_toRightOf="@+id/category_view"
         android:layout_toEndOf="@+id/category_view"
-        android:layout_marginTop="4dp"
         android:layout_marginLeft="-4dp"
         android:layout_marginStart="-4dp"
         android:layout_alignParentRight="true"
@@ -63,7 +61,7 @@
         android:layout_marginBottom="@dimen/event_item_view_shadow_size"
         android:padding="4dp" />
 
-    <ru.nekit.android.nowapp.widget.FontFitTextView
+    <ru.nekit.android.nowapp.widget.AutoResizeTextView
         android:id="@+id/place_view"
         style="@style/PlaceText"
         android:layout_width="wrap_content"
@@ -74,9 +72,10 @@
         android:layout_alignEnd="@+id/poster_thumb_view"
         android:paddingRight="4dp"
         android:paddingEnd="4dp"
-        a:maxFontSize="20sp"
+        android:gravity="bottom"
         android:layout_alignBottom="@+id/icon_view"
-        android:layout_alignParentTop="true" />
+        android:layout_alignBaseline="@+id/icon_view"
+        android:layout_below="@+id/poster_thumb_view" />
 
     <ru.nekit.android.nowapp.widget.AutoResizeTextView
         android:id="@+id/name_view"

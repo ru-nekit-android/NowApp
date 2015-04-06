@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <color name="background">#FFFFFFFF</color>
     <color name="event_item_background">#FFE4E4E4</color>
     <color name="event_item_shadow">#FFA19D9F</color>
     <color name="event_item_poster_thumb_background">#FF000000</color>

@@ -6,6 +6,8 @@ import android.os.Handler;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v7.app.ActionBarActivity;
+import android.text.Html;
+import android.widget.Toast;
 
 import com.pnikosis.materialishprogress.ProgressWheel;
 
@@ -13,7 +15,7 @@ import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.EventItemsLoader;
 import ru.nekit.android.nowapp.utils.ConnectionUtil;
 
-public class SplashScreenActivity extends ActionBarActivity implements LoaderManager.LoaderCallbacks<Void> {
+public class SplashScreenActivity extends ActionBarActivity implements LoaderManager.LoaderCallbacks<Integer> {
 
     private static final int LOADER_ID = 1;
     private ProgressWheel mProgressWheel;
@@ -27,17 +29,16 @@ public class SplashScreenActivity extends ActionBarActivity implements LoaderMan
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash_screen);
         mProgressWheel = (ProgressWheel) findViewById(R.id.progress_wheel);
-        if(ConnectionUtil.isInternetAvailable(this)) {
+        if (ConnectionUtil.isInternetAvailable(this)) {
             LoaderManager loaderManager = getSupportLoaderManager();
             loaderManager.initLoader(LOADER_ID, null, this);
-        }else{
-            //connection error
+        } else {
+            exitWitchError(R.string.connection_is_not_available);
         }
-
     }
 
     @Override
-    public Loader<Void> onCreateLoader(int id, Bundle args) {
+    public Loader<Integer> onCreateLoader(int id, Bundle args) {
         if (id == LOADER_ID) {
             EventItemsLoader loader = new EventItemsLoader(this, args);
             loader.forceLoad();
@@ -47,19 +48,33 @@ public class SplashScreenActivity extends ActionBarActivity implements LoaderMan
     }
 
     @Override
-    public void onLoadFinished(Loader<Void> loader, Void data) {
-        mProgressWheel.stopSpinning();
+    public void onLoadFinished(Loader<Integer> loader, Integer data) {
+        if (data == 0) {
+            mProgressWheel.stopSpinning();
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    startActivity(new Intent(SplashScreenActivity.this, EventCollectionActivity.class));
+                    finish();
+                }
+            }, 100);
+        } else {
+            exitWitchError(R.string.site_is_not_available);
+        }
+    }
+
+    private void exitWitchError(final int errorDescriptionResourceId) {
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                startActivity(new Intent(SplashScreenActivity.this, EventCollectionActivity.class));
+                Toast.makeText(SplashScreenActivity.this, Html.fromHtml(getResources().getString(errorDescriptionResourceId)), Toast.LENGTH_LONG).show();
                 finish();
             }
-        }, 100);
+        }, 500);
     }
 
     @Override
-    public void onLoaderReset(Loader<Void> loader) {
+    public void onLoaderReset(Loader<Integer> loader) {
 
     }
 }

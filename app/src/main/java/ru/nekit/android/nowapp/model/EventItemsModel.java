@@ -19,8 +19,8 @@ public class EventItemsModel {
     public static final String REQUEST_NEW_EVENT_ITEMS = "request_new_event_items";
     public static final String REFRESH_EVENT_ITEMS = "refresh_event_items";
 
-    private static final HashMap<String, Integer> CATEGORY_TYPE = new HashMap();
-    private static final HashMap<String, Integer> CATEGORY_TYPE_BIG = new HashMap();
+    private static final HashMap<String, Integer> CATEGORY_TYPE = new HashMap<>();
+    private static final HashMap<String, Integer> CATEGORY_TYPE_BIG = new HashMap<>();
 
     private static final EventItemsModel instance;
 
@@ -89,7 +89,7 @@ public class EventItemsModel {
         return -1;
     }*/
 
-    public static long getCurrentTimestamp(Context context, boolean usePrecision) {
+    public static long getCurrentTimeTimestamp(Context context, boolean usePrecision) {
         Calendar calendar = Calendar.getInstance();
         int minutes = calendar.get(Calendar.MINUTE);
         int hours = calendar.get(Calendar.HOUR_OF_DAY);
@@ -103,12 +103,12 @@ public class EventItemsModel {
 
     public static long getCurrentDateTimestamp(Context context, boolean usePrecision) {
         Calendar calendar = Calendar.getInstance();
-        long currentDateTimestamp = TimeUnit.MILLISECONDS.toSeconds(calendar.getTimeInMillis()) - getCurrentTimestamp(context, false);
+        long currentDateTimestamp = TimeUnit.MILLISECONDS.toSeconds(calendar.getTimeInMillis()) - getCurrentTimeTimestamp(context, false);
         if (usePrecision) {
             long precision = TimeUnit.MINUTES.toSeconds(context.getResources().getInteger(R.integer.event_time_precision_in_minutes));
             currentDateTimestamp = ((int) currentDateTimestamp / precision) * precision;
         }
-        return currentDateTimestamp;
+        return currentDateTimestamp + TimeUnit.MILLISECONDS.toSeconds(calendar.getTimeZone().getRawOffset());
     }
 
     public void setAvailableEventCount(int count) {

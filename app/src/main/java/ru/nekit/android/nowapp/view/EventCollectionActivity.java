@@ -73,7 +73,9 @@ public class EventCollectionActivity extends ActionBarActivity implements IEvent
     @Override
     public void onEventItemSelect(EventItem eventItem) {
         mEventDetailFragment.setEventItem(eventItem);
-        getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left, R.anim.enter_from_left, R.anim.exit_to_right).replace(R.id.event_place_holder, mEventDetailFragment, EventDetailFragment.TAG).addToBackStack(null).commit();
+        getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left, R.anim.enter_from_left, R.anim.exit_to_right)
+
+                .replace(R.id.event_place_holder, mEventDetailFragment, EventDetailFragment.TAG).addToBackStack(null).commit();
 
     }
 

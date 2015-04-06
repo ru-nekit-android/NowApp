@@ -11,9 +11,7 @@ public class ConnectionUtil {
 
     public static boolean isInternetAvailable(Context ctx) {
         ConnectivityManager cm = (ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
-
         NetworkInfo networkInfo = cm.getActiveNetworkInfo();
-
         // if network is NOT available networkInfo will be null
         // otherwise check if we are connected
         if (networkInfo != null && networkInfo.isConnected()) {

@@ -23,16 +23,16 @@ import ru.nekit.android.nowapp.model.EventItemsModel;
 import ru.nekit.android.nowapp.modelView.EventCollectionAdapter;
 import ru.nekit.android.nowapp.modelView.listeners.IEventItemSelectListener;
 
-public class EventCollectionFragment extends Fragment implements LoaderManager.LoaderCallbacks<Void>, IEventItemSelectListener {
+public class EventCollectionFragment extends Fragment implements LoaderManager.LoaderCallbacks<Integer>, IEventItemSelectListener {
 
     private static final int LOADER_ID = 1;
     public static final String TAG = "ru.nekit.android.event_collection_fragment";
 
     @Override
     public void onEventItemSelect(EventItem eventItem) {
-        if(mState == LOADING_STATE.LOADED) {
+        if (mState == LOADING_STATE.LOADED) {
             mEventItemSelectListener.onEventItemSelect(eventItem);
-        }else{
+        } else {
             //strange behavior on usual user-case
         }
     }
@@ -70,6 +70,9 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     public void onResume() {
         super.onResume();
         ((ActionBarActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+        if (mEventCollectionAdapter.getItemCount() == 0) {
+            mEventCollectionAdapter.setItems(mEventModel.getEventItemsList());
+        }
     }
 
     @Override
@@ -112,7 +115,6 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         });
 
         mEventCollectionList.setOnScrollListener(mScrollListener);
-        mEventCollectionAdapter.setItems(mEventModel.getEventItemsList());
         return view;
     }
 
@@ -120,7 +122,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
             int totalItemCount = mEventCollectionLayoutManager.getItemCount();
             int lastVisibleItem = mEventCollectionLayoutManager.findLastVisibleItemPosition();
-            if(mEventModel.isAvailableLoad()) {
+            if (mEventModel.isAvailableLoad()) {
                 if (totalItemCount > 1) {
                     if (lastVisibleItem >= totalItemCount - 1) {
                         mLoadingType = LOADING_TYPES.REQUEST_NEW_EVENT_ITEMS;
@@ -146,6 +148,9 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                 if (mEventCollectionAdapter.isLoading()) {
                     mEventCollectionAdapter.removeLoading();
                 }
+                break;
+
+            default:
                 break;
         }
     }
@@ -194,7 +199,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     }
 
     @Override
-    public Loader<Void> onCreateLoader(int id, Bundle args) {
+    public Loader<Integer> onCreateLoader(int id, Bundle args) {
         if (id == LOADER_ID) {
             EventItemsLoader loader = new EventItemsLoader(getActivity(), args);
             loader.forceLoad();
@@ -204,16 +209,18 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     }
 
     @Override
-    public void onLoadFinished(Loader<Void> loader, Void data) {
-        setState(LOADING_STATE.LOADED);
-        mLoadingType = LOADING_TYPES.PULL_TO_REFRESH;
-        mEventCollectionAdapter.setItems(mEventModel.getEventItemsList());
-        mSwipeRefreshLayout.setRefreshing(false);
+    public void onLoadFinished(Loader<Integer> loader, Integer data) {
+        if (data == 0) {
+            setState(LOADING_STATE.LOADED);
+            mLoadingType = LOADING_TYPES.PULL_TO_REFRESH;
+            mEventCollectionAdapter.setItems(mEventModel.getEventItemsList());
+            mSwipeRefreshLayout.setRefreshing(false);
+        }
     }
 
     @Override
-    public void onLoaderReset(Loader<Void> loader) {
-       setState(LOADING_STATE.LOADED);
+    public void onLoaderReset(Loader<Integer> loader) {
+        setState(LOADING_STATE.LOADED);
         mLoadingType = LOADING_TYPES.PULL_TO_REFRESH;
         mEventCollectionAdapter.clearItems();
         mSwipeRefreshLayout.setRefreshing(false);

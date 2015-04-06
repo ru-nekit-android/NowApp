@@ -1,52 +1,57 @@
 <resources>
 
     <style name="NowTheme" parent="Theme.AppCompat.NoActionBar">
-        <item name="android:windowBackground">@android:color/white</item>
         <item name="colorPrimary">@color/main</item>
         <item name="typeface">roboto_light</item>
+        <item name="android:windowBackground">@color/background</item>
     </style>
 
     <style name="SplashScreenTheme" parent="Theme.AppCompat.NoActionBar">
         <item name="android:windowBackground">@color/main</item>
+        <item name="typeface">roboto_light</item>
     </style>
 
     <style name="EventNameText">
-        <item name="android:textSize">16sp</item>
+        <item name="maxTextSize">32sp</item>
+        <item name="minTextSize">6sp</item>
+        <item name="android:paddingBottom">4dp</item>
+        <item name="android:paddingRight">4dp</item>
+        <item name="android:paddingTop">4dp</item>
         <item name="android:gravity">bottom</item>
+        <item name="typeface">roboto_medium</item>
+        <item name="android:lineSpacingMultiplier">@dimen/event_name_line_spacing_multiplier</item>
         <item name="android:textColor">@android:color/white</item>
-        <item name="android:lineSpacingMultiplier">.8</item>
     </style>
 
     <style name="EventNameText.DetailTitle">
-        <item name="android:textSize">18sp</item>
-        <item name="android:lineSpacingMultiplier">.8</item>
+        <item name="maxTextSize">72dp</item>
+        <item name="minTextSize">20sp</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
     <style name="DayText">
         <item name="android:textSize">48sp</item>
-        <item name="android:textStyle">bold</item>
         <item name="android:singleLine">true</item>
         <item name="android:gravity">center_horizontal</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
     <style name="MonthText">
-        <item name="android:textSize">20sp</item>
+        <item name="android:textSize">18sp</item>
         <item name="android:singleLine">true</item>
-        <item name="android:textStyle">bold</item>
+        <item name="android:maxLines">1</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
     <style name="DayOfWeekText">
         <item name="android:textSize">20sp</item>
         <item name="android:singleLine">true</item>
-        <item name="android:textStyle">bold</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
     <style name="EventStartTime">
-        <item name="android:textSize">13sp</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:layout_height">@dimen/event_start_time_height</item>
         <item name="android:textColor">@android:color/white</item>
         <item name="android:scaleType">fitXY</item>
     </style>
@@ -75,7 +80,6 @@
 
     <style name="EntranceTitleText">
         <item name="android:textSize">20sp</item>
-        <item name="android:textStyle">bold</item>
         <item name="android:singleLine">true</item>
         <item name="android:gravity">center</item>
         <item name="android:textColor">@android:color/black</item>
@@ -91,7 +95,8 @@
     </style>
 
     <style name="PlaceText">
-        <item name="android:textSize">18sp</item>
+        <item name="maxTextSize">18sp</item>
+        <item name="minTextSize">10sp</item>
         <item name="android:singleLine">true</item>
         <item name="android:maxLines">1</item>
         <item name="android:gravity">bottom</item>
@@ -112,16 +117,16 @@
 
     <style name="ActionButton">
         <item name="android:textSize">18sp</item>
-        <item name="android:layout_marginTop">8dp</item>
         <item name="android:layout_height">match_parent</item>
         <item name="android:textColor">@android:color/black</item>
         <item name="android:background">@drawable/action_button_background</item>
     </style>
 
     <style name="AddressText">
-        <item name="android:textSize">16sp</item>
-        <item name="android:background">#AAFFFFFF</item>
-        <item name="android:textColor">@android:color/black</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:background">#55000000</item>
+        <item name="android:padding">8dp</item>
+        <item name="android:textColor">@android:color/white</item>
         <item name="android:gravity">center_horizontal</item>
     </style>
 

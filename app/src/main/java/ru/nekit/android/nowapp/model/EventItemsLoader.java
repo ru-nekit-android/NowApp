@@ -24,7 +24,7 @@ import ru.nekit.android.nowapp.NowApplication;
 /**
  * Created by chuvac on 13.03.15.
  */
-public class EventItemsLoader extends AsyncTaskLoader<Void> {
+public class EventItemsLoader extends AsyncTaskLoader<Integer> {
 
     private static final String TAG_EVENTS = "events";
     private static final String SITE_NAME = "nowapp.ru";
@@ -39,7 +39,9 @@ public class EventItemsLoader extends AsyncTaskLoader<Void> {
     }
 
     @Override
-    public Void loadInBackground() {
+    public Integer loadInBackground() {
+
+        Integer result = 0;
 
         Context context = getContext();
         EventItemsModel model = ((NowApplication) context).getEventModel();
@@ -57,7 +59,7 @@ public class EventItemsLoader extends AsyncTaskLoader<Void> {
             uriBuilder
                     .appendQueryParameter("fl", "1")
                     .appendQueryParameter("date", String.format("%d", EventItemsModel.getCurrentDateTimestamp(context, true)))
-                    .appendQueryParameter("startAt", String.format("%d", EventItemsModel.getCurrentTimestamp(context, true)));
+                    .appendQueryParameter("startAt", String.format("%d", EventItemsModel.getCurrentTimeTimestamp(context, true)));
         } else {
             EventItem lastEventItem = model.getLastEvent();
             if (lastEventItem != null) {
@@ -123,13 +125,17 @@ public class EventItemsLoader extends AsyncTaskLoader<Void> {
                     //error
                 }
             } catch (JSONException exp) {
+                result = -1;
                 exp.printStackTrace();
             }
         } catch (UnsupportedEncodingException exp) {
+            result = -1;
             exp.printStackTrace();
         } catch (ClientProtocolException exp) {
+            result = -1;
             exp.printStackTrace();
         } catch (IOException exp) {
+            result = -1;
             exp.printStackTrace();
         }
         if (EventItemsModel.REQUEST_NEW_EVENT_ITEMS.equals(type)) {
@@ -139,7 +145,7 @@ public class EventItemsLoader extends AsyncTaskLoader<Void> {
         }
         model.setAvailableEventCount(eventsCount);
 
-        return null;
+        return result;
     }
 
 }

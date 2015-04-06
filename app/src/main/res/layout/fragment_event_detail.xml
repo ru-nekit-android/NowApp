@@ -10,19 +10,20 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
 
-        <RelativeLayout
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:layout_marginRight="16dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginBottom="8dp">
+            android:orientation="vertical"
+            android:layout_marginTop="8dp">
 
             <LinearLayout
                 android:orientation="horizontal"
+                android:layout_marginRight="16dp"
+                android:layout_marginLeft="16dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/top_layout">
+                android:id="@+id/top_layout"
+                android:baselineAligned="false">
 
                 <FrameLayout
                     android:layout_width="0dp"
@@ -53,7 +54,7 @@
                     android:layout_marginStart="8dp"
                     android:layout_height="wrap_content">
 
-                    <me.grantland.widget.AutofitTextView
+                    <ru.nekit.android.nowapp.widget.AutoResizeTextView
                         android:id="@+id/title_view"
                         style="@style/EventNameText.DetailTitle"
                         android:layout_width="match_parent"
@@ -84,12 +85,13 @@
             </LinearLayout>
 
             <LinearLayout
+                android:layout_marginRight="16dp"
+                android:layout_marginLeft="16dp"
                 android:id="@+id/information_layout"
                 android:orientation="horizontal"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_gravity="center_vertical"
-                android:layout_below="@+id/top_layout">
+                android:layout_gravity="center_vertical">
 
                 <RelativeLayout
                     android:layout_weight="2"
@@ -106,7 +108,7 @@
                         android:layout_toLeftOf="@+id/month_view"
                         android:layout_toStartOf="@+id/month_view" />
 
-                    <me.grantland.widget.AutofitTextView
+                    <com.devspark.robototextview.widget.RobotoTextView
                         android:id="@+id/month_view"
                         style="@style/MonthText"
                         android:layout_height="wrap_content"
@@ -164,29 +166,27 @@
             <com.devspark.robototextview.widget.RobotoTextView
                 android:id="@+id/description_view"
                 style="@style/EventDescription"
+                android:layout_marginRight="16dp"
+                android:layout_marginLeft="16dp"
+                android:paddingBottom="16dp"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-
-                android:layout_below="@+id/information_layout" />
+                android:layout_height="wrap_content" />
 
             <com.devspark.robototextview.widget.RobotoButton
                 android:id="@+id/phone_button"
                 style="@style/ActionButton"
-                android:layout_width="match_parent"
-                android:layout_below="@+id/description_view" />
+                android:layout_marginBottom="-1dp"
+                android:layout_width="match_parent" />
 
             <com.devspark.robototextview.widget.RobotoButton
                 android:id="@+id/site_button"
+                android:layout_marginTop="-1dp"
                 style="@style/ActionButton"
-                android:layout_width="match_parent"
-                android:layout_below="@+id/phone_button" />
+                android:layout_width="match_parent" />
 
             <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_marginTop="8dp"
-                android:layout_height="@dimen/map_view_height"
-                android:layout_below="@+id/site_button"
-                android:layout_alignParentBottom="true">
+                android:layout_height="@dimen/map_view_height">
 
                 <org.osmdroid.views.MapView
                     android:id="@+id/map_view"
@@ -201,14 +201,15 @@
 
                 <View
                     android:id="@+id/map_scroll_fake_view"
-                    android:layout_margin="16dp"
+                    android:layout_marginLeft="24dp"
+                    android:layout_marginRight="24dp"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:src="@android:color/transparent" />
 
             </FrameLayout>
 
-        </RelativeLayout>
+        </LinearLayout>
 
         <ImageView
             android:id="@+id/category_type_view"

@@ -58,6 +58,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     private EventItem mEventItem;
     private IEventItemPosterSelectListener mEventItemPosterSelectListener;
     private ProgressWheel mProgressWheel;
+    private GeoPoint mGeoPoint;
 
     public EventDetailFragment() {
     }
@@ -75,31 +76,42 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         createMap();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+
+
+    }
+
     private void createMap() {
         mMapView.setBuiltInZoomControls(true);
         mMapView.setMultiTouchControls(true);
         mMapView.setTileSource(TileSourceFactory.MAPNIK);
-        GeoPoint geoPoint = new GeoPoint(mEventItem.lat, mEventItem.lng);
-        mMapView.getController().setZoom(17);
-        mMapView.getController().setCenter(geoPoint);
+        mGeoPoint = new GeoPoint(mEventItem.lat, mEventItem.lng);
+        mMapView.getController().setZoom(19);
+        mMapView.getController().setCenter(mGeoPoint);
         final ArrayList<OverlayItem> items = new ArrayList<OverlayItem>();
-        OverlayItem marker = new OverlayItem(null, null, geoPoint);
+        OverlayItem marker = new OverlayItem(null, null, mGeoPoint);
         marker.setMarkerHotspot(OverlayItem.HotspotPlace.BOTTOM_CENTER);
         items.add(marker);
         Drawable newMarker = this.getResources().getDrawable(R.drawable.map_marker);
         DefaultResourceProxyImpl resProxyImp = new DefaultResourceProxyImpl(getActivity().getApplicationContext());
         ItemizedIconOverlay markersOverlay = new ItemizedIconOverlay<OverlayItem>(items, newMarker, null, resProxyImp);
         mMapView.getOverlays().add(markersOverlay);
-        mMapView.invalidate();
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        return constructInterface(inflater.inflate(R.layout.fragment_event_detail, container, false));
+    }
+
+    private View constructInterface(View view){
+
         Bundle arg = getArguments();
         Context context = getActivity();
         mEventItem = arg.getParcelable(ARG_EVENT_ITEM);
-        View view = inflater.inflate(R.layout.fragment_event_detail, container, false);
+
         TextView titleView = (TextView) view.findViewById(R.id.title_view);
         titleView.setText(mEventItem.name.toUpperCase());
         ImageView posterThumbView = (ImageView) view.findViewById(R.id.poster_thumb_view);
@@ -145,6 +157,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         TextView addressView = (TextView) view.findViewById(R.id.address_view);
         Button phoneButton = (Button) view.findViewById(R.id.phone_button);
         Button siteButton = (Button) view.findViewById(R.id.site_button);
+        view.findViewById(R.id.address_view).setOnClickListener(this);
         phoneButton.setVisibility(View.GONE);
         siteButton.setVisibility(View.GONE);
         if (!"".equals(mEventItem.site)) {
@@ -154,15 +167,17 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
             siteButton.setTransformationMethod(null);
         }
         if (!"".equals(mEventItem.phone)) {
-            TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-            if (tm.getPhoneType() == TelephonyManager.PHONE_TYPE_NONE) {
-                phoneButton.setEnabled(false);
-            } else {
-                phoneButton.setEnabled(true);
-                phoneButton.setOnClickListener(this);
+            if(mEventItem.phone.length() > 1) {
+                TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+                if (tm.getPhoneType() == TelephonyManager.PHONE_TYPE_NONE) {
+                    phoneButton.setEnabled(false);
+                } else {
+                    phoneButton.setEnabled(true);
+                    phoneButton.setOnClickListener(this);
+                }
+                phoneButton.setVisibility(View.VISIBLE);
+                phoneButton.setText(mEventItem.phone);
             }
-            phoneButton.setVisibility(View.VISIBLE);
-            phoneButton.setText(mEventItem.phone);
         }
 
         Calendar calendar = Calendar.getInstance();
@@ -287,6 +302,12 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                 intent = new Intent(Intent.ACTION_VIEW);
                 intent.setData(Uri.parse(mEventItem.site));
                 startActivity(intent);
+                break;
+
+            case R.id.address_view:
+
+                mMapView.getController().animateTo(mGeoPoint);
+
                 break;
 
             case R.id.poster_thumb_view:
