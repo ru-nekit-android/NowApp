@@ -16,7 +16,6 @@ import com.pnikosis.materialishprogress.ProgressWheel;
 
 import ru.nekit.android.nowapp.R;
 
-
 public class EventPosterViewFragment extends Fragment {
 
     public static final String TAG = "ru.nekit.android.event_poster_view_fragment";
@@ -27,10 +26,15 @@ public class EventPosterViewFragment extends Fragment {
 
     private String mImageUrl;
 
-    public void setEventPosterUrl(String imageUrl) {
+    private void setEventPosterUrl(String imageUrl) {
         Bundle args = new Bundle();
         args.putString(IMAGE_URL, imageUrl);
         setArguments(args);
+    }
+
+    public void updateEventPosterUrl(String imageUrl) {
+        Bundle args = getArguments();
+        args.putString(IMAGE_URL, imageUrl);
     }
 
     public EventPosterViewFragment() {
@@ -42,9 +46,13 @@ public class EventPosterViewFragment extends Fragment {
         if (getArguments() != null) {
             mImageUrl = getArguments().getString(IMAGE_URL);
         }
-        ((ActionBarActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        setRetainInstance(false);
+        setRetainInstance(true);
+    }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        ((ActionBarActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     }
 
     @Override
@@ -66,5 +74,11 @@ public class EventPosterViewFragment extends Fragment {
             }
         }).into((ImageView) view.findViewById(R.id.poster_view));
         return view;
+    }
+
+    public static EventPosterViewFragment getInstance(String posterUrl) {
+        EventPosterViewFragment fragment = new EventPosterViewFragment();
+        fragment.setEventPosterUrl(posterUrl);
+        return fragment;
     }
 }

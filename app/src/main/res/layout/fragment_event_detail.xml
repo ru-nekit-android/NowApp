@@ -43,7 +43,8 @@
                     <ImageView
                         android:id="@+id/poster_thumb_view"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent" />
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical" />
                 </FrameLayout>
 
                 <LinearLayout
@@ -66,20 +67,24 @@
                         android:layout_width="match_parent"
                         android:background="@color/divide_line" />
 
-                    <ImageView
-                        android:id="@+id/logo_view"
-                        android:layout_marginTop="4dp"
-                        android:layout_gravity="center_vertical"
-                        android:layout_width="wrap_content"
-                        android:layout_height="48dp" />
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="4dp">
 
-                    <com.devspark.robototextview.widget.RobotoTextView
-                        android:id="@+id/place_view"
-                        style="@style/PlaceText.Detail"
-                        android:layout_marginTop="4dp"
-                        android:visibility="gone"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" />
+                        <ImageView
+                            android:id="@+id/logo_view"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent" />
+
+                        <ru.nekit.android.nowapp.widget.AutoResizeTextView
+                            android:id="@+id/place_view"
+                            style="@style/PlaceText.Detail"
+                            android:visibility="gone"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent" />
+
+                    </FrameLayout>
 
                 </LinearLayout>
             </LinearLayout>
@@ -137,8 +142,8 @@
                     android:layout_height="match_parent"
                     android:layout_width="1dp"
                     android:background="@color/divide_line"
-                    android:layout_marginTop="10dp"
-                    android:layout_marginBottom="10dp" />
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="8dp" />
 
                 <com.devspark.robototextview.widget.RobotoTextView
                     android:id="@+id/time_view"
@@ -151,8 +156,8 @@
                     android:layout_height="match_parent"
                     android:layout_width="1dp"
                     android:background="@color/divide_line"
-                    android:layout_marginTop="10dp"
-                    android:layout_marginBottom="10dp" />
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="8dp" />
 
                 <com.devspark.robototextview.widget.RobotoTextView
                     android:id="@+id/entrance_view"

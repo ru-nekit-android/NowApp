@@ -9,8 +9,9 @@
     <string name="going_day_after_tomorrow">Послезавтра</string>
     <string name="going_in">через</string>
     <string name="about_text"><b>Твой город интересный сейчас</b>\n\nПрограмма доступна для использования лицам от 16 лет и старше\n\nЕсли хотите сообщить нам о предстоящем событии, свяжитесь с нами \n\n<a href="mailto:event@nowapp.ru">event@nowapp.ru</a>\n\n\u00A9 2014\u20132015 &#171;Джус&#187;</string>
-    <string name="connection_is_not_available">Проверьте соединение</string>
-    <string name="site_is_not_available"><b>Сайт в данный момент недоступен</b></string>
+    <string name="connection_is_not_available">Проверьте соединение с сетью Интернет</string>
+    <string name="site_is_not_available">Сайт в данный момент недоступен</string>
+    <string name="error_while_data_loading">Ошибка во время загрузки данных</string>
 
     <string-array name="day_of_week">
         <item>ВС</item>

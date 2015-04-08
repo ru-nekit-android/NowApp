@@ -40,6 +40,7 @@ import org.osmdroid.views.overlay.OverlayItem;
 import java.text.DateFormatSymbols;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.concurrent.TimeUnit;
 
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.EventItem;
@@ -53,6 +54,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     public static final String TAG = "ru.nekit.android.event_detail_fragment";
 
     private static final String ARG_EVENT_ITEM = "ru.nekit.android.event_item";
+    private static final int MAX_ZOOM = 19;
 
     private MapView mMapView;
     private EventItem mEventItem;
@@ -66,8 +68,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        ((ActionBarActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        setRetainInstance(false);
+        setRetainInstance(true);
     }
 
     @Override
@@ -79,8 +80,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     @Override
     public void onResume() {
         super.onResume();
-
-
+        ((ActionBarActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     }
 
     private void createMap() {
@@ -88,7 +88,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         mMapView.setMultiTouchControls(true);
         mMapView.setTileSource(TileSourceFactory.MAPNIK);
         mGeoPoint = new GeoPoint(mEventItem.lat, mEventItem.lng);
-        mMapView.getController().setZoom(19);
+        mMapView.getController().setZoom(MAX_ZOOM);
         mMapView.getController().setCenter(mGeoPoint);
         final ArrayList<OverlayItem> items = new ArrayList<OverlayItem>();
         OverlayItem marker = new OverlayItem(null, null, mGeoPoint);
@@ -106,7 +106,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         return constructInterface(inflater.inflate(R.layout.fragment_event_detail, container, false));
     }
 
-    private View constructInterface(View view){
+    private View constructInterface(View view) {
 
         Bundle arg = getArguments();
         Context context = getActivity();
@@ -119,7 +119,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         Glide.with(context).load(mEventItem.posterThumb).listener(new RequestListener<String, GlideDrawable>() {
 
             @Override
-            public boolean onException(Exception e, String model, Target<GlideDrawable> target, boolean isFirstResource) {
+            public boolean onException(Exception exp, String model, Target<GlideDrawable> target, boolean isFirstResource) {
                 return false;
             }
 
@@ -130,8 +130,8 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
             }
         }).into(posterThumbView);
         String logoThumb = mEventItem.logoThumb;
-        ImageView logoThumbView = (ImageView) view.findViewById(R.id.logo_view);
-        TextView placeView = (TextView) view.findViewById(R.id.place_view);
+        final ImageView logoThumbView = (ImageView) view.findViewById(R.id.logo_view);
+        final TextView placeView = (TextView) view.findViewById(R.id.place_view);
         if ("".equals(logoThumb)) {
             logoThumbView.setVisibility(View.GONE);
             placeView.setVisibility(View.VISIBLE);
@@ -139,7 +139,21 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         } else {
             logoThumbView.setVisibility(View.VISIBLE);
             placeView.setVisibility(View.GONE);
-            Glide.with(context).load(mEventItem.logoThumb).into(logoThumbView);
+            Glide.with(context).load(logoThumb).listener(new RequestListener<String, GlideDrawable>() {
+
+                @Override
+                public boolean onException(Exception e, String model, Target<GlideDrawable> target, boolean isFirstResource) {
+                    logoThumbView.setVisibility(View.GONE);
+                    placeView.setVisibility(View.VISIBLE);
+                    placeView.setText(mEventItem.placeName);
+                    return true;
+                }
+
+                @Override
+                public boolean onResourceReady(GlideDrawable resource, String model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
+                    return false;
+                }
+            }).into(logoThumbView);
         }
         int categoryDrawableId = EventItemsModel.getCategoryBigDrawable(mEventItem.category);
         if (categoryDrawableId != 0) {
@@ -167,7 +181,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
             siteButton.setTransformationMethod(null);
         }
         if (!"".equals(mEventItem.phone)) {
-            if(mEventItem.phone.length() > 1) {
+            if (mEventItem.phone.length() > 1) {
                 TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
                 if (tm.getPhoneType() == TelephonyManager.PHONE_TYPE_NONE) {
                     phoneButton.setEnabled(false);
@@ -181,11 +195,13 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         }
 
         Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(mEventItem.date * 1000);
+        calendar.setTimeInMillis(TimeUnit.SECONDS.toMillis(mEventItem.date));
         dayDateView.setText(String.format("%d", calendar.get(Calendar.DAY_OF_MONTH)));
         monthView.setText(new DateFormatSymbols().getMonths()[calendar.get(Calendar.MONTH)].toLowerCase());
         int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK) - 1;
         dayOfWeekView.setText(getResources().getTextArray(R.array.day_of_week)[dayOfWeek]);
+
+        calendar.set(Calendar.SECOND, EventItemsModel.getCurrentTimeFromEventInSeconds(mEventItem));
         createEventTimeTextBlock(context, timeView, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE));
 
         createEventEntranceTextBlock(context, entranceView, mEventItem.entrance);
@@ -264,10 +280,16 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         timeView.setText(finalText);
     }
 
-    public void setEventItem(EventItem eventItem) {
+    private void setEventItem(EventItem eventItem) {
         Bundle arg = new Bundle();
         arg.putParcelable(ARG_EVENT_ITEM, eventItem);
         setArguments(arg);
+    }
+
+
+    public void updateEventItem(EventItem eventItem) {
+        Bundle arg = getArguments();
+        arg.putParcelable(ARG_EVENT_ITEM, eventItem);
     }
 
     @Override
@@ -277,7 +299,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
             mEventItemPosterSelectListener = (IEventItemPosterSelectListener) getActivity();
         } catch (ClassCastException e) {
             throw new ClassCastException(activity.toString()
-                    + " must implement OnSplashScreenCompleteListener");
+                    + " must implement IEventItemPosterSelectListener");
         }
     }
 
@@ -306,6 +328,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
             case R.id.address_view:
 
+                mMapView.getController().setZoom(MAX_ZOOM);
                 mMapView.getController().animateTo(mGeoPoint);
 
                 break;
@@ -318,5 +341,11 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
             default:
         }
+    }
+
+    public static EventDetailFragment getInstance(EventItem eventItem) {
+        EventDetailFragment fragment = new EventDetailFragment();
+        fragment.setEventItem(eventItem);
+        return fragment;
     }
 }

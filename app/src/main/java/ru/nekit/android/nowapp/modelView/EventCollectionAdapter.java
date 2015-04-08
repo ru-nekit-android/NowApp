@@ -63,8 +63,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         if (items != null) {
             for (EventItem eventItem : items) {
                 long dateDelta = eventItem.date - getCurrentDateTimestamp(mContext, true);
-                if (!(dateDelta == 0 && eventItem.endAt < EventItemsModel.getCurrentTimeTimestamp(mContext, true)))
-                {
+                if (!(dateDelta == 0 && eventItem.endAt < EventItemsModel.getCurrentTimeTimestamp(mContext, true))) {
                     mEventItems.add(new WrapperEventItem(eventItem));
                 }
             }
@@ -204,7 +203,8 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     @Override
     public int getItemViewType(int position) {
-        if (getItem(position).isLoadingItem) {
+        WrapperEventItem item = getItem(position);
+        if (item != null && item.isLoadingItem) {
             return LOADING;
         }
         return NORMAL;

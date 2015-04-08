@@ -70,12 +70,10 @@
         android:layout_toEndOf="@+id/icon_view"
         android:layout_alignRight="@+id/poster_thumb_view"
         android:layout_alignEnd="@+id/poster_thumb_view"
-        android:paddingRight="4dp"
-        android:paddingEnd="4dp"
-        android:gravity="bottom"
+        android:layout_alignTop="@+id/icon_view"
         android:layout_alignBottom="@+id/icon_view"
-        android:layout_alignBaseline="@+id/icon_view"
-        android:layout_below="@+id/poster_thumb_view" />
+        android:layout_alignBaseline="@id/icon_view"
+        />
 
     <ru.nekit.android.nowapp.widget.AutoResizeTextView
         android:id="@+id/name_view"

@@ -26,6 +26,8 @@ import ru.nekit.android.nowapp.NowApplication;
  */
 public class EventItemsLoader extends AsyncTaskLoader<Integer> {
 
+    public static final int RESULT_OK = 0;
+
     private static final String TAG_EVENTS = "events";
     private static final String SITE_NAME = "nowapp.ru";
     private static final String API_ROOT = "api/events.get";
@@ -41,7 +43,7 @@ public class EventItemsLoader extends AsyncTaskLoader<Integer> {
     @Override
     public Integer loadInBackground() {
 
-        Integer result = 0;
+        Integer result = RESULT_OK;
 
         Context context = getContext();
         EventItemsModel model = ((NowApplication) context).getEventModel();
@@ -91,6 +93,7 @@ public class EventItemsLoader extends AsyncTaskLoader<Integer> {
 
                 if ("ok".equals(response)) {
                     JSONArray eventJsonArray = jsonRootObject.getJSONArray(TAG_EVENTS);
+                    model.setReachEndOfDataList(eventJsonArray.length() == 0);
                     for (int i = 0; i < eventJsonArray.length(); i++) {
                         JSONObject jsonEventItem = eventJsonArray.getJSONObject(i);
 
@@ -140,9 +143,16 @@ public class EventItemsLoader extends AsyncTaskLoader<Integer> {
         }
         if (EventItemsModel.REQUEST_NEW_EVENT_ITEMS.equals(type)) {
             model.addEvents(eventItems);
+            if (eventItems.size() > 0) {
+                model.incrementCurrentPage();
+            }
         } else {
             model.setEvents(eventItems);
+            if (eventItems.size() > 0) {
+                model.setDefaultCurrentPage();
+            }
         }
+
         model.setAvailableEventCount(eventsCount);
 
         return result;

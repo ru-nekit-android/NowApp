@@ -8,6 +8,6 @@
     <color name="main">#FF1169A0</color>
     <color name="divide_line">#FFAAAAAA</color>
     <color name="poster_overlay">#DDAAAAAA</color>
-    <color name="action_button_stroke">#FF333333</color>
+    <color name="action_button_stroke">#FFAAAAAA</color>
     <color name="action_button_fill">#FFFFFFFF</color>
 </resources>

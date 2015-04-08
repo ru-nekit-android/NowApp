@@ -22,17 +22,17 @@ public class EventItemsModel {
     private static final HashMap<String, Integer> CATEGORY_TYPE = new HashMap<>();
     private static final HashMap<String, Integer> CATEGORY_TYPE_BIG = new HashMap<>();
 
-    private static final EventItemsModel instance;
+    private static EventItemsModel instance;
 
     private ArrayList<EventItem> mEventItemsList;
     private int mAvailableEventCount;
-
-    static {
-        instance = new EventItemsModel();
-    }
+    private int mCurrentPage;
+    private boolean mReachEndOfDataList;
 
     private EventItemsModel() {
         mEventItemsList = new ArrayList<>();
+        mCurrentPage = 1;
+        mReachEndOfDataList = false;
         CATEGORY_TYPE.put("category_sport", R.drawable.cat_sport);
         CATEGORY_TYPE.put("category_entertainment", R.drawable.cat_drink);
         CATEGORY_TYPE.put("category_other", R.drawable.cat_crown);
@@ -53,6 +53,8 @@ public class EventItemsModel {
     }
 
     public static EventItemsModel getInstance() {
+
+        instance = new EventItemsModel();
         return instance;
     }
 
@@ -80,15 +82,6 @@ public class EventItemsModel {
         return mEventItemsList;
     }
 
-    /*public int getIndexWithId(int id) {
-        for (int i = 0; i < mEventItemsList.size(); i++) {
-            if (mEventItemsList.get(i).id == id) {
-                return i;
-            }
-        }
-        return -1;
-    }*/
-
     public static long getCurrentTimeTimestamp(Context context, boolean usePrecision) {
         Calendar calendar = Calendar.getInstance();
         int minutes = calendar.get(Calendar.MINUTE);
@@ -108,7 +101,15 @@ public class EventItemsModel {
             long precision = TimeUnit.MINUTES.toSeconds(context.getResources().getInteger(R.integer.event_time_precision_in_minutes));
             currentDateTimestamp = ((int) currentDateTimestamp / precision) * precision;
         }
-        return currentDateTimestamp + TimeUnit.MILLISECONDS.toSeconds(calendar.getTimeZone().getRawOffset());
+        return currentDateTimestamp + getTimeZoneOffsetInSeconds();
+    }
+
+    private static long getTimeZoneOffsetInSeconds() {
+        return TimeUnit.MILLISECONDS.toSeconds(Calendar.getInstance().getTimeZone().getRawOffset());
+    }
+
+    public static int getCurrentTimeFromEventInSeconds(EventItem eventItem) {
+        return (int) (eventItem.date + eventItem.startAt - getTimeZoneOffsetInSeconds());
     }
 
     public void setAvailableEventCount(int count) {
@@ -120,6 +121,22 @@ public class EventItemsModel {
     }
 
     public boolean isAvailableLoad() {
-        return mEventItemsList.size() < mAvailableEventCount;
+        return mEventItemsList.size() < mAvailableEventCount && !mReachEndOfDataList;
+    }
+
+    public void incrementCurrentPage() {
+        mCurrentPage++;
+    }
+
+    public void setDefaultCurrentPage() {
+        mCurrentPage = 1;
+    }
+
+    public int getCurrentPage() {
+        return mCurrentPage;
+    }
+
+    public void setReachEndOfDataList(boolean value) {
+        mReachEndOfDataList = value;
     }
 }

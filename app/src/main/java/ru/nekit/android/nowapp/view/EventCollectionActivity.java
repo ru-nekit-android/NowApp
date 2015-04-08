@@ -29,16 +29,13 @@ public class EventCollectionActivity extends ActionBarActivity implements IEvent
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_event_collection);
-
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.setNavigationIcon(R.drawable.ic_action_previous_item);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
-
-        if (savedInstanceState == null) {
-            mEventCollectionFragment = new EventCollectionFragment();
-            mEventDetailFragment = new EventDetailFragment();
-            mEventPosterViewFragment = new EventPosterViewFragment();
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        mEventCollectionFragment = new EventCollectionFragment();
+        if (fragmentManager.findFragmentByTag(EventCollectionFragment.TAG) == null) {
             getSupportFragmentManager().beginTransaction().add(R.id.event_place_holder, mEventCollectionFragment, EventCollectionFragment.TAG).commit();
         }
     }
@@ -72,22 +69,37 @@ public class EventCollectionActivity extends ActionBarActivity implements IEvent
 
     @Override
     public void onEventItemSelect(EventItem eventItem) {
-        mEventDetailFragment.setEventItem(eventItem);
-        getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left, R.anim.enter_from_left, R.anim.exit_to_right)
+        if (mEventDetailFragment == null) {
+            mEventDetailFragment = EventDetailFragment.getInstance(eventItem);
+        } else {
+            mEventDetailFragment.updateEventItem(eventItem);
+        }
+        if (!mEventDetailFragment.isAdded()) {
 
-                .replace(R.id.event_place_holder, mEventDetailFragment, EventDetailFragment.TAG).addToBackStack(null).commit();
-
+            getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left, R.anim.enter_from_left, R.anim.exit_to_right).addToBackStack(null).replace(R.id.event_place_holder, mEventDetailFragment, EventDetailFragment.TAG).commit();
+        }
     }
 
     @Override
     public void onEventItemPosterSelect(String posterUrl) {
-        mEventPosterViewFragment.setEventPosterUrl(posterUrl);
-        getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left, R.anim.enter_from_left, R.anim.exit_to_right).replace(R.id.event_place_holder, mEventPosterViewFragment, EventPosterViewFragment.TAG).addToBackStack(null).commit();
+        if (mEventPosterViewFragment == null) {
+            mEventPosterViewFragment = EventPosterViewFragment.getInstance(posterUrl);
+        } else {
+            mEventPosterViewFragment.updateEventPosterUrl(posterUrl);
+        }
+        if (!mEventPosterViewFragment.isAdded()) {
+            getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left, R.anim.enter_from_left, R.anim.exit_to_right).replace(R.id.event_place_holder, mEventPosterViewFragment, EventPosterViewFragment.TAG).addToBackStack(null).commit();
+        }
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_event_collection, menu);
         return true;
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
     }
 }

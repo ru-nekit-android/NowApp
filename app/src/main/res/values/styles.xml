@@ -13,7 +13,7 @@
 
     <style name="EventNameText">
         <item name="maxTextSize">32sp</item>
-        <item name="minTextSize">6sp</item>
+        <item name="minTextSize">10sp</item>
         <item name="android:paddingBottom">4dp</item>
         <item name="android:paddingRight">4dp</item>
         <item name="android:paddingTop">4dp</item>
@@ -24,8 +24,8 @@
     </style>
 
     <style name="EventNameText.DetailTitle">
-        <item name="maxTextSize">72dp</item>
-        <item name="minTextSize">20sp</item>
+        <item name="maxTextSize">42dp</item>
+        <item name="minTextSize">24sp</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
@@ -50,9 +50,10 @@
     </style>
 
     <style name="EventStartTime">
-        <item name="android:textSize">12sp</item>
+        <item name="android:textSize">15sp</item>
         <item name="android:layout_height">@dimen/event_start_time_height</item>
         <item name="android:textColor">@android:color/white</item>
+        <item name="typeface">roboto_light_italic</item>
         <item name="android:scaleType">fitXY</item>
     </style>
 
@@ -79,7 +80,7 @@
     </style>
 
     <style name="EntranceTitleText">
-        <item name="android:textSize">20sp</item>
+        <item name="android:textSize">23sp</item>
         <item name="android:singleLine">true</item>
         <item name="android:gravity">center</item>
         <item name="android:textColor">@android:color/black</item>
@@ -99,19 +100,19 @@
         <item name="minTextSize">10sp</item>
         <item name="android:singleLine">true</item>
         <item name="android:maxLines">1</item>
-        <item name="android:gravity">bottom</item>
         <item name="android:ellipsize">none</item>
+        <item name="android:gravity">bottom</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
     <style name="PlaceText.Detail">
-        <item name="android:textSize">18sp</item>
-        <item name="android:singleLine">true</item>
-        <item name="android:textColor">@android:color/black</item>
+        <item name="maxTextSize">20sp</item>
+        <item name="minTextSize">10sp</item>
+        <item name="android:gravity">top</item>
     </style>
 
     <style name="EventDescription">
-        <item name="android:textSize">16sp</item>
+        <item name="android:textSize">18sp</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
@@ -126,8 +127,9 @@
         <item name="android:textSize">18sp</item>
         <item name="android:background">#55000000</item>
         <item name="android:padding">8dp</item>
+        <item name="typeface">roboto_medium</item>
         <item name="android:textColor">@android:color/white</item>
-        <item name="android:gravity">center_horizontal</item>
+        <item name="android:gravity">center</item>
     </style>
 
     <style name="NowLogoOnSplashScreen">
