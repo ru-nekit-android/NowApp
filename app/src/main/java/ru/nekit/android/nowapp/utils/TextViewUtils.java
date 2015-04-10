@@ -23,7 +23,12 @@ public class TextViewUtils {
 
     public static SuperscriptSpanAdjuster getSuperscriptSpanAdjuster(Context context, String baseText, int baseTextSize) {
         float scaledDensity = context.getResources().getDisplayMetrics().scaledDensity;
-        int baseHeight = TextViewUtils.getTextBounds(baseText, baseTextSize - 2 * scaledDensity, Typeface.DEFAULT).height();
+        if(scaledDensity == 1.5){
+            scaledDensity *= 4;
+        }else{
+            scaledDensity *= 0;
+        }
+        int baseHeight = TextViewUtils.getTextBounds(baseText, baseTextSize - scaledDensity, Typeface.DEFAULT).height();
         return new SuperscriptSpanAdjuster(baseHeight);
     }
 

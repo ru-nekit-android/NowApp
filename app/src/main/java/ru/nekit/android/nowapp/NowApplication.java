@@ -1,6 +1,7 @@
 package ru.nekit.android.nowapp;
 
 import android.app.Application;
+import android.util.DisplayMetrics;
 
 import ru.nekit.android.nowapp.model.EventItemsModel;
 
@@ -19,6 +20,7 @@ public class NowApplication extends Application {
     public void onCreate() {
         super.onCreate();
         mEventModel = EventItemsModel.getInstance();
+        DisplayMetrics metrics = getResources().getDisplayMetrics();
     }
 
     public EventItemsModel getEventModel() {

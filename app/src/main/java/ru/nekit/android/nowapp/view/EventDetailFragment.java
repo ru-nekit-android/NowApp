@@ -113,11 +113,12 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         mEventItem = arg.getParcelable(ARG_EVENT_ITEM);
 
         TextView titleView = (TextView) view.findViewById(R.id.title_view);
-        titleView.setText(mEventItem.name.toUpperCase());
+        ArrayList<String> eventNameArray = ru.nekit.android.nowapp.utils.StringUtil.wrapText(mEventItem.name.toUpperCase());
+        titleView.setLines(eventNameArray.size());
+        titleView.setText(TextUtils.join("\n", eventNameArray));
         ImageView posterThumbView = (ImageView) view.findViewById(R.id.poster_thumb_view);
         mProgressWheel = (ProgressWheel) view.findViewById(R.id.progress_wheel);
         Glide.with(context).load(mEventItem.posterThumb).listener(new RequestListener<String, GlideDrawable>() {
-
             @Override
             public boolean onException(Exception exp, String model, Target<GlideDrawable> target, boolean isFirstResource) {
                 return false;
@@ -171,7 +172,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         TextView addressView = (TextView) view.findViewById(R.id.address_view);
         Button phoneButton = (Button) view.findViewById(R.id.phone_button);
         Button siteButton = (Button) view.findViewById(R.id.site_button);
-        view.findViewById(R.id.address_view).setOnClickListener(this);
+        addressView.setOnClickListener(this);
         phoneButton.setVisibility(View.GONE);
         siteButton.setVisibility(View.GONE);
         if (!"".equals(mEventItem.site)) {
@@ -237,7 +238,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
             }
         });
 
-        addressView.setText(mEventItem.placeName);
+        addressView.setText(mEventItem.address);
 
         return view;
     }

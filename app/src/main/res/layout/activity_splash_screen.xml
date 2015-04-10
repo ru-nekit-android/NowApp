@@ -13,16 +13,20 @@
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
+        android:layout_alignParentStart="false"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true" />
 
     <com.pnikosis.materialishprogress.ProgressWheel
         android:id="@+id/progress_wheel"
         android:layout_width="@dimen/progress_wheel_size"
         android:layout_height="@dimen/progress_wheel_size"
-        android:layout_below="@+id/imageView"
-        android:layout_centerHorizontal="true"
         wheel:matProg_barColor="@android:color/white"
         wheel:matProg_progressIndeterminate="true"
-       />
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/imageView" />
 
 </RelativeLayout>

@@ -3,7 +3,7 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingBottom="24dp">
+    android:paddingBottom="@dimen/large_space">
 
     <RelativeLayout
         android:orientation="horizontal"
@@ -18,9 +18,9 @@
             android:layout_height="wrap_content"
             android:layout_toLeftOf="@+id/image_view"
             android:layout_toStartOf="@+id/image_view"
-            android:paddingRight="4dp"
-            android:paddingEnd="4dp"
-            android:paddingLeft="24dp"
+            android:paddingRight="@dimen/small_space"
+            android:paddingEnd="@dimen/small_space"
+            android:paddingLeft="@dimen/large_space"
             />
 
         <ImageView
@@ -31,10 +31,10 @@
             android:layout_alignParentTop="true"
             android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"
-            android:paddingRight="16dp"
-            android:paddingEnd="16dp"
-            android:paddingLeft="4dp"
-            android:paddingStart="4dp" />
+            android:paddingRight="@dimen/big_space"
+            android:paddingEnd="@dimen/big_space"
+            android:paddingLeft="@dimen/small_space"
+            android:paddingStart="@dimen/small_space" />
     </RelativeLayout>
 
 </LinearLayout>

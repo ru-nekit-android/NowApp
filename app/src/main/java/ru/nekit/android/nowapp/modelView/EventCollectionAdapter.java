@@ -6,6 +6,8 @@ import android.graphics.Point;
 import android.os.Build;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
+import android.util.TypedValue;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -53,7 +55,10 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         mInflater = LayoutInflater.from(context);
         mColumns = columns;
         int screenWidth = getScreenWidth(context);
-        mItemHeight = (int) ((screenWidth / columns) * (mColumns > 1 ? .86 : .6));
+        TypedValue outValue = new TypedValue();
+        context.getResources().getValue(R.dimen.event_item_view_height_ratio, outValue, true);
+        float value = outValue.getFloat();
+        mItemHeight = (int) ((screenWidth / columns) * (mColumns > 1 ? outValue.getFloat() : .6));
         mMargin = context.getResources().getDimensionPixelSize(R.dimen.event_collection_space);
         setItems(items);
     }
@@ -133,9 +138,10 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
             eventCollectionItemViewHolder.getPlaceView().setText(eventItem.placeName);
             String eventName = eventItem.name.toUpperCase();
-            String[] eventNameArray = eventName.split(" ");
-            eventCollectionItemViewHolder.getNameView().setLines(eventNameArray.length);
-            eventCollectionItemViewHolder.getNameView().setText(eventName.replace(" ", "\n"));
+            ArrayList<String> eventNameArray = ru.nekit.android.nowapp.utils.StringUtil.wrapText(eventName);
+            TextView eventNameView = eventCollectionItemViewHolder.getNameView();
+            eventNameView.setLines(eventNameArray.size());
+            eventNameView.setText(TextUtils.join("\n", eventNameArray));
 
             eventCollectionItemViewHolder.getPosterThumbView().setColorFilter(mContext.getResources().getColor(R.color.poster_overlay), android.graphics.PorterDuff.Mode.MULTIPLY);
 
@@ -143,7 +149,6 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
             long currentTimeTimestamp = getCurrentTimeTimestamp(mContext, true);
             long startAfterSeconds = eventItem.startAt - currentTimeTimestamp;
-
             long dateDelta = eventItem.date - getCurrentDateTimestamp(mContext, true);
             String startAfterString;
 
@@ -156,8 +161,8 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                     }
                 } else {
                     long startAfterMinutesFull = startAfterSeconds / 60;
-                    long startAfterHours = startAfterMinutesFull / 60;
-                    long startAfterMinutes = startAfterMinutesFull % 60;
+                    long startAfterHours = 23;//startAfterMinutesFull / 60;
+                    long startAfterMinutes = 55;//startAfterMinutesFull % 60;
                     startAfterString = mContext.getResources().getString(R.string.going_in);
                     if (startAfterHours > 0) {
                         startAfterString += String.format(" %d ч", startAfterHours);

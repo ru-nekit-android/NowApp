@@ -25,11 +25,24 @@ import ru.nekit.android.nowapp.model.EventItemsModel;
 import ru.nekit.android.nowapp.modelView.EventCollectionAdapter;
 import ru.nekit.android.nowapp.modelView.listeners.IEventItemSelectListener;
 
-public class EventCollectionFragment extends Fragment implements LoaderManager.LoaderCallbacks<Integer>, IEventItemSelectListener {
+public class EventCollectionFragment extends Fragment implements LoaderManager.LoaderCallbacks<Integer>, IEventItemSelectListener, View.OnClickListener {
 
     private static final int LOADER_ID = 2;
     public static final String TAG = "ru.nekit.android.event_collection_fragment";
     private int mCurrentPage;
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.now_title:
+                if (isResumed()) {
+                    mEventCollectionList.smoothScrollToPosition(0);
+                }
+                break;
+            default:
+                break;
+        }
+    }
 
     enum LOADING_TYPES {
         PULL_TO_REFRESH,
@@ -54,7 +67,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     }
 
     @Override
-      public void onEventItemSelect(EventItem eventItem) {
+    public void onEventItemSelect(EventItem eventItem) {
         if (mLoadingState == LOADING_STATE.LOADED) {
             mEventItemSelectListener.onEventItemSelect(eventItem);
         } else {
@@ -95,6 +108,8 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
             mLoadingType = LOADING_TYPES.PULL_TO_REFRESH;
             performLoad();
         }
+        getView().getRootView().findViewById(R.id.now_title).setOnClickListener(this);
+
     }
 
     @Override

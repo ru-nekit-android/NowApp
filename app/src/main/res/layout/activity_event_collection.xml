@@ -17,6 +17,7 @@
             android:layout_height="wrap_content" />
 
         <ImageView
+            android:id="@+id/now_title"
             style="@style/NowLogoInToolbar"
             android:layout_width="wrap_content"
             android:src="@drawable/now_big"

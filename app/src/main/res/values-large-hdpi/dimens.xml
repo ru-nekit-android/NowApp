@@ -1,26 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
-    <dimen name="event_collection_padding">1dp</dimen>
-    <dimen name="event_collection_space">3dp</dimen>
+    <dimen name="event_collection_padding">0dp</dimen>
+    <dimen name="event_collection_space">4dp</dimen>
     <dimen name="event_item_view_shadow_size">7dp</dimen>
     <dimen name="event_item_poster_view_margin_right">14dp</dimen>
     <dimen name="event_item_view_background_margin_right">7dp</dimen>
     <dimen name="event_category_view_shift">3dp</dimen>
     <dimen name="event_category_big_view_size">64dp</dimen>
-    <dimen name="event_category_view_size">48dp</dimen>
-    <dimen name="progress_wheel_size">32dp</dimen>
-    <dimen name="icon_place_size">20dp</dimen>
+    <dimen name="event_category_view_size">64dp</dimen>
+    <dimen name="progress_wheel_size">72dp</dimen>
+    <dimen name="icon_place_size">24dp</dimen>
     <dimen name="event_loading_padding">4dp</dimen>
-    <dimen name="map_view_height">250dp</dimen>
-    <dimen name="event_start_time_height">36dp</dimen>
+    <dimen name="map_view_height">500dp</dimen>
+    <dimen name="event_start_time_height">38dp</dimen>
     <dimen name="small_space">4dp</dimen>
     <dimen name="normal_space">8dp</dimen>
     <dimen name="big_space">16dp</dimen>
-    <dimen name="event_name_height">108dp</dimen>
+    <dimen name="event_name_height">164dp</dimen>
     <dimen name="large_space">24dp</dimen>
-    <item name="event_name_line_spacing_multiplier" format="float" type="dimen">0.8</item>
-    <item name="event_item_view_height_ratio" format="float" type="dimen">0.86</item>
-
+    <item name="event_name_line_spacing_multiplier" format="float" type="dimen">1.0</item>
+    <item name="event_item_view_height_ratio" format="float" type="dimen">1.02</item>
 
 </resources>

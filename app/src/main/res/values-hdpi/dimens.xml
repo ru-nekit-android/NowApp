@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <dimen name="event_collection_padding">1dp</dimen>
+    <dimen name="event_collection_space">1dp</dimen>
+    <dimen name="small_space">4dp</dimen>
+    <dimen name="normal_space">4dp</dimen>
+    <dimen name="big_space">8dp</dimen>
+    <dimen name="event_category_view_size">44dp</dimen>
+    <dimen name="event_category_big_view_size">48dp</dimen>
+    <item name="event_item_view_height_ratio" format="float" type="dimen">0.96</item>
+    <dimen name="icon_place_size">20dp</dimen>
+    <dimen name="event_name_height">92dp</dimen>
+    <dimen name="large_space">24dp</dimen>
+    <dimen name="event_item_view_background_margin_right">7dp</dimen>
+    <dimen name="event_category_view_shift">2dp</dimen>
+
+</resources>

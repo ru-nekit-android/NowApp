@@ -19,7 +19,7 @@ import ru.nekit.android.nowapp.modelView.listeners.IEventItemPosterSelectListene
 import ru.nekit.android.nowapp.modelView.listeners.IEventItemSelectListener;
 
 
-public class EventCollectionActivity extends ActionBarActivity implements IEventItemSelectListener, IEventItemPosterSelectListener {
+public class EventCollectionActivity extends ActionBarActivity implements IEventItemSelectListener, IEventItemPosterSelectListener{
 
     private EventCollectionFragment mEventCollectionFragment;
     private EventDetailFragment mEventDetailFragment;
@@ -75,7 +75,6 @@ public class EventCollectionActivity extends ActionBarActivity implements IEvent
             mEventDetailFragment.updateEventItem(eventItem);
         }
         if (!mEventDetailFragment.isAdded()) {
-
             getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left, R.anim.enter_from_left, R.anim.exit_to_right).addToBackStack(null).replace(R.id.event_place_holder, mEventDetailFragment, EventDetailFragment.TAG).commit();
         }
     }
@@ -102,4 +101,5 @@ public class EventCollectionActivity extends ActionBarActivity implements IEvent
     protected void onDestroy() {
         super.onDestroy();
     }
+
 }
