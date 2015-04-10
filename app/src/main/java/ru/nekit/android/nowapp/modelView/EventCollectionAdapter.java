@@ -161,8 +161,8 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                     }
                 } else {
                     long startAfterMinutesFull = startAfterSeconds / 60;
-                    long startAfterHours = 23;//startAfterMinutesFull / 60;
-                    long startAfterMinutes = 55;//startAfterMinutesFull % 60;
+                    long startAfterHours = startAfterMinutesFull / 60;
+                    long startAfterMinutes = startAfterMinutesFull % 60;
                     startAfterString = mContext.getResources().getString(R.string.going_in);
                     if (startAfterHours > 0) {
                         startAfterString += String.format(" %d ч", startAfterHours);

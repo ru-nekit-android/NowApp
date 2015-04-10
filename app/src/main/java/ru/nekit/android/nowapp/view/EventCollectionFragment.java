@@ -109,7 +109,6 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
             performLoad();
         }
         getView().getRootView().findViewById(R.id.now_title).setOnClickListener(this);
-
     }
 
     @Override
