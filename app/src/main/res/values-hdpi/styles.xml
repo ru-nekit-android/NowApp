@@ -2,8 +2,9 @@
 <resources>
 
     <style name="NowLogoOnSplashScreen">
-        <item name="android:layout_marginRight">8dp</item>
-        <item name="android:layout_marginLeft">8dp</item>
+        <item name="android:layout_marginRight">@dimen/large_space</item>
+        <item name="android:layout_marginLeft">@dimen/large_space</item>
+        <item name="android:layout_marginBottom">@dimen/large_space</item>
     </style>
 
     <style name="EventStartTime">
@@ -50,6 +51,7 @@
         <item name="android:textSize">42sp</item>
         <item name="android:singleLine">true</item>
         <item name="android:gravity">center_horizontal</item>
+        <item name="typeface">roboto_regular</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
@@ -57,12 +59,14 @@
         <item name="android:textSize">16sp</item>
         <item name="android:singleLine">true</item>
         <item name="android:maxLines">1</item>
+        <item name="typeface">roboto_regular</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
     <style name="DayOfWeekText">
         <item name="android:textSize">18sp</item>
         <item name="android:singleLine">true</item>
+        <item name="typeface">roboto_regular</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
@@ -74,12 +78,14 @@
         <item name="android:textSize">42sp</item>
         <item name="android:textStyle">normal</item>
         <item name="android:singleLine">true</item>
+        <item name="typeface">roboto_regular</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
     <style name="MinuteText">
         <item name="android:textSize">18sp</item>
         <item name="android:singleLine">true</item>
+        <item name="typeface">roboto_regular</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
@@ -87,6 +93,7 @@
         <item name="android:textSize">18sp</item>
         <item name="android:singleLine">true</item>
         <item name="android:gravity">center</item>
+        <item name="typeface">roboto_regular</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
@@ -96,11 +103,18 @@
         <item name="android:textStyle">normal</item>
         <item name="android:singleLine">true</item>
         <item name="android:gravity">center</item>
+        <item name="typeface">roboto_regular</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
+    <style name="ActionButton">
+        <item name="android:textSize">16sp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:textColor">@android:color/black</item>
+        <item name="android:background">@drawable/action_button_background</item>
+    </style>
+
     <style name="NowLogoInToolbar">
-        <item name="android:layout_height">?android:attr/actionBarSize</item>
         <item name="android:paddingBottom">4dp</item>
         <item name="android:paddingTop">4dp</item>f
         <item name="android:layout_marginLeft">64dp</item>
@@ -108,11 +122,8 @@
     </style>
 
     <style name="AddressText">
-        <item name="android:textSize">18sp</item>
+        <item name="android:textSize">16sp</item>
         <item name="android:background">#55000000</item>
-        <item name="android:paddingTop">14dp</item>
-        <item name="android:paddingBottom">14dp</item>
-        <item name="typeface">roboto_medium</item>
         <item name="android:textColor">@android:color/white</item>
         <item name="android:gravity">center</item>
     </style>

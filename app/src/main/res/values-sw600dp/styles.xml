@@ -5,6 +5,8 @@
         <item name="colorPrimary">@color/main</item>
         <item name="typeface">roboto_light</item>
         <item name="android:windowBackground">@color/background</item>
+        <item name="android:actionBarSize">64dp</item>
+        <item name="actionBarSize">64dp</item>
     </style>
 
     <style name="SplashScreenTheme" parent="Theme.AppCompat.NoActionBar">
@@ -13,7 +15,7 @@
     </style>
 
     <style name="EventNameText">
-        <item name="maxTextSize">48sp</item>
+        <item name="maxTextSize">32sp</item>
         <item name="minTextSize">10sp</item>
         <item name="android:paddingBottom">4dp</item>
         <item name="android:paddingRight">4dp</item>
@@ -25,33 +27,36 @@
     </style>
 
     <style name="EventNameText.DetailTitle">
-        <item name="maxTextSize">72sp</item>
-        <item name="minTextSize">24sp</item>
+        <item name="maxTextSize">42sp</item>
+        <item name="minTextSize">10sp</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
     <style name="DayText">
-        <item name="android:textSize">72sp</item>
+        <item name="android:textSize">58sp</item>
         <item name="android:singleLine">true</item>
         <item name="android:gravity">center_horizontal</item>
+        <item name="typeface">roboto_regular</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
     <style name="MonthText">
-        <item name="android:textSize">27sp</item>
+        <item name="android:textSize">28sp</item>
         <item name="android:singleLine">true</item>
         <item name="android:maxLines">1</item>
+        <item name="typeface">roboto_regular</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
     <style name="DayOfWeekText">
-        <item name="android:textSize">30sp</item>
+        <item name="android:textSize">22sp</item>
         <item name="android:singleLine">true</item>
+        <item name="typeface">roboto_regular</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
     <style name="EventStartTime">
-        <item name="android:textSize">16sp</item>
+        <item name="android:textSize">17sp</item>
         <item name="android:layout_height">@dimen/event_start_time_height</item>
         <item name="android:textColor">@android:color/white</item>
         <item name="typeface">roboto_light_italic</item>
@@ -59,14 +64,15 @@
     </style>
 
     <style name="TimeText">
-        <item name="android:textSize">72sp</item>
+        <item name="android:textSize">58sp</item>
         <item name="android:gravity">center_horizontal</item>
     </style>
 
     <style name="HourText">
-        <item name="android:textSize">72sp</item>
+        <item name="android:textSize">58sp</item>
         <item name="android:textStyle">normal</item>
         <item name="android:singleLine">true</item>
+        <item name="typeface">roboto_regular</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
@@ -75,29 +81,32 @@
     </style>
 
     <style name="MinuteText">
-        <item name="android:textSize">30sp</item>
+        <item name="android:textSize">28sp</item>
         <item name="android:singleLine">true</item>
+        <item name="typeface">roboto_regular</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
     <style name="EntranceTitleText">
-        <item name="android:textSize">32sp</item>
+        <item name="android:textSize">26sp</item>
         <item name="android:singleLine">true</item>
         <item name="android:gravity">center</item>
+        <item name="typeface">roboto_regular</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
     <style name="EntranceText">
-        <item name="android:layout_marginTop">18dp</item>
-        <item name="android:textSize">24sp</item>
+        <item name="android:layout_marginTop">28dp</item>
+        <item name="android:textSize">18sp</item>
         <item name="android:textStyle">normal</item>
         <item name="android:singleLine">true</item>
         <item name="android:gravity">center</item>
+        <item name="typeface">roboto_regular</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
     <style name="PlaceText">
-        <item name="maxTextSize">24sp</item>
+        <item name="maxTextSize">18sp</item>
         <item name="minTextSize">10sp</item>
         <item name="android:singleLine">true</item>
         <item name="android:maxLines">1</item>
@@ -127,20 +136,17 @@
     <style name="AddressText">
         <item name="android:textSize">24sp</item>
         <item name="android:background">#55000000</item>
-        <item name="android:paddingTop">12dp</item>
-        <item name="android:paddingBottom">12dp</item>
-        <item name="typeface">roboto_medium</item>
         <item name="android:textColor">@android:color/white</item>
         <item name="android:gravity">center</item>
     </style>
 
     <style name="NowLogoOnSplashScreen">
-        <item name="android:layout_marginRight">32dp</item>
-        <item name="android:layout_marginLeft">32dp</item>
+        <item name="android:layout_marginRight">@dimen/large_space</item>
+        <item name="android:layout_marginLeft">@dimen/large_space</item>
+        <item name="android:layout_marginBottom">@dimen/large_space</item>
     </style>
 
     <style name="NowLogoInToolbar">
-        <item name="android:layout_height">?android:attr/actionBarSize</item>
         <item name="android:paddingBottom">4dp</item>
         <item name="android:paddingTop">4dp</item>
         <item name="android:layout_marginLeft">64dp</item>

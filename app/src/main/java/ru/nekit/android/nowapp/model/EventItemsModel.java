@@ -24,13 +24,19 @@ public class EventItemsModel {
 
     private static EventItemsModel instance;
 
-    private ArrayList<EventItem> mEventItemsList;
+    static {
+        instance = new EventItemsModel();
+    }
+
+    private final ArrayList<EventItem> mEventItems;
+    private final ArrayList<EventItem> mLastAddedEventItems;
     private int mAvailableEventCount;
     private int mCurrentPage;
     private boolean mReachEndOfDataList;
 
     private EventItemsModel() {
-        mEventItemsList = new ArrayList<>();
+        mEventItems = new ArrayList<>();
+        mLastAddedEventItems = new ArrayList<>();
         mCurrentPage = 1;
         mReachEndOfDataList = false;
         CATEGORY_TYPE.put("category_sport", R.drawable.cat_sport);
@@ -53,33 +59,30 @@ public class EventItemsModel {
     }
 
     public static EventItemsModel getInstance() {
-
-        instance = new EventItemsModel();
         return instance;
     }
 
     public void addEvents(ArrayList<EventItem> eventItems) {
-        if (isEventItemsListEmpty()) {
-            mEventItemsList.addAll(eventItems);
-        } else {
-            for (int i = 0; i < eventItems.size(); i++) {
-                EventItem eventItem = eventItems.get(i);
-                mEventItemsList.add(eventItem);
-            }
-        }
+        mLastAddedEventItems.clear();
+        mLastAddedEventItems.addAll(eventItems);
+        mEventItems.addAll(eventItems);
     }
 
-    public void setEvents(ArrayList<EventItem> eventList) {
-        mEventItemsList.clear();
-        mEventItemsList.addAll(eventList);
+    public void setEvents(ArrayList<EventItem> eventItems) {
+        mEventItems.clear();
+        mEventItems.addAll(eventItems);
     }
 
     public EventItem getLastEvent() {
-        return mEventItemsList.size() > 0 ? mEventItemsList.get(mEventItemsList.size() - 1) : null;
+        return mEventItems.size() > 0 ? mEventItems.get(mEventItems.size() - 1) : null;
     }
 
-    public ArrayList<EventItem> getEventItemsList() {
-        return mEventItemsList;
+    public ArrayList<EventItem> getEventItems() {
+        return mEventItems;
+    }
+
+    public ArrayList<EventItem> getLastAddedEventItems() {
+        return mLastAddedEventItems;
     }
 
     public static long getCurrentTimeTimestamp(Context context, boolean usePrecision) {
@@ -117,11 +120,11 @@ public class EventItemsModel {
     }
 
     public boolean isEventItemsListEmpty() {
-        return mEventItemsList.size() == 0;
+        return mEventItems.size() == 0;
     }
 
     public boolean isAvailableLoad() {
-        return mEventItemsList.size() < mAvailableEventCount && !mReachEndOfDataList;
+        return mEventItems.size() < mAvailableEventCount && !mReachEndOfDataList;
     }
 
     public void incrementCurrentPage() {

@@ -8,13 +8,13 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBarActivity;
 import android.telephony.TelephonyManager;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
-import android.text.style.TextAppearanceSpan;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -46,7 +46,9 @@ import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.EventItem;
 import ru.nekit.android.nowapp.model.EventItemsModel;
 import ru.nekit.android.nowapp.modelView.listeners.IEventItemPosterSelectListener;
+import ru.nekit.android.nowapp.utils.RobotoTextAppearanceSpan;
 import ru.nekit.android.nowapp.utils.TextViewUtils;
+import ru.nekit.android.nowapp.widget.OnSwipeTouchListener;
 
 @SuppressWarnings("ResourceType")
 public class EventDetailFragment extends Fragment implements View.OnClickListener {
@@ -143,7 +145,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
             Glide.with(context).load(logoThumb).listener(new RequestListener<String, GlideDrawable>() {
 
                 @Override
-                public boolean onException(Exception e, String model, Target<GlideDrawable> target, boolean isFirstResource) {
+                public boolean onException(Exception exp, String model, Target<GlideDrawable> target, boolean isFirstResource) {
                     logoThumbView.setVisibility(View.GONE);
                     placeView.setVisibility(View.VISIBLE);
                     placeView.setText(mEventItem.placeName);
@@ -169,10 +171,10 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         TextView timeView = (TextView) view.findViewById(R.id.time_view);
         TextView entranceView = (TextView) view.findViewById(R.id.entrance_view);
         TextView descriptionView = (TextView) view.findViewById(R.id.description_view);
-        TextView addressView = (TextView) view.findViewById(R.id.address_view);
+        TextView addressButton = (TextView) view.findViewById(R.id.address_button);
         Button phoneButton = (Button) view.findViewById(R.id.phone_button);
         Button siteButton = (Button) view.findViewById(R.id.site_button);
-        addressView.setOnClickListener(this);
+        addressButton.setOnClickListener(this);
         phoneButton.setVisibility(View.GONE);
         siteButton.setVisibility(View.GONE);
         if (!"".equals(mEventItem.site)) {
@@ -238,7 +240,15 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
             }
         });
 
-        addressView.setText(mEventItem.address);
+        addressButton.setText(mEventItem.address);
+        addressButton.setTransformationMethod(null);
+
+        view.setOnTouchListener(new OnSwipeTouchListener(context) {
+            public void onSwipeRight() {
+                FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
+                fragmentManager.popBackStack();
+            }
+        });
 
         return view;
     }
@@ -246,9 +256,9 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     private void createEventEntranceTextBlock(Context context, TextView entranceView, String entrance) {
         String title = "ВХОД:";
         SpannableString titleSpan = new SpannableString(title);
-        titleSpan.setSpan(new TextAppearanceSpan(context, R.style.EntranceTitleText), 0, title.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+        titleSpan.setSpan(new RobotoTextAppearanceSpan(context, R.style.EntranceTitleText), 0, title.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
         SpannableString entranceSpan = new SpannableString(entrance);
-        entranceSpan.setSpan(new TextAppearanceSpan(context, R.style.EntranceText), 0, entrance.length(), SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+        entranceSpan.setSpan(new RobotoTextAppearanceSpan(context, R.style.EntranceText), 0, entrance.length(), SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
         CharSequence finalText = TextUtils.concat(titleSpan, "\n", entranceSpan);
         entranceView.setText(finalText);
     }
@@ -273,9 +283,9 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         }
 
         SpannableString hourValueSpan = new SpannableString(hourTextValue);
-        hourValueSpan.setSpan(new TextAppearanceSpan(context, R.style.HourText), 0, hourTextValue.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+        hourValueSpan.setSpan(new RobotoTextAppearanceSpan(context, R.style.HourText), 0, hourTextValue.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
         SpannableStringBuilder minuteSpanBuilder = new SpannableStringBuilder(minuteTextValue);
-        minuteSpanBuilder.setSpan(new TextAppearanceSpan(context, R.style.MinuteText), 0, minuteTextValue.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+        minuteSpanBuilder.setSpan(new RobotoTextAppearanceSpan(context, R.style.MinuteText), 0, minuteTextValue.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
         minuteSpanBuilder.setSpan(TextViewUtils.getSuperscriptSpanAdjuster(context, hourTextValue, hourTextSize), 0, minuteTextValue.length(), SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
         CharSequence finalText = TextUtils.concat(hourValueSpan, minuteSpanBuilder);
         timeView.setText(finalText);
@@ -327,7 +337,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                 startActivity(intent);
                 break;
 
-            case R.id.address_view:
+            case R.id.address_button:
 
                 mMapView.getController().setZoom(MAX_ZOOM);
                 mMapView.getController().animateTo(mGeoPoint);

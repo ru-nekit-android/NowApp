@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="NowTheme" parent="Theme.AppCompat.NoActionBar">
+        <item name="colorPrimary">@color/main</item>
+        <item name="typeface">roboto_light</item>
+        <item name="android:windowBackground">@color/background</item>
+        <item name="android:actionBarSize">64dp</item>
+        <item name="actionBarSize">64dp</item>
+    </style>
+
+    <style name="EventStartTime">
+        <item name="android:textSize">16sp</item>
+        <item name="android:layout_height">@dimen/event_start_time_height</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="typeface">roboto_light_italic</item>
+        <item name="android:scaleType">fitXY</item>
+    </style>
+
+    <style name="MonthText">
+        <item name="android:textSize">18sp</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textColor">@android:color/black</item>
+    </style>
+
+    <style name="DayOfWeekText">
+        <item name="android:textSize">19sp</item>
+        <item name="android:singleLine">true</item>
+        <item name="typeface">roboto_regular</item>
+        <item name="android:textColor">@android:color/black</item>
+    </style>
+
+    <style name="EntranceTextBlock">
+        <item name="android:gravity">center</item>
+    </style>
+
+    <style name="EntranceTitleText">
+        <item name="android:textSize">20sp</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:gravity">center</item>
+        <item name="typeface">roboto_regular</item>
+        <item name="android:textColor">@android:color/black</item>
+    </style>
+
+    <style name="EntranceText">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:gravity">center</item>
+        <item name="typeface">roboto_regular</item>
+        <item name="android:textColor">@android:color/black</item>
+    </style>
+
+    <style name="MinuteText">
+        <item name="android:textSize">18sp</item>
+        <item name="android:singleLine">true</item>
+        <item name="typeface">roboto_regular</item>
+        <item name="android:textColor">@android:color/black</item>
+    </style>
+
+    <style name="HourText">
+        <item name="android:textSize">42sp</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:singleLine">true</item>
+        <item name="typeface">roboto_regular</item>
+        <item name="android:textColor">@android:color/black</item>
+    </style>
+
+</resources>

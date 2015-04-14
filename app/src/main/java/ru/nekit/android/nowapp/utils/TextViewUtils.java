@@ -22,10 +22,14 @@ public class TextViewUtils {
     }
 
     public static SuperscriptSpanAdjuster getSuperscriptSpanAdjuster(Context context, String baseText, int baseTextSize) {
-        float scaledDensity = context.getResources().getDisplayMetrics().scaledDensity;
-        if(scaledDensity == 1.5){
+        float scaledDensity = context.getResources().getDisplayMetrics().density;
+        if (scaledDensity == 1.5) {
             scaledDensity *= 4;
-        }else{
+        } else if (scaledDensity == 2) {
+            scaledDensity *= 2;
+        } else if (scaledDensity == 3) {
+            scaledDensity *= 2;
+        } else {
             scaledDensity *= 0;
         }
         int baseHeight = TextViewUtils.getTextBounds(baseText, baseTextSize - scaledDensity, Typeface.DEFAULT).height();

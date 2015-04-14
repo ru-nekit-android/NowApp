@@ -24,11 +24,14 @@ import ru.nekit.android.nowapp.model.EventItemsLoader;
 import ru.nekit.android.nowapp.model.EventItemsModel;
 import ru.nekit.android.nowapp.modelView.EventCollectionAdapter;
 import ru.nekit.android.nowapp.modelView.listeners.IEventItemSelectListener;
+import ru.nekit.android.nowapp.widget.ScrollingGridLayoutManager;
 
 public class EventCollectionFragment extends Fragment implements LoaderManager.LoaderCallbacks<Integer>, IEventItemSelectListener, View.OnClickListener {
 
-    private static final int LOADER_ID = 2;
     public static final String TAG = "ru.nekit.android.event_collection_fragment";
+
+    private static final int LOADER_ID = 2;
+    private static final int MAX_SCROLL_SPEED = 70;
     private int mCurrentPage;
 
     @Override
@@ -36,7 +39,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         switch (view.getId()) {
             case R.id.now_title:
                 if (isResumed()) {
-                    mEventCollectionList.smoothScrollToPosition(0);
+                    mEventItemsView.scrollToPosition(0);
                 }
                 break;
             default:
@@ -53,9 +56,9 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         LOADING, LOADED
     }
 
-    private RecyclerView mEventCollectionList;
+    private RecyclerView mEventItemsView;
     private EventCollectionAdapter mEventCollectionAdapter;
-    private GridLayoutManager mEventCollectionLayoutManager;
+    private ScrollingGridLayoutManager mEventCollectionLayoutManager;
     private IEventItemSelectListener mEventItemSelectListener;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private EventItemsModel mEventModel;
@@ -89,7 +92,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         ((ActionBarActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(false);
         if (!mEventModel.isEventItemsListEmpty()) {
             if (mEventModel.getCurrentPage() != mCurrentPage) {
-                mEventCollectionAdapter.setItems(mEventModel.getEventItemsList());
+                mEventCollectionAdapter.setItems(mEventModel.getEventItems());
                 mCurrentPage = mEventModel.getCurrentPage();
             }
         }
@@ -116,15 +119,15 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                              Bundle savedInstanceState) {
         final Context context = getActivity();
         View view = inflater.inflate(R.layout.fragment_event_collection, container, false);
-        mEventCollectionList = (RecyclerView) view.findViewById(R.id.event_collection_list);
-        mEventCollectionList.setHasFixedSize(true);
-        mEventCollectionList.setItemAnimator(new DefaultItemAnimator());
+        mEventItemsView = (RecyclerView) view.findViewById(R.id.event_collection_list);
+        mEventItemsView.setHasFixedSize(true);
+        mEventItemsView.setItemAnimator(new DefaultItemAnimator());
         int listColumn = getResources().getInteger(R.integer.event_collection_column_count);
 
-        mEventCollectionLayoutManager = new GridLayoutManager(context, listColumn);
-        mEventCollectionAdapter = new EventCollectionAdapter(context, mEventModel.getEventItemsList(), listColumn);
-        mEventCollectionList.setAdapter(mEventCollectionAdapter);
-        mEventCollectionList.setLayoutManager(mEventCollectionLayoutManager);
+        mEventCollectionLayoutManager = new ScrollingGridLayoutManager(context, listColumn, 1000);
+        mEventCollectionAdapter = new EventCollectionAdapter(context, mEventModel.getEventItems(), listColumn);
+        mEventItemsView.setAdapter(mEventCollectionAdapter);
+        mEventItemsView.setLayoutManager(mEventCollectionLayoutManager);
         mEventCollectionAdapter.setOnItemClickListener(this);
         mEventCollectionLayoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
             @Override
@@ -144,25 +147,37 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
             }
         });
 
-        mEventCollectionList.setOnScrollListener(mScrollListener);
+        mEventItemsView.setOnScrollListener(mScrollListener);
 
         return view;
     }
 
     private RecyclerView.OnScrollListener mScrollListener = new RecyclerView.OnScrollListener() {
         public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-            int totalItemCount = mEventCollectionLayoutManager.getItemCount();
-            int lastVisibleItem = mEventCollectionLayoutManager.findLastVisibleItemPosition();
-            if (mEventModel.isAvailableLoad()) {
-                if (totalItemCount > 1) {
-                    if (lastVisibleItem >= totalItemCount - 1) {
-                        mLoadingType = LOADING_TYPES.REQUEST_NEW_EVENT_ITEMS;
-                        setLoadingState(LOADING_STATE.LOADING);
+            if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                int totalItemCount = mEventCollectionLayoutManager.getItemCount();
+                int firstVisibleItem = mEventCollectionLayoutManager.findFirstVisibleItemPosition();
+                int lastVisibleItem = mEventCollectionLayoutManager.findLastVisibleItemPosition();
+                if (mEventModel.isAvailableLoad()) {
+                    if (totalItemCount > 1) {
+                        if (lastVisibleItem >= totalItemCount - 1) {
+                            mLoadingType = LOADING_TYPES.REQUEST_NEW_EVENT_ITEMS;
+                            setLoadingState(LOADING_STATE.LOADING);
+                        }
                     }
                 }
+                mEventCollectionAdapter.continueImageLoading(mEventItemsView, firstVisibleItem, lastVisibleItem);
+            }
+        }
+
+        public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+            int speed = Math.abs(dy);
+            if (speed > MAX_SCROLL_SPEED) {
+                mEventCollectionAdapter.stopImageLoading();
             }
         }
     };
+
 
     private void setLoadingState(LOADING_STATE state) {
         if (mLoadingState == state) return;
@@ -173,12 +188,13 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                     if (!mEventCollectionAdapter.isLoading()) {
                         mEventCollectionAdapter.addLoading();
                     }
-                    mEventCollectionList.scrollToPosition(mEventModel.getEventItemsList().size());
                     performLoad();
+                    mEventItemsView.smoothScrollToPosition(mEventModel.getEventItems().size());
                     break;
                 case LOADED:
                     if (mEventCollectionAdapter.isLoading()) {
                         mEventCollectionAdapter.removeLoading();
+                        mEventItemsView.smoothScrollToPosition(mEventModel.getEventItems().size() - mEventModel.getLastAddedEventItems().size());
                     }
                     break;
 
@@ -246,13 +262,17 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     public void onLoadFinished(Loader<Integer> loader, Integer result) {
         if (isResumed()) {
             if (result == EventItemsLoader.RESULT_OK) {
-                mEventCollectionAdapter.setItems(mEventModel.getEventItemsList());
+                if (LOADING_TYPES.PULL_TO_REFRESH == mLoadingType) {
+                    mEventCollectionAdapter.setItems(mEventModel.getEventItems());
+                } else if (mLoadingType == LOADING_TYPES.REQUEST_NEW_EVENT_ITEMS) {
+                    mEventCollectionAdapter.addItems(mEventModel.getLastAddedEventItems());
+                }
                 mCurrentPage = mEventModel.getCurrentPage();
             } else {
                 Toast.makeText(getActivity(), Html.fromHtml(getResources().getString(R.string.error_while_data_loading)), Toast.LENGTH_LONG).show();
             }
-            mLoadingType = LOADING_TYPES.PULL_TO_REFRESH;
             setLoadingState(LOADING_STATE.LOADED);
+            mLoadingType = LOADING_TYPES.PULL_TO_REFRESH;
             mSwipeRefreshLayout.setRefreshing(false);
         }
     }

@@ -17,6 +17,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.drawable.GlideDrawable;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 
 import java.text.DateFormatSymbols;
 import java.util.ArrayList;
@@ -37,14 +40,16 @@ import static ru.nekit.android.nowapp.model.EventItemsModel.getCurrentTimeTimest
  */
 public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    final int NORMAL = 0, LOADING = 1;
+    private static final int NORMAL = 0, LOADING = 1;
 
-    private int mItemHeight, mColumns, mMargin;
     private final LayoutInflater mInflater;
     private final Context mContext;
+    private final ArrayList<WrapperEventItem> mEventItems;
+    private final ArrayList<Target> mLoadingList;
 
-    private ArrayList<WrapperEventItem> mEventItems = new ArrayList<>();
+    private int mItemHeight, mColumns, mMargin;
     private IEventItemSelectListener mItemClickListener;
+    private boolean mImmediateImageLoading = true;
 
     public void setOnItemClickListener(IEventItemSelectListener listener) {
         mItemClickListener = listener;
@@ -57,23 +62,52 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         int screenWidth = getScreenWidth(context);
         TypedValue outValue = new TypedValue();
         context.getResources().getValue(R.dimen.event_item_view_height_ratio, outValue, true);
-        float value = outValue.getFloat();
-        mItemHeight = (int) ((screenWidth / columns) * (mColumns > 1 ? outValue.getFloat() : .6));
+        mItemHeight = (int) (((screenWidth - mContext.getResources().getDimensionPixelOffset(R.dimen.event_collection_padding) * 2 - mContext.getResources().getDimensionPixelOffset(R.dimen.event_collection_space) * (columns - 1)) / columns) * (mColumns > 1 ? outValue.getFloat() : .6));
         mMargin = context.getResources().getDimensionPixelSize(R.dimen.event_collection_space);
+        mEventItems = new ArrayList<>();
+        mLoadingList = new ArrayList<>();
         setItems(items);
     }
 
-    public void setItems(ArrayList<EventItem> items) {
-        mEventItems.clear();
-        if (items != null) {
-            for (EventItem eventItem : items) {
+    public void addItems(ArrayList<EventItem> eventItems) {
+        int fistItemIndex = mEventItems.size();
+        boolean hasLoading = false;
+        if (isLoading()) {
+            hasLoading = true;
+            fistItemIndex--;
+            removeLoading();
+        }
+        if (setItems(eventItems, true)) {
+            for (int i = fistItemIndex; i < mEventItems.size(); i++) {
+                notifyItemInserted(i);
+            }
+        }
+        if (hasLoading) {
+            addLoading();
+        }
+    }
+
+    public boolean setItems(ArrayList<EventItem> eventItems, boolean addState) {
+        if (!addState) {
+            mEventItems.clear();
+        }
+        if (eventItems != null && eventItems.size() > 0) {
+            for (EventItem eventItem : eventItems) {
                 long dateDelta = eventItem.date - getCurrentDateTimestamp(mContext, true);
-                if (!(dateDelta == 0 && eventItem.endAt < EventItemsModel.getCurrentTimeTimestamp(mContext, true))) {
+                if (dateDelta >= 0 && eventItem.endAt > EventItemsModel.getCurrentTimeTimestamp(mContext, true) || dateDelta > 1) {
                     mEventItems.add(new WrapperEventItem(eventItem));
                 }
             }
+            if (!addState) {
+                notifyDataSetChanged();
+            }
+            return true;
         }
-        notifyDataSetChanged();
+        return false;
+    }
+
+    public boolean setItems(ArrayList<EventItem> eventItems) {
+        return setItems(eventItems, false);
     }
 
     public void clearItems() {
@@ -93,18 +127,6 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         return display.getWidth();
     }
 
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
-    public static int getScreenHeight(Context context) {
-        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-        Display display = wm.getDefaultDisplay();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-            Point size = new Point();
-            display.getSize(size);
-            return size.y;
-        }
-        return display.getHeight();
-    }
-
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view;
@@ -121,6 +143,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, int position) {
+
         GridLayoutManager.LayoutParams layoutParams = (GridLayoutManager.LayoutParams) viewHolder.itemView.getLayoutParams();
         if (getItemViewType(position) == NORMAL) {
             layoutParams.height = mItemHeight;
@@ -143,9 +166,11 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             eventNameView.setLines(eventNameArray.size());
             eventNameView.setText(TextUtils.join("\n", eventNameArray));
 
-            eventCollectionItemViewHolder.getPosterThumbView().setColorFilter(mContext.getResources().getColor(R.color.poster_overlay), android.graphics.PorterDuff.Mode.MULTIPLY);
-
-            Glide.with(mContext).load(eventItem.posterBlur).centerCrop().dontAnimate().into(eventCollectionItemViewHolder.getPosterThumbView());
+            if (mImmediateImageLoading) {
+                addToLoadingList(eventItem.posterBlur, eventCollectionItemViewHolder.getPosterThumbView());
+            } else {
+                eventCollectionItemViewHolder.getPosterThumbView().setImageDrawable(null);
+            }
 
             long currentTimeTimestamp = getCurrentTimeTimestamp(mContext, true);
             long startAfterSeconds = eventItem.startAt - currentTimeTimestamp;
@@ -178,7 +203,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                     startAfterString = mContext.getResources().getString(R.string.going_day_after_tomorrow);
                 } else {
                     Calendar calendar = Calendar.getInstance();
-                    calendar.setTimeInMillis(eventItem.date * 1000);
+                    calendar.setTimeInMillis(TimeUnit.SECONDS.toMillis(eventItem.date));
                     startAfterString = String.format("%s %s", calendar.get(Calendar.DAY_OF_MONTH), new DateFormatSymbols().getMonths()[calendar.get(Calendar.MONTH)].toLowerCase());
                 }
             }
@@ -199,6 +224,34 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         }
 
         viewHolder.itemView.setLayoutParams(layoutParams);
+    }
+
+    private void addToLoadingList(String url, final ImageView viewTarget) {
+        mLoadingList.add(Glide.with(mContext).load(url).centerCrop().dontAnimate().listener(new RequestListener<String, GlideDrawable>() {
+
+            @Override
+            public boolean onException(Exception exp, String model, Target<GlideDrawable> target, boolean isFirstResource) {
+                return true;
+            }
+
+            @Override
+            public boolean onResourceReady(GlideDrawable resource, String model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
+                mLoadingList.remove(target);
+                viewTarget.setColorFilter(mContext.getResources().getColor(R.color.poster_overlay), android.graphics.PorterDuff.Mode.MULTIPLY);
+                return false;
+            }
+        }).into(viewTarget));
+    }
+
+    private void resetCurrentLoadingList() {
+        if (mLoadingList.size() > 0) {
+            for (Target target : mLoadingList) {
+                if (target.getRequest() != null && target.getRequest().isRunning()) {
+                    Glide.clear(target);
+                }
+            }
+            mLoadingList.clear();
+        }
     }
 
     @Override
@@ -226,7 +279,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         WrapperEventItem item = mEventItems.get(position);
         if (item.isLoadingItem) {
             mEventItems.remove(position);
-            notifyItemChanged(position);
+            notifyItemRemoved(position);
         }
     }
 
@@ -236,10 +289,9 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         if (getItemCount() != 0) {
             item = mEventItems.get(position);
         }
-
         if (getItemCount() == 0 || (item != null && !item.isLoadingItem)) {
             mEventItems.add(new WrapperEventItem(true));
-            notifyItemChanged(position + 1);
+            notifyItemInserted(position + 1);
         }
     }
 
@@ -250,6 +302,24 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     public int getSpanSize(int position) {
         return getItemViewType(position) == LOADING ? mColumns : 1;
+    }
+
+    public void stopImageLoading() {
+        mImmediateImageLoading = false;
+        resetCurrentLoadingList();
+    }
+
+    public void continueImageLoading(RecyclerView recyclerView, int firstVisibleItem, int lastVisibleItem) {
+        mImmediateImageLoading = true;
+        for (int i = firstVisibleItem; i <= lastVisibleItem; i++) {
+            RecyclerView.ViewHolder viewHolder = recyclerView.findViewHolderForAdapterPosition(i);
+            if (viewHolder.getClass() == EventCollectionItemViewHolder.class) {
+                EventCollectionItemViewHolder eventCollectionItemViewHolder = (EventCollectionItemViewHolder) recyclerView.findViewHolderForAdapterPosition(i);
+                if (eventCollectionItemViewHolder.getPosterThumbView().getDrawable() == null) {
+                    addToLoadingList(getItem(i).eventItem.posterBlur, eventCollectionItemViewHolder.getPosterThumbView());
+                }
+            }
+        }
     }
 
     class WrapperEventItem {

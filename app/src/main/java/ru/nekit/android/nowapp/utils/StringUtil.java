@@ -9,6 +9,7 @@ import java.util.Arrays;
 public class StringUtil {
 
     private static final int MAX_WORD_LENGTH = 12;
+    private static final int MIN_WORD_LENGTH = 7;
 
     public static ArrayList<String> wrapText(String text) {
         ArrayList<String> textArray = new ArrayList<String>(Arrays.asList(text.split(" ")));
@@ -42,7 +43,7 @@ public class StringUtil {
                 }
             }
         }
-
+        maxWordLength = maxWordLength < MIN_WORD_LENGTH ? MIN_WORD_LENGTH : maxWordLength;
         String wordString;
         String wordStringTemp = "";
         for (int i = 0; i < textArrayWithWordLengthLimit.size(); i++) {

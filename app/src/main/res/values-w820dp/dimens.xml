@@ -1,5 +1,0 @@
-<resources>
-    <dimen name="activity_horizontal_margin">64dp</dimen>
-    <dimen name="event_collection_space">64dp</dimen>
-    <dimen name="event_collection_item_height">150dp</dimen>
-</resources>

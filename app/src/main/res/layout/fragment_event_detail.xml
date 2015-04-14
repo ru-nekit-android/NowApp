@@ -73,9 +73,12 @@
                         android:layout_marginTop="@dimen/small_space">
 
                         <ImageView
+                            android:layout_gravity="center_vertical"
                             android:id="@+id/logo_view"
-                            android:layout_width="wrap_content"
-                            android:layout_height="match_parent" />
+                            android:scaleType="fitStart"
+                            android:layout_width="@dimen/logo_max_width"
+                            android:layout_height="wrap_content"
+                            android:maxHeight="@dimen/logo_max_height" />
 
                         <ru.nekit.android.nowapp.widget.AutoResizeTextView
                             android:id="@+id/place_view"
@@ -191,15 +194,16 @@
 
             <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="@dimen/map_view_height">
+                android:layout_height="match_parent"
+                android:minHeight="@dimen/map_view_height">
 
                 <org.osmdroid.views.MapView
                     android:id="@+id/map_view"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent" />
 
-                <TextView
-                    android:id="@+id/address_view"
+                <com.devspark.robototextview.widget.RobotoButton
+                    android:id="@+id/address_button"
                     style="@style/AddressText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
