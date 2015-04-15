@@ -14,7 +14,6 @@
     <dimen name="progress_wheel_size">56dp</dimen>
     <dimen name="icon_place_size">20dp</dimen>
     <dimen name="event_loading_padding">14dp</dimen>
-    <dimen name="map_view_height">300dp</dimen>
     <dimen name="event_start_time_height">38dp</dimen>
     <dimen name="small_space">4dp</dimen>
     <dimen name="normal_space">8dp</dimen>

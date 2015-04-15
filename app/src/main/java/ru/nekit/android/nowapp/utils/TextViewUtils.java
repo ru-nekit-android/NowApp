@@ -26,7 +26,7 @@ public class TextViewUtils {
         if (scaledDensity == 1.5) {
             scaledDensity *= 4;
         } else if (scaledDensity == 2) {
-            scaledDensity *= 2;
+            scaledDensity *= 1;
         } else if (scaledDensity == 3) {
             scaledDensity *= 2;
         } else {

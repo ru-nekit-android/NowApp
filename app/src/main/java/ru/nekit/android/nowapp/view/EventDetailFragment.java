@@ -4,6 +4,9 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.TypedArray;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -15,12 +18,14 @@ import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
+import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
@@ -63,6 +68,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     private IEventItemPosterSelectListener mEventItemPosterSelectListener;
     private ProgressWheel mProgressWheel;
     private GeoPoint mGeoPoint;
+    private RelativeLayout mMapViewContainer;
 
     public EventDetailFragment() {
     }
@@ -86,7 +92,15 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     }
 
     private void createMap() {
-        mMapView.setBuiltInZoomControls(true);
+
+        //configure map view container :: set height - half of screen height
+        DisplayMetrics displaymetrics = new DisplayMetrics();
+        getActivity().getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
+        int height = displaymetrics.heightPixels;
+        mMapViewContainer.getLayoutParams().height = height / 2;
+
+        //configure map view :: set parameters + add marker
+        mMapView.setBuiltInZoomControls(false);
         mMapView.setMultiTouchControls(true);
         mMapView.setTileSource(TileSourceFactory.MAPNIK);
         mGeoPoint = new GeoPoint(mEventItem.lat, mEventItem.lng);
@@ -100,6 +114,29 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         DefaultResourceProxyImpl resProxyImp = new DefaultResourceProxyImpl(getActivity().getApplicationContext());
         ItemizedIconOverlay markersOverlay = new ItemizedIconOverlay<OverlayItem>(items, newMarker, null, resProxyImp);
         mMapView.getOverlays().add(markersOverlay);
+        checkZoomButtons();
+    }
+
+    private void checkZoomButtons() {
+        View view = getView();
+        if (view != null) {
+            View button = view.findViewById(R.id.zoom_plus);
+            boolean active = mMapView.canZoomIn();
+            button.setEnabled(active);
+            if (active) {
+                button.getBackground().setColorFilter(null);
+            } else {
+                button.getBackground().setColorFilter(new PorterDuffColorFilter(Color.GRAY, PorterDuff.Mode.MULTIPLY));
+            }
+            button = view.findViewById(R.id.zoom_minus);
+            active = mMapView.canZoomOut();
+            button.setEnabled(active);
+            if (active) {
+                button.getBackground().setColorFilter(null);
+            } else {
+                button.getBackground().setColorFilter(new PorterDuffColorFilter(Color.GRAY, PorterDuff.Mode.MULTIPLY));
+            }
+        }
     }
 
     @Override
@@ -171,10 +208,9 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         TextView timeView = (TextView) view.findViewById(R.id.time_view);
         TextView entranceView = (TextView) view.findViewById(R.id.entrance_view);
         TextView descriptionView = (TextView) view.findViewById(R.id.description_view);
-        TextView addressButton = (TextView) view.findViewById(R.id.address_button);
+        TextView addressButton = (TextView) view.findViewById(R.id.address_view);
         Button phoneButton = (Button) view.findViewById(R.id.phone_button);
         Button siteButton = (Button) view.findViewById(R.id.site_button);
-        addressButton.setOnClickListener(this);
         phoneButton.setVisibility(View.GONE);
         siteButton.setVisibility(View.GONE);
         if (!"".equals(mEventItem.site)) {
@@ -203,16 +239,11 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         monthView.setText(new DateFormatSymbols().getMonths()[calendar.get(Calendar.MONTH)].toLowerCase());
         int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK) - 1;
         dayOfWeekView.setText(getResources().getTextArray(R.array.day_of_week)[dayOfWeek]);
-
         calendar.set(Calendar.SECOND, EventItemsModel.getCurrentTimeFromEventInSeconds(mEventItem));
         createEventTimeTextBlock(context, timeView, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE));
-
         createEventEntranceTextBlock(context, entranceView, mEventItem.entrance);
-
         descriptionView.setText(mEventItem.eventDescription);
-
         mMapView = (MapView) view.findViewById(R.id.map_view);
-
         final ScrollView scrollView = (ScrollView) view.findViewById(R.id.scroll_view);
         View mapScrollFakeView = view.findViewById(R.id.map_scroll_fake_view);
 
@@ -249,6 +280,12 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                 fragmentManager.popBackStack();
             }
         });
+
+        view.findViewById(R.id.zoom_minus).setOnClickListener(this);
+        view.findViewById(R.id.zoom_plus).setOnClickListener(this);
+        view.findViewById(R.id.location).setOnClickListener(this);
+        addressButton.setOnClickListener(this);
+        mMapViewContainer = (RelativeLayout) view.findViewById(R.id.map_view_container);
 
         return view;
     }
@@ -337,10 +374,24 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                 startActivity(intent);
                 break;
 
-            case R.id.address_button:
+            case R.id.location:
 
                 mMapView.getController().setZoom(MAX_ZOOM);
                 mMapView.getController().animateTo(mGeoPoint);
+
+                break;
+
+            case R.id.zoom_minus:
+
+                mMapView.getController().zoomOut();
+                checkZoomButtons();
+
+                break;
+
+            case R.id.zoom_plus:
+
+                mMapView.getController().zoomIn();
+                checkZoomButtons();
 
                 break;
 

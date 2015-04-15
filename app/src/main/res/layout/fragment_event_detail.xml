@@ -192,10 +192,10 @@
                 style="@style/ActionButton"
                 android:layout_width="match_parent" />
 
-            <FrameLayout
+            <RelativeLayout
+                android:id="@+id/map_view_container"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:minHeight="@dimen/map_view_height">
+                android:layout_height="300dp">
 
                 <org.osmdroid.views.MapView
                     android:id="@+id/map_view"
@@ -203,7 +203,7 @@
                     android:layout_height="match_parent" />
 
                 <com.devspark.robototextview.widget.RobotoButton
-                    android:id="@+id/address_button"
+                    android:id="@+id/address_view"
                     style="@style/AddressText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
@@ -216,7 +216,38 @@
                     android:layout_height="match_parent"
                     android:src="@android:color/transparent" />
 
-            </FrameLayout>
+                <Button
+                    style="@style/MapActionButton"
+                    android:id="@+id/location"
+                    android:background="@drawable/location"
+                    android:layout_centerVertical="true"
+                    android:layout_alignParentRight="true"
+                    android:layout_alignParentEnd="true"
+                    android:layout_marginRight="@dimen/big_space"
+                    android:layout_marginEnd="@dimen/big_space"
+                    />
+
+                <Button
+                    style="@style/MapActionButton"
+                    android:id="@+id/zoom_plus"
+                    android:layout_below="@+id/location"
+                    android:background="@drawable/zoom_plus"
+                    android:layout_alignLeft="@+id/location"
+                    android:layout_alignStart="@+id/location"
+                    android:layout_marginTop="@dimen/normal_space"
+                    android:layout_alignRight="@+id/location"
+                    android:layout_alignEnd="@+id/location" />
+
+                <Button
+                    style="@style/MapActionButton"
+                    android:id="@+id/zoom_minus"
+                    android:background="@drawable/zoom_minus"
+                    android:layout_below="@+id/zoom_plus"
+                    android:layout_marginTop="@dimen/normal_space"
+                    android:layout_alignLeft="@+id/location"
+                    android:layout_alignStart="@+id/location" />
+
+            </RelativeLayout>
 
         </LinearLayout>
 

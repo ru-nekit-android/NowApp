@@ -11,22 +11,10 @@ import com.devspark.robototextview.util.RobotoTypefaceManager;
 
 import ru.nekit.android.nowapp.R;
 
-/**
- * Span for replacing typeface.
- */
 public class RobotoTextAppearanceSpan extends TextAppearanceSpan {
 
-    /**
-     * Created typefaces.
-     */
     private Typeface mTypeface;
 
-    /**
-     * Constructor to use with default typeface (regular).
-     *
-     * @param context The Context the span is using in, through which it can
-     *                access the current theme, resources, etc.
-     */
     public RobotoTextAppearanceSpan(Context context, int appearance) {
         super(context, appearance);
         TypedArray a =

@@ -154,4 +154,9 @@
         <item name="android:textColor">@android:color/black</item>
     </style>
 
+    <style name="MapActionButton">
+        <item name="android:layout_height">42dp</item>
+        <item name="android:layout_width">42dp</item>
+    </style>
+
 </resources>
