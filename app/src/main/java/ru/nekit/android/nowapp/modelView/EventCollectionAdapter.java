@@ -8,7 +8,6 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -115,7 +114,10 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                                     int firstVisibleItem = layoutManager.findFirstVisibleItemPosition();
                                     int lastVisibleItem = layoutManager.findLastVisibleItemPosition();
                                     if (firstVisibleItem > -1 && lastVisibleItem > -1) {
-                                        updateStartTimeForEvents(firstVisibleItem, lastVisibleItem);
+                                        for (int i = firstVisibleItem; i <= lastVisibleItem; i++) {
+                                            EventCollectionItemViewHolder eventCollectionItemViewHolder = (EventCollectionItemViewHolder) mRecyclerView.findViewHolderForAdapterPosition(i);
+                                            setStartTimeForEvent(getItem(i).eventItem, eventCollectionItemViewHolder);
+                                        }
                                     }
                                 }
                             }
@@ -332,13 +334,6 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         return getItemViewType(position) == LOADING ? -1 : getItem(position).eventItem.id;
     }
 
-    private void updateStartTimeForEvents(int firstVisibleItem, int lastVisibleItem) {
-        for (int i = firstVisibleItem; i <= lastVisibleItem; i++) {
-            EventCollectionItemViewHolder eventCollectionItemViewHolder = (EventCollectionItemViewHolder) mRecyclerView.findViewHolderForAdapterPosition(i);
-            setStartTimeForEvent(getItem(i).eventItem, eventCollectionItemViewHolder);
-        }
-    }
-
     private void addToLoadingList(String url, final ImageView viewTarget) {
         mLoadingList.add(Glide.with(mContext).load(url).centerCrop().dontAnimate().listener(new RequestListener<String, GlideDrawable>() {
 
@@ -419,7 +414,6 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     private void stopImageLoading() {
         if (mImmediateImageLoading) {
-            Log.v("ru.nekit.vtag", "stopImageLoading");
             mImmediateImageLoading = false;
             resetCurrentLoadingList();
         }

@@ -10,4 +10,5 @@
     <color name="poster_overlay">#DDAAAAAA</color>
     <color name="action_button_stroke">#FFAAAAAA</color>
     <color name="action_button_fill">#FFFFFFFF</color>
+    <color name="event_poster_stub_background">#FFD9E1E5</color>
 </resources>

@@ -156,6 +156,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         titleView.setText(TextUtils.join("\n", eventNameArray));
         ImageView posterThumbView = (ImageView) view.findViewById(R.id.poster_thumb_view);
         mProgressWheel = (ProgressWheel) view.findViewById(R.id.progress_wheel);
+        mProgressWheel.setVisibility(View.VISIBLE);
         if (mEventItem.posterThumb != null && mEventItem.posterThumb != "") {
             Glide.with(context).load(mEventItem.posterThumb).listener(new RequestListener<String, GlideDrawable>() {
                 @Override
@@ -170,12 +171,13 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                 }
             }).into(posterThumbView);
         } else {
-            Glide.with(context).load(R.drawable.default_image_picture).into(posterThumbView);
+            mProgressWheel.setVisibility(View.GONE);
+            posterThumbView.setImageDrawable(context.getResources().getDrawable(R.drawable.event_poster_stub));
         }
         String logoThumb = mEventItem.logoThumb;
         final ImageView logoThumbView = (ImageView) view.findViewById(R.id.logo_view);
         final TextView placeView = (TextView) view.findViewById(R.id.place_view);
-        if ("".equals(logoThumb)) {
+        if (logoThumb == "") {
             logoThumbView.setVisibility(View.GONE);
             placeView.setVisibility(View.VISIBLE);
             placeView.setText(mEventItem.placeName);

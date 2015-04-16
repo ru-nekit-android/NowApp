@@ -1,5 +1,5 @@
 # Add project specific ProGuard rules here.
-# By default_image_picture, the flags in this file are appended to flags specified
+# By stub_image, the flags in this file are appended to flags specified
 # in /Users/chuvac/develope/sdks/adt-bundle-mac-x86_64-20140702/sdk/tools/proguard/proguard-android.txt
 # You can edit the include path and order by changing the proguardFiles
 # directive in build.gradle.
