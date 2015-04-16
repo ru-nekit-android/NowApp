@@ -11,7 +11,6 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBarActivity;
 import android.telephony.TelephonyManager;
 import android.text.SpannableString;
@@ -157,18 +156,22 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         titleView.setText(TextUtils.join("\n", eventNameArray));
         ImageView posterThumbView = (ImageView) view.findViewById(R.id.poster_thumb_view);
         mProgressWheel = (ProgressWheel) view.findViewById(R.id.progress_wheel);
-        Glide.with(context).load(mEventItem.posterThumb).listener(new RequestListener<String, GlideDrawable>() {
-            @Override
-            public boolean onException(Exception exp, String model, Target<GlideDrawable> target, boolean isFirstResource) {
-                return false;
-            }
+        if (mEventItem.posterThumb != null && mEventItem.posterThumb != "") {
+            Glide.with(context).load(mEventItem.posterThumb).listener(new RequestListener<String, GlideDrawable>() {
+                @Override
+                public boolean onException(Exception exp, String model, Target<GlideDrawable> target, boolean isFirstResource) {
+                    return false;
+                }
 
-            @Override
-            public boolean onResourceReady(GlideDrawable resource, String model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
-                mProgressWheel.setVisibility(View.GONE);
-                return false;
-            }
-        }).into(posterThumbView);
+                @Override
+                public boolean onResourceReady(GlideDrawable resource, String model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
+                    mProgressWheel.setVisibility(View.GONE);
+                    return false;
+                }
+            }).into(posterThumbView);
+        } else {
+            Glide.with(context).load(R.drawable.default_image_picture).into(posterThumbView);
+        }
         String logoThumb = mEventItem.logoThumb;
         final ImageView logoThumbView = (ImageView) view.findViewById(R.id.logo_view);
         final TextView placeView = (TextView) view.findViewById(R.id.place_view);
@@ -208,7 +211,6 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         TextView timeView = (TextView) view.findViewById(R.id.time_view);
         TextView entranceView = (TextView) view.findViewById(R.id.entrance_view);
         TextView descriptionView = (TextView) view.findViewById(R.id.description_view);
-        TextView addressButton = (TextView) view.findViewById(R.id.address_view);
         Button phoneButton = (Button) view.findViewById(R.id.phone_button);
         Button siteButton = (Button) view.findViewById(R.id.site_button);
         phoneButton.setVisibility(View.GONE);
@@ -271,20 +273,21 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
             }
         });
 
-        addressButton.setText(mEventItem.address);
-        addressButton.setTransformationMethod(null);
-
         view.setOnTouchListener(new OnSwipeTouchListener(context) {
             public void onSwipeRight() {
-                FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
-                fragmentManager.popBackStack();
+                getActivity().getSupportFragmentManager().popBackStack();
             }
         });
 
         view.findViewById(R.id.zoom_minus).setOnClickListener(this);
         view.findViewById(R.id.zoom_plus).setOnClickListener(this);
         view.findViewById(R.id.location).setOnClickListener(this);
+
+        TextView addressButton = (TextView) view.findViewById(R.id.address_view);
+        addressButton.setText(mEventItem.address);
+        addressButton.setTransformationMethod(null);
         addressButton.setOnClickListener(this);
+
         mMapViewContainer = (RelativeLayout) view.findViewById(R.id.map_view_container);
 
         return view;

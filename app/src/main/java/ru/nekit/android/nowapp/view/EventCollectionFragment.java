@@ -31,21 +31,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     public static final String TAG = "ru.nekit.android.event_collection_fragment";
 
     private static final int LOADER_ID = 2;
-    private static final int MAX_SCROLL_SPEED = 70;
-    private int mCurrentPage;
-
-    @Override
-    public void onClick(View view) {
-        switch (view.getId()) {
-            case R.id.now_title:
-                if (isResumed()) {
-                    mEventItemsView.scrollToPosition(0);
-                }
-                break;
-            default:
-                break;
-        }
-    }
+    private static final int SMOOTH_SCROLL_DURATION = 1000;
 
     enum LOADING_TYPES {
         PULL_TO_REFRESH,
@@ -62,6 +48,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     private IEventItemSelectListener mEventItemSelectListener;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private EventItemsModel mEventModel;
+    private int mCurrentPage;
 
     private LOADING_STATE mLoadingState = LOADING_STATE.LOADED;
     private LOADING_TYPES mLoadingType = LOADING_TYPES.PULL_TO_REFRESH;
@@ -111,7 +98,10 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
             mLoadingType = LOADING_TYPES.PULL_TO_REFRESH;
             performLoad();
         }
-        getView().getRootView().findViewById(R.id.now_title).setOnClickListener(this);
+        View view = getView();
+        if (view != null) {
+            view.getRootView().findViewById(R.id.now_title).setOnClickListener(this);
+        }
     }
 
     @Override
@@ -124,8 +114,9 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         mEventItemsView.setItemAnimator(new DefaultItemAnimator());
         int listColumn = getResources().getInteger(R.integer.event_collection_column_count);
 
-        mEventCollectionLayoutManager = new ScrollingGridLayoutManager(context, listColumn, 1000);
-        mEventCollectionAdapter = new EventCollectionAdapter(context, mEventModel.getEventItems(), listColumn);
+        mEventCollectionLayoutManager = new ScrollingGridLayoutManager(context, listColumn, SMOOTH_SCROLL_DURATION);
+        mEventCollectionAdapter = new EventCollectionAdapter(context, mEventModel, listColumn);
+        mEventCollectionAdapter.setHasStableIds(true);
         mEventItemsView.setAdapter(mEventCollectionAdapter);
         mEventItemsView.setLayoutManager(mEventCollectionLayoutManager);
         mEventCollectionAdapter.setOnItemClickListener(this);
@@ -147,37 +138,16 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
             }
         });
 
-        mEventItemsView.setOnScrollListener(mScrollListener);
+        mEventCollectionAdapter.setLoadMoreListener(new EventCollectionAdapter.OnLoadMorelListener() {
+            @Override
+            public void onLoadMore() {
+                mLoadingType = LOADING_TYPES.REQUEST_NEW_EVENT_ITEMS;
+                setLoadingState(LOADING_STATE.LOADING);
+            }
+        });
 
         return view;
     }
-
-    private RecyclerView.OnScrollListener mScrollListener = new RecyclerView.OnScrollListener() {
-        public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-            if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                int totalItemCount = mEventCollectionLayoutManager.getItemCount();
-                int firstVisibleItem = mEventCollectionLayoutManager.findFirstVisibleItemPosition();
-                int lastVisibleItem = mEventCollectionLayoutManager.findLastVisibleItemPosition();
-                if (mEventModel.isAvailableLoad()) {
-                    if (totalItemCount > 1) {
-                        if (lastVisibleItem >= totalItemCount - 1) {
-                            mLoadingType = LOADING_TYPES.REQUEST_NEW_EVENT_ITEMS;
-                            setLoadingState(LOADING_STATE.LOADING);
-                        }
-                    }
-                }
-                mEventCollectionAdapter.continueImageLoading(mEventItemsView, firstVisibleItem, lastVisibleItem);
-            }
-        }
-
-        public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-            int speed = Math.abs(dy);
-            if (speed > MAX_SCROLL_SPEED) {
-                mEventCollectionAdapter.stopImageLoading();
-            }
-        }
-    };
-
 
     private void setLoadingState(LOADING_STATE state) {
         if (mLoadingState == state) return;
@@ -194,7 +164,6 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                 case LOADED:
                     if (mEventCollectionAdapter.isLoading()) {
                         mEventCollectionAdapter.removeLoading();
-                        mEventItemsView.smoothScrollToPosition(mEventModel.getEventItems().size() - mEventModel.getLastAddedEventItems().size());
                     }
                     break;
 
@@ -282,5 +251,18 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         setLoadingState(LOADING_STATE.LOADED);
         mLoadingType = LOADING_TYPES.PULL_TO_REFRESH;
         mSwipeRefreshLayout.setRefreshing(false);
+    }
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.now_title:
+                if (isResumed()) {
+                    mEventItemsView.scrollToPosition(0);
+                }
+                break;
+            default:
+                break;
+        }
     }
 }

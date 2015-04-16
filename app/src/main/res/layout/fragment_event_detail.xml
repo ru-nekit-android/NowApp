@@ -195,7 +195,7 @@
             <RelativeLayout
                 android:id="@+id/map_view_container"
                 android:layout_width="match_parent"
-                android:layout_height="300dp">
+                android:layout_height="0dp">
 
                 <org.osmdroid.views.MapView
                     android:id="@+id/map_view"
