@@ -292,7 +292,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
         mMapViewContainer = (RelativeLayout) view.findViewById(R.id.map_view_container);
 
-        ((ScrollView) view.findViewById(R.id.scroll_view)).fullScroll(ScrollView.FOCUS_DOWN);
+        view.findViewById(R.id.scroll_view).scrollTo(0, 0);
 
         return view;
     }
