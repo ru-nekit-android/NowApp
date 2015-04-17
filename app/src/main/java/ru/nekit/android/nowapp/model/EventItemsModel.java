@@ -1,7 +1,9 @@
 package ru.nekit.android.nowapp.model;
 
 import android.content.Context;
+import android.support.v4.util.Pair;
 
+import java.text.DateFormatSymbols;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -13,6 +15,21 @@ import ru.nekit.android.nowapp.R;
  * Created by chuvac on 15.03.15.
  */
 public class EventItemsModel {
+
+
+    private static final long MAXIMUM_TIME_PERIOD_FOR_DATE_ALIAS_SUPPORT = TimeUnit.HOURS.toSeconds(4);
+
+    private static final long[] NIGHT_PERIOD = {TimeUnit.HOURS.toSeconds(0), TimeUnit.HOURS.toSeconds(5) - 1};
+    private static final long[] MORNING_PERIOD = {TimeUnit.HOURS.toSeconds(5), TimeUnit.HOURS.toSeconds(12) - 1};
+    private static final long[] DAY_PERIOD = {TimeUnit.HOURS.toSeconds(12), TimeUnit.HOURS.toSeconds(19) - 1};
+    private static final long[] EVENING_PERIOD = {TimeUnit.HOURS.toSeconds(19), TimeUnit.HOURS.toSeconds(24)};
+
+    private static ArrayList<Pair<String, long[]>> PERIODS = new ArrayList<Pair<String, long[]>>(4) {{
+        add(new Pair<>("ночью", NIGHT_PERIOD));
+        add(new Pair<>("утром", MORNING_PERIOD));
+        add(new Pair<>("днем", DAY_PERIOD));
+        add(new Pair<>("вечером", EVENING_PERIOD));
+    }};
 
     public static final String TYPE = "type";
 
@@ -47,6 +64,61 @@ public class EventItemsModel {
         CATEGORY_TYPE_BIG.put("category_entertainment", R.drawable.cat_drink_big);
         CATEGORY_TYPE_BIG.put("category_other", R.drawable.cat_crown_big);
         CATEGORY_TYPE_BIG.put("category_education", R.drawable.cat_book_big);
+
+    }
+
+    public static String getStartTimeAlias(Context context, EventItem eventItem) {
+
+        long currentTimeTimestamp = getCurrentTimeTimestamp(context, true);
+        long startAfterSeconds = eventItem.startAt - currentTimeTimestamp;
+        long dateDelta = eventItem.date - getCurrentDateTimestamp(context, true);
+        String startTimeAliasString;
+        if (dateDelta == 0 || (dateDelta == 1 && eventItem.startAt <= PERIODS.get(0).second[1])) {
+            if (startAfterSeconds <= 0) {
+                if (eventItem.endAt > currentTimeTimestamp) {
+                    startTimeAliasString = context.getResources().getString(R.string.going_right_now);
+                } else {
+                    startTimeAliasString = context.getResources().getString(R.string.already_ended);
+                }
+            } else {
+                long startAfterMinutesFull = TimeUnit.SECONDS.toMinutes(startAfterSeconds);
+                long startAfterHours = TimeUnit.MINUTES.toHours(startAfterMinutesFull);
+                long startAfterMinutes = startAfterMinutesFull % TimeUnit.HOURS.toMinutes(1);
+                if (startAfterSeconds <= MAXIMUM_TIME_PERIOD_FOR_DATE_ALIAS_SUPPORT) {
+                    startTimeAliasString = context.getResources().getString(R.string.going_in);
+                    if (startAfterHours > 0) {
+                        startTimeAliasString += String.format(" %d ч", startAfterHours);
+                    }
+                    if (startAfterMinutes > 0) {
+                        startTimeAliasString += String.format(" %d мин", startAfterMinutes);
+                    }
+                } else {
+                    startTimeAliasString = String.format("%s %s", context.getResources().getString(R.string.today), getDayPeriodAlias(eventItem.startAt));
+                }
+            }
+        } else {
+            if (dateDelta == TimeUnit.DAYS.toSeconds(1)) {
+                startTimeAliasString = String.format("%s %s", context.getResources().getString(R.string.going_tomorrow), getDayPeriodAlias(eventItem.startAt));
+            } else if (dateDelta == TimeUnit.DAYS.toSeconds(2)) {
+                startTimeAliasString = context.getResources().getString(R.string.going_day_after_tomorrow);
+            } else {
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTimeInMillis(TimeUnit.SECONDS.toMillis(eventItem.date));
+                startTimeAliasString = String.format("%s %s", calendar.get(Calendar.DAY_OF_MONTH), new DateFormatSymbols().getMonths()[calendar.get(Calendar.MONTH)].toLowerCase());
+            }
+        }
+        return startTimeAliasString;
+    }
+
+    private static String getDayPeriodAlias(long dayTimeInSeconds) {
+        String alias = null;
+        for (int i = 0; i < PERIODS.size() && alias == null; i++) {
+            long[] periodTime = PERIODS.get(i).second;
+            if (dayTimeInSeconds >= periodTime[0] && dayTimeInSeconds <= periodTime[1]) {
+                alias = PERIODS.get(i).first;
+            }
+        }
+        return alias;
     }
 
     public static int getCategoryDrawable(String category) {

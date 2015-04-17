@@ -21,9 +21,7 @@ import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 
-import java.text.DateFormatSymbols;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
@@ -35,12 +33,12 @@ import ru.nekit.android.nowapp.modelView.listeners.IEventItemSelectListener;
 
 import static ru.nekit.android.nowapp.model.EventItemsModel.getCategoryDrawable;
 import static ru.nekit.android.nowapp.model.EventItemsModel.getCurrentDateTimestamp;
-import static ru.nekit.android.nowapp.model.EventItemsModel.getCurrentTimeTimestamp;
 
 /**
  * Created by chuvac on 12.03.15.
  */
 public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+
 
     private static final int NORMAL = 0, LOADING = 1;
     private static final int MAX_SCROLL_SPEED = 70;
@@ -59,6 +57,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     private OnLoadMorelListener mLoadMoreListener;
     private Timer mTimer;
     private Handler mHandler;
+    private int mLoadMoreCount;
 
     public void setOnItemClickListener(IEventItemSelectListener listener) {
         mItemClickListener = listener;
@@ -77,7 +76,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                     int totalItemCount = layoutManager.getItemCount();
                     if (mEventModel.isAvailableLoad()) {
                         if (totalItemCount > 1) {
-                            if (lastVisibleItem >= totalItemCount - 1) {
+                            if (lastVisibleItem >= totalItemCount - 1 - mLoadMoreCount) {
                                 if (mLoadMoreListener != null) {
                                     mLoadMoreListener.onLoadMore();
                                 }
@@ -157,13 +156,14 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         int screenWidth = getScreenWidth(context);
         TypedValue outValue = new TypedValue();
         context.getResources().getValue(R.dimen.event_item_view_height_ratio, outValue, true);
-        mItemHeight = (int) (((screenWidth - mContext.getResources().getDimensionPixelOffset(R.dimen.event_collection_padding) * 2 - mContext.getResources().getDimensionPixelOffset(R.dimen.event_collection_space) * (columns - 1)) / columns) * (mColumns > 1 ? outValue.getFloat() : .6));
+        mItemHeight = (int) (((screenWidth - mContext.getResources().getDimensionPixelOffset(R.dimen.event_collection_padding) * 2 - mContext.getResources().getDimensionPixelOffset(R.dimen.event_collection_space) * (columns - 1)) / columns) * (columns > 1 ? outValue.getFloat() : .6));
         mMargin = context.getResources().getDimensionPixelSize(R.dimen.event_collection_space);
         mEventItems = new ArrayList<>();
         mLoadingList = new ArrayList<>();
         setItems(model.getEventItems());
         mEventModel = model;
         mImmediateImageLoading = true;
+        mLoadMoreCount = columns > 2 ? 0 : columns;
     }
 
     public void addItems(ArrayList<EventItem> eventItems) {
@@ -234,9 +234,8 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     }
 
     @Override
-    public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, int position) {
-
-        GridLayoutManager.LayoutParams layoutParams = (GridLayoutManager.LayoutParams) viewHolder.itemView.getLayoutParams();
+    public void onBindViewHolder(final RecyclerView.ViewHolder viewHolder, final int position) {
+        final GridLayoutManager.LayoutParams layoutParams = (GridLayoutManager.LayoutParams) viewHolder.itemView.getLayoutParams();
         if (getItemViewType(position) == NORMAL) {
             layoutParams.height = mItemHeight;
             if (mColumns > 1) {
@@ -248,84 +247,45 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             } else {
                 layoutParams.setMargins(mMargin / 2, mMargin, mMargin / 2, 0);
             }
-            EventCollectionItemViewHolder eventCollectionItemViewHolder = (EventCollectionItemViewHolder) viewHolder;
+            final EventCollectionItemViewHolder eventCollectionItemViewHolder = (EventCollectionItemViewHolder) viewHolder;
             final WrapperEventItem wrapperEventItem = mEventItems.get(position);
             final EventItem eventItem = wrapperEventItem.eventItem;
-
-            eventCollectionItemViewHolder.getPlaceView().setText(eventItem.placeName);
-            String eventName = eventItem.name.toUpperCase();
-
+            final String eventName = eventItem.name.toUpperCase();
             if (wrapperEventItem.cachedName == null) {
                 ArrayList<String> eventNameArray = ru.nekit.android.nowapp.utils.StringUtil.wrapText(eventName);
                 wrapperEventItem.cachedNameLineCount = eventNameArray.size();
                 wrapperEventItem.cachedName = TextUtils.join("\n", eventNameArray);
             }
-
-            TextView eventNameView = eventCollectionItemViewHolder.getNameView();
-            eventNameView.setLines(wrapperEventItem.cachedNameLineCount);
+            final TextView eventNameView = eventCollectionItemViewHolder.getNameView();
+            eventCollectionItemViewHolder.getPlaceView().setText(eventItem.placeName);
+            if (eventNameView.getLineCount() != wrapperEventItem.cachedNameLineCount) {
+                eventNameView.setLines(wrapperEventItem.cachedNameLineCount);
+            }
             eventNameView.setText(wrapperEventItem.cachedName);
-
             if (mImmediateImageLoading) {
                 addToLoadingList(eventItem.posterBlur, eventCollectionItemViewHolder.getPosterThumbView());
             } else {
                 eventCollectionItemViewHolder.getPosterThumbView().setImageDrawable(null);
             }
-
             setStartTimeForEvent(eventItem, eventCollectionItemViewHolder);
+            int categoryDrawableId = getCategoryDrawable(eventItem.category);
+            if (categoryDrawableId != 0) {
+                eventCollectionItemViewHolder.getCatalogIcon().setImageDrawable(mContext.getResources().getDrawable(categoryDrawableId));
+            }
         } else {
             layoutParams.height = mContext.getResources().getDimensionPixelOffset(R.dimen.progress_wheel_size) + 2 * mMargin + 2 * mContext.getResources().getDimensionPixelOffset(R.dimen.event_loading_padding);
             layoutParams.setMargins(mMargin, mMargin, mMargin, mMargin);
         }
-
-        viewHolder.itemView.setLayoutParams(layoutParams);
     }
 
     private void setStartTimeForEvent(EventItem eventItem, EventCollectionItemViewHolder eventCollectionItemViewHolder) {
-        long currentTimeTimestamp = getCurrentTimeTimestamp(mContext, true);
-        long startAfterSeconds = eventItem.startAt - currentTimeTimestamp;
-        long dateDelta = eventItem.date - getCurrentDateTimestamp(mContext, true);
-        String startAfterString;
-
-        if (dateDelta == 0) {
-            if (startAfterSeconds <= 0) {
-                if (eventItem.endAt > currentTimeTimestamp) {
-                    startAfterString = mContext.getResources().getString(R.string.going_right_now);
-                } else {
-                    startAfterString = mContext.getResources().getString(R.string.already_ended);
-                }
-            } else {
-                long startAfterMinutesFull = startAfterSeconds / 60;
-                long startAfterHours = startAfterMinutesFull / 60;
-                long startAfterMinutes = startAfterMinutesFull % 60;
-                startAfterString = mContext.getResources().getString(R.string.going_in);
-                if (startAfterHours > 0) {
-                    startAfterString += String.format(" %d ч", startAfterHours);
-                }
-                if (startAfterMinutes > 0) {
-                    startAfterString += String.format(" %d мин", startAfterMinutes);
-                }
-            }
-        } else {
-            if (dateDelta == TimeUnit.DAYS.toSeconds(1)) {
-                startAfterString = mContext.getResources().getString(R.string.going_tomorrow);
-            } else if (dateDelta == TimeUnit.DAYS.toSeconds(2)) {
-                startAfterString = mContext.getResources().getString(R.string.going_day_after_tomorrow);
-            } else {
-                Calendar calendar = Calendar.getInstance();
-                calendar.setTimeInMillis(TimeUnit.SECONDS.toMillis(eventItem.date));
-                startAfterString = String.format("%s %s", calendar.get(Calendar.DAY_OF_MONTH), new DateFormatSymbols().getMonths()[calendar.get(Calendar.MONTH)].toLowerCase());
-            }
-        }
+        String startTimeAliasString = EventItemsModel.getStartTimeAlias(mContext, eventItem);
         TextView startItemView = eventCollectionItemViewHolder.getStartEventView();
-        if (startAfterString == null) {
+        if (startTimeAliasString == null) {
             startItemView.setVisibility(View.INVISIBLE);
         } else {
             startItemView.setVisibility(View.VISIBLE);
-            startItemView.setText(startAfterString);
-        }
-        int categoryDrawableId = getCategoryDrawable(eventItem.category);
-        if (categoryDrawableId != 0) {
-            eventCollectionItemViewHolder.getCatalogIcon().setImageDrawable(mContext.getResources().getDrawable(categoryDrawableId));
+            startItemView.setText(startTimeAliasString);
         }
     }
 
@@ -420,13 +380,15 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     }
 
     private void continueImageLoading(int firstVisibleItem, int lastVisibleItem) {
-        mImmediateImageLoading = true;
-        for (int i = firstVisibleItem; i <= lastVisibleItem; i++) {
-            RecyclerView.ViewHolder viewHolder = mRecyclerView.findViewHolderForAdapterPosition(i);
-            if (viewHolder.getClass() == EventCollectionItemViewHolder.class) {
-                EventCollectionItemViewHolder eventCollectionItemViewHolder = (EventCollectionItemViewHolder) mRecyclerView.findViewHolderForAdapterPosition(i);
-                if (eventCollectionItemViewHolder.getPosterThumbView().getDrawable() == null) {
-                    addToLoadingList(getItem(i).eventItem.posterBlur, eventCollectionItemViewHolder.getPosterThumbView());
+        if (!mImmediateImageLoading) {
+            mImmediateImageLoading = true;
+            for (int i = firstVisibleItem; i <= lastVisibleItem; i++) {
+                RecyclerView.ViewHolder viewHolder = mRecyclerView.findViewHolderForAdapterPosition(i);
+                if (viewHolder.getClass() == EventCollectionItemViewHolder.class) {
+                    EventCollectionItemViewHolder eventCollectionItemViewHolder = (EventCollectionItemViewHolder) mRecyclerView.findViewHolderForAdapterPosition(i);
+                    if (eventCollectionItemViewHolder.getPosterThumbView().getDrawable() == null) {
+                        addToLoadingList(getItem(i).eventItem.posterBlur, eventCollectionItemViewHolder.getPosterThumbView());
+                    }
                 }
             }
         }

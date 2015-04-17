@@ -5,6 +5,7 @@
 
     <string name="going_right_now">уже идет!</string>
     <string name="already_ended">уже закончилось!</string>
+    <string name="today">Сегодня</string>
     <string name="going_tomorrow">Завтра</string>
     <string name="going_day_after_tomorrow">Послезавтра</string>
     <string name="going_in">через</string>

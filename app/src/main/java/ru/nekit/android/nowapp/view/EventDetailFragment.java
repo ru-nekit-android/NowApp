@@ -383,6 +383,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
                 mMapView.getController().setZoom(MAX_ZOOM);
                 mMapView.getController().animateTo(mGeoPoint);
+                checkZoomButtons();
 
                 break;
 

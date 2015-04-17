@@ -159,7 +159,6 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                         mEventCollectionAdapter.addLoading();
                     }
                     performLoad();
-                    mEventItemsView.smoothScrollToPosition(mEventModel.getEventItems().size());
                     break;
                 case LOADED:
                     if (mEventCollectionAdapter.isLoading()) {
@@ -258,7 +257,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         switch (view.getId()) {
             case R.id.now_title:
                 if (isResumed()) {
-                    mEventItemsView.scrollToPosition(0);
+                    mEventItemsView.smoothScrollToPosition(0);
                 }
                 break;
             default:
