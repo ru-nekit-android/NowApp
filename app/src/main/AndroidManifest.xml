@@ -25,6 +25,7 @@
         android:required="false" />
 
     <application
+        android:hardwareAccelerated="true"
         android:name=".NowApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"

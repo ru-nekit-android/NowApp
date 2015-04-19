@@ -41,6 +41,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
 
     private static final int NORMAL = 0, LOADING = 1;
+    private static final boolean USE_IMAGE_LOADING_FOR_QUICK_SCROLLING = true;
     private static final int MAX_SCROLL_SPEED = 70;
 
     private final LayoutInflater mInflater;
@@ -48,6 +49,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     private final ArrayList<WrapperEventItem> mEventItems;
     private final ArrayList<Target> mLoadingList;
     private final EventItemsModel mEventModel;
+
 
     private RecyclerView mRecyclerView;
     private RecyclerView.OnScrollListener mScrollListener;
@@ -89,7 +91,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 int speed = Math.abs(dy);
-                if (speed > MAX_SCROLL_SPEED) {
+                if (USE_IMAGE_LOADING_FOR_QUICK_SCROLLING && speed > MAX_SCROLL_SPEED) {
                     stopImageLoading();
                 }
             }
@@ -262,8 +264,9 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 eventNameView.setLines(wrapperEventItem.cachedNameLineCount);
             }
             eventNameView.setText(wrapperEventItem.cachedName);
+            wrapperEventItem.posterLoaded = false;
             if (mImmediateImageLoading) {
-                addToLoadingList(eventItem.posterBlur, eventCollectionItemViewHolder.getPosterThumbView());
+                addToLoadingList(wrapperEventItem, eventCollectionItemViewHolder.getPosterThumbView());
             } else {
                 eventCollectionItemViewHolder.getPosterThumbView().setImageDrawable(null);
             }
@@ -294,8 +297,8 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         return getItemViewType(position) == LOADING ? -1 : getItem(position).eventItem.id;
     }
 
-    private void addToLoadingList(String url, final ImageView viewTarget) {
-        mLoadingList.add(Glide.with(mContext).load(url).centerCrop().dontAnimate().listener(new RequestListener<String, GlideDrawable>() {
+    private void addToLoadingList(final WrapperEventItem wrapperEventItem, final ImageView viewTarget) {
+        mLoadingList.add(Glide.with(mContext).load(wrapperEventItem.eventItem.posterBlur).centerCrop().dontAnimate().listener(new RequestListener<String, GlideDrawable>() {
 
             @Override
             public boolean onException(Exception exp, String model, Target<GlideDrawable> target, boolean isFirstResource) {
@@ -305,6 +308,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             @Override
             public boolean onResourceReady(GlideDrawable resource, String model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
                 mLoadingList.remove(target);
+                wrapperEventItem.posterLoaded = true;
                 viewTarget.setColorFilter(mContext.getResources().getColor(R.color.poster_overlay), PorterDuff.Mode.MULTIPLY);
                 return false;
             }
@@ -386,8 +390,9 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 RecyclerView.ViewHolder viewHolder = mRecyclerView.findViewHolderForAdapterPosition(i);
                 if (viewHolder.getClass() == EventCollectionItemViewHolder.class) {
                     EventCollectionItemViewHolder eventCollectionItemViewHolder = (EventCollectionItemViewHolder) mRecyclerView.findViewHolderForAdapterPosition(i);
-                    if (eventCollectionItemViewHolder.getPosterThumbView().getDrawable() == null) {
-                        addToLoadingList(getItem(i).eventItem.posterBlur, eventCollectionItemViewHolder.getPosterThumbView());
+                    WrapperEventItem wrapperEventItem = getItem(i);
+                    if (!wrapperEventItem.posterLoaded) {
+                        addToLoadingList(getItem(i), eventCollectionItemViewHolder.getPosterThumbView());
                     }
                 }
             }
@@ -401,9 +406,12 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
         public String cachedName;
         public int cachedNameLineCount;
+        public boolean posterLoaded;
 
         WrapperEventItem(EventItem eventItem) {
             cachedName = null;
+            cachedNameLineCount = 0;
+            posterLoaded = false;
             this.eventItem = eventItem;
         }
 
