@@ -13,7 +13,7 @@
 
         <ImageView
             android:id="@+id/imageView"
-            android:layout_gravity="bottom"
+            android:layout_gravity="bottom|center_horizontal"
             style="@style/NowLogoOnSplashScreen"
             android:src="@drawable/now_big"
             android:layout_width="wrap_content"
