@@ -116,7 +116,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         OverlayItem marker = new OverlayItem(null, null, mGeoPoint);
         marker.setMarkerHotspot(OverlayItem.HotspotPlace.BOTTOM_CENTER);
         items.add(marker);
-        Drawable newMarker = this.getResources().getDrawable(R.drawable.ic_action_location);
+        Drawable newMarker = this.getResources().getDrawable(R.drawable.map_marker);
         DefaultResourceProxyImpl resProxyImp = new DefaultResourceProxyImpl(getActivity().getApplicationContext());
         ItemizedIconOverlay markersOverlay = new ItemizedIconOverlay<>(items, newMarker, null, resProxyImp);
         mMapView.getOverlays().add(markersOverlay);
