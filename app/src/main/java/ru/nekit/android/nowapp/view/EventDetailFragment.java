@@ -18,7 +18,6 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -33,10 +32,6 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
-import com.parse.CountCallback;
-import com.parse.ParseAnonymousUtils;
-import com.parse.ParseException;
-import com.parse.ParseUser;
 import com.pnikosis.materialishprogress.ProgressWheel;
 
 import org.osmdroid.DefaultResourceProxyImpl;
@@ -51,11 +46,9 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.concurrent.TimeUnit;
 
-import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.EventItem;
 import ru.nekit.android.nowapp.model.EventItemsModel;
-import ru.nekit.android.nowapp.model.EventViewStatistic;
 import ru.nekit.android.nowapp.modelView.listeners.IEventItemPosterSelectListener;
 import ru.nekit.android.nowapp.utils.RobotoTextAppearanceSpan;
 import ru.nekit.android.nowapp.utils.TextViewUtils;
@@ -75,6 +68,8 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     private ProgressWheel mProgressWheel;
     private GeoPoint mGeoPoint;
     private RelativeLayout mMapViewContainer;
+    private ImageView mPosterThumbView;
+    private boolean mPosterViewIsEmpty;
 
     public EventDetailFragment() {
     }
@@ -91,38 +86,9 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         createMap();
     }
 
-    private void fetchEventViewStatistic() {
-        if (ParseAnonymousUtils.isLinked(ParseUser.getCurrentUser())) {
-            EventViewStatistic.getUniqueViewStatisticForDeviceQuery(mEventItem.id, NowApplication.getDeviceId()).countInBackground(new CountCallback() {
-                @Override
-                public void done(int count, ParseException exp) {
-                    if (exp == null) {
-                        if (count == 0) {
-                            EventViewStatistic eventViewStatistic = new EventViewStatistic();
-                            eventViewStatistic.setEventId(mEventItem.id);
-                            eventViewStatistic.setDeviceId(NowApplication.getDeviceId());
-                            eventViewStatistic.saveInBackground();
-                        }
-                    } else {
-                    }
-                }
-            });
-            EventViewStatistic.getUniqueViewStatisticForEventQuery(mEventItem.id).countInBackground(new CountCallback() {
-                @Override
-                public void done(int count, ParseException exp) {
-                    if (exp == null) {
-                        Log.v("ru.nekit.vtag", "Event item statistic :: view count: " + count);
-                    } else {
-                    }
-                }
-            });
-        }
-    }
-
     @Override
     public void onResume() {
         super.onResume();
-        fetchEventViewStatistic();
         ((ActionBarActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     }
 
@@ -188,30 +154,38 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     }
 
     private View constructInterface(View view) {
-        Context context = getActivity();
+
+        Bundle arg = getArguments();
+        final Context context = getActivity();
+        mEventItem = arg.getParcelable(ARG_EVENT_ITEM);
+
         TextView titleView = (TextView) view.findViewById(R.id.title_view);
         ArrayList<String> eventNameArray = ru.nekit.android.nowapp.utils.StringUtil.wrapText(mEventItem.name.toUpperCase());
         titleView.setLines(eventNameArray.size());
         titleView.setText(TextUtils.join("\n", eventNameArray));
-        ImageView posterThumbView = (ImageView) view.findViewById(R.id.poster_thumb_view);
+        mPosterThumbView = (ImageView) view.findViewById(R.id.poster_thumb_view);
         mProgressWheel = (ProgressWheel) view.findViewById(R.id.progress_wheel);
         mProgressWheel.setVisibility(View.VISIBLE);
         if (mEventItem.posterThumb != null && mEventItem.posterThumb != "") {
             Glide.with(context).load(mEventItem.posterThumb).listener(new RequestListener<String, GlideDrawable>() {
                 @Override
                 public boolean onException(Exception exp, String model, Target<GlideDrawable> target, boolean isFirstResource) {
-                    return false;
+                    mProgressWheel.setVisibility(View.GONE);
+                    mPosterThumbView.setImageResource(R.drawable.event_poster_stub);
+                    mPosterViewIsEmpty = true;
+                    return true;
                 }
 
                 @Override
                 public boolean onResourceReady(GlideDrawable resource, String model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
                     mProgressWheel.setVisibility(View.GONE);
+                    mPosterViewIsEmpty = false;
                     return false;
                 }
-            }).into(posterThumbView);
+            }).into(mPosterThumbView);
         } else {
             mProgressWheel.setVisibility(View.GONE);
-            posterThumbView.setImageDrawable(context.getResources().getDrawable(R.drawable.event_poster_stub));
+            mPosterThumbView.setImageDrawable(context.getResources().getDrawable(R.drawable.event_poster_stub));
         }
         String logoThumb = mEventItem.logoThumb;
         final ImageView logoThumbView = (ImageView) view.findViewById(R.id.logo_view);
@@ -244,7 +218,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
             ((ImageView) view.findViewById(R.id.category_type_view)).setImageDrawable(context.getResources().getDrawable(categoryDrawableId));
         }
 
-        posterThumbView.setOnClickListener(this);
+        mPosterThumbView.setOnClickListener(this);
 
         TextView dayDateView = (TextView) view.findViewById(R.id.day_date_view);
         TextView monthView = (TextView) view.findViewById(R.id.month_view);
@@ -444,7 +418,9 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
             case R.id.poster_thumb_view:
 
-                mEventItemPosterSelectListener.onEventItemPosterSelect(mEventItem.posterOriginal);
+                if (!mPosterViewIsEmpty) {
+                    mEventItemPosterSelectListener.onEventItemPosterSelect(mEventItem.posterOriginal);
+                }
 
                 break;
 

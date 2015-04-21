@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 import ru.nekit.android.nowapp.R;
+import ru.nekit.android.nowapp.model.db.EventLocalDataSource;
 
 /**
  * Created by chuvac on 15.03.15.
@@ -31,7 +32,7 @@ public class EventItemsModel {
         add(new Pair<>("вечером", EVENING_PERIOD));
     }};
 
-    public static final String TYPE = "type";
+    public static final String LOADING_TYPE = "loading_type";
 
     public static final String REQUEST_NEW_EVENT_ITEMS = "request_new_event_items";
     public static final String REFRESH_EVENT_ITEMS = "refresh_event_items";
@@ -41,17 +42,14 @@ public class EventItemsModel {
 
     private static EventItemsModel instance;
 
-    static {
-        instance = new EventItemsModel();
-    }
-
     private final ArrayList<EventItem> mEventItems;
     private final ArrayList<EventItem> mLastAddedEventItems;
     private int mAvailableEventCount;
     private int mCurrentPage;
     private boolean mReachEndOfDataList;
+    private EventLocalDataSource mEventLocalDataSource;
 
-    private EventItemsModel() {
+    private EventItemsModel(Context context) {
         mEventItems = new ArrayList<>();
         mLastAddedEventItems = new ArrayList<>();
         mCurrentPage = 1;
@@ -64,7 +62,7 @@ public class EventItemsModel {
         CATEGORY_TYPE_BIG.put("category_entertainment", R.drawable.cat_drink_big);
         CATEGORY_TYPE_BIG.put("category_other", R.drawable.cat_crown_big);
         CATEGORY_TYPE_BIG.put("category_education", R.drawable.cat_book_big);
-
+        mEventLocalDataSource = new EventLocalDataSource(context);
     }
 
     public static String getStartTimeAlias(Context context, EventItem eventItem) {
@@ -130,7 +128,10 @@ public class EventItemsModel {
         return CATEGORY_TYPE_BIG.get(category);
     }
 
-    public static EventItemsModel getInstance() {
+    public static EventItemsModel getInstance(Context context) {
+        if (instance == null) {
+            instance = new EventItemsModel(context);
+        }
         return instance;
     }
 
@@ -213,5 +214,9 @@ public class EventItemsModel {
 
     public void setReachEndOfDataList(boolean value) {
         mReachEndOfDataList = value;
+    }
+
+    public EventLocalDataSource getLocalDataSource() {
+        return mEventLocalDataSource;
     }
 }

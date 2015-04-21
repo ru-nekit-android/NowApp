@@ -302,6 +302,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
             @Override
             public boolean onException(Exception exp, String model, Target<GlideDrawable> target, boolean isFirstResource) {
+                viewTarget.setImageResource(R.drawable.event_poster_stub);
                 return true;
             }
 

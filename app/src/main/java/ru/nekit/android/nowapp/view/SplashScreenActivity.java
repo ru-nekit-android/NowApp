@@ -11,6 +11,7 @@ import android.widget.Toast;
 
 import com.pnikosis.materialishprogress.ProgressWheel;
 
+import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.EventItemsLoader;
 import ru.nekit.android.nowapp.utils.ConnectionUtil;
@@ -30,11 +31,18 @@ public class SplashScreenActivity extends ActionBarActivity implements LoaderMan
         setContentView(R.layout.activity_splash_screen);
         mProgressWheel = (ProgressWheel) findViewById(R.id.progress_wheel);
         if (ConnectionUtil.isInternetAvailable(this)) {
-            LoaderManager loaderManager = getSupportLoaderManager();
-            loaderManager.initLoader(LOADER_ID, null, this);
+            NowApplication.setState(NowApplication.STATE.ONLINE);
+            initFirstTimeLoader();
         } else {
-            exitWitchError(R.string.connection_is_not_available);
+            NowApplication.setState(NowApplication.STATE.OFFLINE);
+            initFirstTimeLoader();
+            //exitWitchError(R.string.connection_is_not_available);
         }
+    }
+
+    private void initFirstTimeLoader(){
+        LoaderManager loaderManager = getSupportLoaderManager();
+        loaderManager.initLoader(LOADER_ID, null, this);
     }
 
     @Override
