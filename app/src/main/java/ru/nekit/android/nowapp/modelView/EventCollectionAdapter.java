@@ -46,7 +46,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     private final LayoutInflater mInflater;
     private final Context mContext;
-    private final ArrayList<WrapperEventItem> mEventItems;
+    private final ArrayList<EventItemWrapper> mEventItems;
     private final ArrayList<Target> mLoadingList;
     private final EventItemsModel mEventModel;
 
@@ -194,7 +194,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             for (EventItem eventItem : eventItems) {
                 long dateDelta = eventItem.date - getCurrentDateTimestamp(mContext, true);
                 if (dateDelta >= 0 && eventItem.endAt > EventItemsModel.getCurrentTimeTimestamp(mContext, true) || dateDelta > 1) {
-                    mEventItems.add(new WrapperEventItem(eventItem));
+                    mEventItems.add(new EventItemWrapper(eventItem));
                 }
             }
             if (!addState) {
@@ -250,23 +250,23 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 layoutParams.setMargins(mMargin / 2, mMargin, mMargin / 2, 0);
             }
             final EventCollectionItemViewHolder eventCollectionItemViewHolder = (EventCollectionItemViewHolder) viewHolder;
-            final WrapperEventItem wrapperEventItem = mEventItems.get(position);
-            final EventItem eventItem = wrapperEventItem.eventItem;
+            final EventItemWrapper eventItemWrapper = mEventItems.get(position);
+            final EventItem eventItem = eventItemWrapper.eventItem;
             final String eventName = eventItem.name.toUpperCase();
-            if (wrapperEventItem.cachedName == null) {
+            if (eventItemWrapper.cachedName == null) {
                 ArrayList<String> eventNameArray = ru.nekit.android.nowapp.utils.StringUtil.wrapText(eventName);
-                wrapperEventItem.cachedNameLineCount = eventNameArray.size();
-                wrapperEventItem.cachedName = TextUtils.join("\n", eventNameArray);
+                eventItemWrapper.cachedNameLineCount = eventNameArray.size();
+                eventItemWrapper.cachedName = TextUtils.join("\n", eventNameArray);
             }
             final TextView eventNameView = eventCollectionItemViewHolder.getNameView();
             eventCollectionItemViewHolder.getPlaceView().setText(eventItem.placeName);
-            if (eventNameView.getLineCount() != wrapperEventItem.cachedNameLineCount) {
-                eventNameView.setLines(wrapperEventItem.cachedNameLineCount);
+            if (eventNameView.getLineCount() != eventItemWrapper.cachedNameLineCount) {
+                eventNameView.setLines(eventItemWrapper.cachedNameLineCount);
             }
-            eventNameView.setText(wrapperEventItem.cachedName);
-            wrapperEventItem.posterLoaded = false;
+            eventNameView.setText(eventItemWrapper.cachedName);
+            eventItemWrapper.posterLoaded = false;
             if (mImmediateImageLoading) {
-                addToLoadingList(wrapperEventItem, eventCollectionItemViewHolder.getPosterThumbView());
+                addToLoadingList(eventItemWrapper, eventCollectionItemViewHolder.getPosterThumbView());
             } else {
                 eventCollectionItemViewHolder.getPosterThumbView().setImageDrawable(null);
             }
@@ -297,8 +297,8 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         return getItemViewType(position) == LOADING ? -1 : getItem(position).eventItem.id;
     }
 
-    private void addToLoadingList(final WrapperEventItem wrapperEventItem, final ImageView viewTarget) {
-        mLoadingList.add(Glide.with(mContext).load(wrapperEventItem.eventItem.posterBlur).centerCrop().dontAnimate().listener(new RequestListener<String, GlideDrawable>() {
+    private void addToLoadingList(final EventItemWrapper eventItemWrapper, final ImageView viewTarget) {
+        mLoadingList.add(Glide.with(mContext).load(eventItemWrapper.eventItem.posterBlur).centerCrop().dontAnimate().listener(new RequestListener<String, GlideDrawable>() {
 
             @Override
             public boolean onException(Exception exp, String model, Target<GlideDrawable> target, boolean isFirstResource) {
@@ -308,7 +308,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             @Override
             public boolean onResourceReady(GlideDrawable resource, String model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
                 mLoadingList.remove(target);
-                wrapperEventItem.posterLoaded = true;
+                eventItemWrapper.posterLoaded = true;
                 viewTarget.setColorFilter(mContext.getResources().getColor(R.color.poster_overlay), PorterDuff.Mode.MULTIPLY);
                 return false;
             }
@@ -333,14 +333,14 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     @Override
     public int getItemViewType(int position) {
-        WrapperEventItem item = getItem(position);
+        EventItemWrapper item = getItem(position);
         if (item != null && item.isLoadingItem) {
             return LOADING;
         }
         return NORMAL;
     }
 
-    public WrapperEventItem getItem(int position) {
+    public EventItemWrapper getItem(int position) {
         if (position < 0 || mEventItems.size() <= position) return null;
         return mEventItems.get(position);
     }
@@ -348,7 +348,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     public void removeLoading() {
         if (getItemCount() <= 0) return;
         int position = getItemCount() - 1;
-        WrapperEventItem item = mEventItems.get(position);
+        EventItemWrapper item = mEventItems.get(position);
         if (item.isLoadingItem) {
             mEventItems.remove(position);
             notifyItemRemoved(position);
@@ -356,13 +356,13 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     }
 
     public void addLoading() {
-        WrapperEventItem item = null;
+        EventItemWrapper item = null;
         int position = getItemCount() - 1;
         if (getItemCount() != 0) {
             item = mEventItems.get(position);
         }
         if (getItemCount() == 0 || (item != null && !item.isLoadingItem)) {
-            mEventItems.add(new WrapperEventItem(true));
+            mEventItems.add(new EventItemWrapper(true));
             notifyItemInserted(position + 1);
         }
     }
@@ -390,8 +390,8 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 RecyclerView.ViewHolder viewHolder = mRecyclerView.findViewHolderForAdapterPosition(i);
                 if (viewHolder.getClass() == EventCollectionItemViewHolder.class) {
                     EventCollectionItemViewHolder eventCollectionItemViewHolder = (EventCollectionItemViewHolder) mRecyclerView.findViewHolderForAdapterPosition(i);
-                    WrapperEventItem wrapperEventItem = getItem(i);
-                    if (!wrapperEventItem.posterLoaded) {
+                    EventItemWrapper eventItemWrapper = getItem(i);
+                    if (!eventItemWrapper.posterLoaded) {
                         addToLoadingList(getItem(i), eventCollectionItemViewHolder.getPosterThumbView());
                     }
                 }
@@ -399,7 +399,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         }
     }
 
-    class WrapperEventItem {
+    class EventItemWrapper {
 
         private EventItem eventItem;
         private boolean isLoadingItem = false;
@@ -408,14 +408,14 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         public int cachedNameLineCount;
         public boolean posterLoaded;
 
-        WrapperEventItem(EventItem eventItem) {
+        EventItemWrapper(EventItem eventItem) {
             cachedName = null;
             cachedNameLineCount = 0;
             posterLoaded = false;
             this.eventItem = eventItem;
         }
 
-        WrapperEventItem(boolean loading) {
+        EventItemWrapper(boolean loading) {
             this.isLoadingItem = loading;
         }
     }

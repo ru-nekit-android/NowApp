@@ -60,11 +60,15 @@ public class EventPosterViewFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_poster_view, container, false);
         mProgressWheel = (ProgressWheel) view.findViewById(R.id.progress_wheel);
+        final ImageView posterView = (ImageView) view.findViewById(R.id.poster_view);
         Glide.with(getActivity()).load(mImageUrl).listener(new RequestListener<String, GlideDrawable>() {
 
             @Override
             public boolean onException(Exception e, String model, Target<GlideDrawable> target, boolean isFirstResource) {
-                return false;
+                //getActivity().getSupportFragmentManager().popBackStack();
+                mProgressWheel.setVisibility(View.GONE);
+                posterView.setImageResource(R.drawable.event_poster_stub);
+                return true;
             }
 
             @Override
@@ -72,7 +76,7 @@ public class EventPosterViewFragment extends Fragment {
                 mProgressWheel.setVisibility(View.GONE);
                 return false;
             }
-        }).into((ImageView) view.findViewById(R.id.poster_view));
+        }).into(posterView);
         return view;
     }
 

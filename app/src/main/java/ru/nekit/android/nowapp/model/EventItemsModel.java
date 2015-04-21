@@ -6,10 +6,13 @@ import android.support.v4.util.Pair;
 import java.text.DateFormatSymbols;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 import ru.nekit.android.nowapp.R;
+import ru.nekit.android.nowapp.model.db.EventLocalDataSource;
 
 /**
  * Created by chuvac on 15.03.15.
@@ -19,10 +22,10 @@ public class EventItemsModel {
 
     private static final long MAXIMUM_TIME_PERIOD_FOR_DATE_ALIAS_SUPPORT = TimeUnit.HOURS.toSeconds(4);
 
-    private static final long[] NIGHT_PERIOD = {TimeUnit.HOURS.toSeconds(0), TimeUnit.HOURS.toSeconds(5) - 1};
+    private static final long[] NIGHT_PERIOD = {TimeUnit.HOURS.toSeconds(23), TimeUnit.HOURS.toSeconds(5) - 1};
     private static final long[] MORNING_PERIOD = {TimeUnit.HOURS.toSeconds(5), TimeUnit.HOURS.toSeconds(12) - 1};
     private static final long[] DAY_PERIOD = {TimeUnit.HOURS.toSeconds(12), TimeUnit.HOURS.toSeconds(19) - 1};
-    private static final long[] EVENING_PERIOD = {TimeUnit.HOURS.toSeconds(19), TimeUnit.HOURS.toSeconds(24)};
+    private static final long[] EVENING_PERIOD = {TimeUnit.HOURS.toSeconds(19), TimeUnit.HOURS.toSeconds(23) - 1};
 
     private static ArrayList<Pair<String, long[]>> PERIODS = new ArrayList<Pair<String, long[]>>(4) {{
         add(new Pair<>("ночью", NIGHT_PERIOD));
@@ -31,7 +34,7 @@ public class EventItemsModel {
         add(new Pair<>("вечером", EVENING_PERIOD));
     }};
 
-    public static final String TYPE = "type";
+    public static final String LOADING_TYPE = "loading_type";
 
     public static final String REQUEST_NEW_EVENT_ITEMS = "request_new_event_items";
     public static final String REFRESH_EVENT_ITEMS = "refresh_event_items";
@@ -41,17 +44,14 @@ public class EventItemsModel {
 
     private static EventItemsModel instance;
 
-    static {
-        instance = new EventItemsModel();
-    }
-
     private final ArrayList<EventItem> mEventItems;
     private final ArrayList<EventItem> mLastAddedEventItems;
     private int mAvailableEventCount;
     private int mCurrentPage;
     private boolean mReachEndOfDataList;
+    private EventLocalDataSource mEventLocalDataSource;
 
-    private EventItemsModel() {
+    private EventItemsModel(Context context) {
         mEventItems = new ArrayList<>();
         mLastAddedEventItems = new ArrayList<>();
         mCurrentPage = 1;
@@ -64,7 +64,7 @@ public class EventItemsModel {
         CATEGORY_TYPE_BIG.put("category_entertainment", R.drawable.cat_drink_big);
         CATEGORY_TYPE_BIG.put("category_other", R.drawable.cat_crown_big);
         CATEGORY_TYPE_BIG.put("category_education", R.drawable.cat_book_big);
-
+        mEventLocalDataSource = new EventLocalDataSource(context);
     }
 
     public static String getStartTimeAlias(Context context, EventItem eventItem) {
@@ -130,7 +130,10 @@ public class EventItemsModel {
         return CATEGORY_TYPE_BIG.get(category);
     }
 
-    public static EventItemsModel getInstance() {
+    public static EventItemsModel getInstance(Context context) {
+        if (instance == null) {
+            instance = new EventItemsModel(context);
+        }
         return instance;
     }
 
@@ -213,5 +216,19 @@ public class EventItemsModel {
 
     public void setReachEndOfDataList(boolean value) {
         mReachEndOfDataList = value;
+    }
+
+    public EventLocalDataSource getLocalDataSource() {
+        return mEventLocalDataSource;
+    }
+
+    public void sortByStartTime() {
+        Collections.sort(mEventItems, new EventNameComparator());
+    }
+
+    public class EventNameComparator implements Comparator<EventItem> {
+        public int compare(EventItem left, EventItem right) {
+            return Long.valueOf(left.date + left.startAt).compareTo(right.date + right.startAt);
+        }
     }
 }

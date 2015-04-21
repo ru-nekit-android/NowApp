@@ -1,11 +1,15 @@
 package ru.nekit.android.nowapp.view;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -26,6 +30,8 @@ import ru.nekit.android.nowapp.modelView.EventCollectionAdapter;
 import ru.nekit.android.nowapp.modelView.listeners.IEventItemSelectListener;
 import ru.nekit.android.nowapp.widget.ScrollingGridLayoutManager;
 
+import static ru.nekit.android.nowapp.NowApplication.STATE.ONLINE;
+
 public class EventCollectionFragment extends Fragment implements LoaderManager.LoaderCallbacks<Integer>, IEventItemSelectListener, View.OnClickListener {
 
     public static final String TAG = "ru.nekit.android.event_collection_fragment";
@@ -33,10 +39,6 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     private static final int LOADER_ID = 2;
     private static final int SMOOTH_SCROLL_DURATION = 1000;
 
-    enum LOADING_TYPES {
-        PULL_TO_REFRESH,
-        REQUEST_NEW_EVENT_ITEMS
-    }
 
     enum LOADING_STATE {
         LOADING, LOADED
@@ -49,9 +51,10 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private EventItemsModel mEventModel;
     private int mCurrentPage;
+    private BroadcastReceiver mChangeApplicationStateReceiver;
 
     private LOADING_STATE mLoadingState = LOADING_STATE.LOADED;
-    private LOADING_TYPES mLoadingType = LOADING_TYPES.PULL_TO_REFRESH;
+    private String mLoadingType = EventItemsModel.REFRESH_EVENT_ITEMS;
 
     public EventCollectionFragment() {
     }
@@ -69,8 +72,28 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
-        mEventModel = ((NowApplication) getActivity().getApplication()).getEventModel();
+        mEventModel = NowApplication.getEventModel();
         mCurrentPage = mEventModel.getCurrentPage();
+        mChangeApplicationStateReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                updateApplcationStateHandler();
+                if (NowApplication.getState() == ONLINE) {
+                    mLoadingType = EventItemsModel.REFRESH_EVENT_ITEMS;
+                    mEventItemsView.smoothScrollToPosition(0);
+                    mSwipeRefreshLayout.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            mSwipeRefreshLayout.setRefreshing(true);
+                            performLoad();
+                        }
+                    }, SMOOTH_SCROLL_DURATION);
+
+                } else {
+                    performLoad();
+                }
+            }
+        };
     }
 
     @Override
@@ -83,6 +106,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                 mCurrentPage = mEventModel.getCurrentPage();
             }
         }
+        LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mChangeApplicationStateReceiver, new IntentFilter(NowApplication.CHANGE_APPLICATION_STATE));
     }
 
     @Override
@@ -95,7 +119,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                     mSwipeRefreshLayout.setRefreshing(true);
                 }
             });
-            mLoadingType = LOADING_TYPES.PULL_TO_REFRESH;
+            mLoadingType = EventItemsModel.REFRESH_EVENT_ITEMS;
             performLoad();
         }
         View view = getView();
@@ -132,7 +156,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                mLoadingType = LOADING_TYPES.PULL_TO_REFRESH;
+                mLoadingType = EventItemsModel.REFRESH_EVENT_ITEMS;
                 setLoadingState(LOADING_STATE.LOADING);
                 performLoad();
             }
@@ -141,18 +165,24 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         mEventCollectionAdapter.setLoadMoreListener(new EventCollectionAdapter.OnLoadMorelListener() {
             @Override
             public void onLoadMore() {
-                mLoadingType = LOADING_TYPES.REQUEST_NEW_EVENT_ITEMS;
+                mLoadingType = EventItemsModel.REQUEST_NEW_EVENT_ITEMS;
                 setLoadingState(LOADING_STATE.LOADING);
             }
         });
 
+        updateApplcationStateHandler();
+
         return view;
+    }
+
+    private void updateApplcationStateHandler() {
+        mSwipeRefreshLayout.setEnabled(NowApplication.getState() == ONLINE);
     }
 
     private void setLoadingState(LOADING_STATE state) {
         if (mLoadingState == state) return;
         mLoadingState = state;
-        if (mLoadingType == LOADING_TYPES.REQUEST_NEW_EVENT_ITEMS) {
+        if (EventItemsModel.REQUEST_NEW_EVENT_ITEMS.equals(mLoadingType)) {
             switch (mLoadingState) {
                 case LOADING:
                     if (!mEventCollectionAdapter.isLoading()) {
@@ -175,14 +205,8 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     private void performLoad() {
         LoaderManager loaderManager = getLoaderManager();
         Bundle loaderArgs = new Bundle();
-        String type = null;
-        if (mLoadingType == LOADING_TYPES.PULL_TO_REFRESH) {
-            type = EventItemsModel.REFRESH_EVENT_ITEMS;
-        } else if (mLoadingType == LOADING_TYPES.REQUEST_NEW_EVENT_ITEMS) {
-            type = EventItemsModel.REQUEST_NEW_EVENT_ITEMS;
-        }
-        loaderArgs.putString(EventItemsModel.TYPE, type);
-        final Loader<Void> loader = loaderManager.getLoader(LOADER_ID);
+        loaderArgs.putString(EventItemsModel.LOADING_TYPE, mLoadingType);
+        final Loader<Integer> loader = loaderManager.getLoader(LOADER_ID);
         if (loader != null) {
             loaderManager.restartLoader(LOADER_ID, loaderArgs, EventCollectionFragment.this);
         } else {
@@ -213,6 +237,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         LoaderManager loaderManager = getLoaderManager();
         loaderManager.destroyLoader(LOADER_ID);
         setLoadingState(LOADING_STATE.LOADED);
+        LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mChangeApplicationStateReceiver);
         super.onPause();
     }
 
@@ -230,9 +255,9 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     public void onLoadFinished(Loader<Integer> loader, Integer result) {
         if (isResumed()) {
             if (result == EventItemsLoader.RESULT_OK) {
-                if (LOADING_TYPES.PULL_TO_REFRESH == mLoadingType) {
+                if (EventItemsModel.REFRESH_EVENT_ITEMS.equals(mLoadingType)) {
                     mEventCollectionAdapter.setItems(mEventModel.getEventItems());
-                } else if (mLoadingType == LOADING_TYPES.REQUEST_NEW_EVENT_ITEMS) {
+                } else if (EventItemsModel.REQUEST_NEW_EVENT_ITEMS.equals(mLoadingType)) {
                     mEventCollectionAdapter.addItems(mEventModel.getLastAddedEventItems());
                 }
                 mCurrentPage = mEventModel.getCurrentPage();
@@ -240,7 +265,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                 Toast.makeText(getActivity(), Html.fromHtml(getResources().getString(R.string.error_while_data_loading)), Toast.LENGTH_LONG).show();
             }
             setLoadingState(LOADING_STATE.LOADED);
-            mLoadingType = LOADING_TYPES.PULL_TO_REFRESH;
+            mLoadingType = EventItemsModel.REFRESH_EVENT_ITEMS;
             mSwipeRefreshLayout.setRefreshing(false);
         }
     }
@@ -248,7 +273,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     @Override
     public void onLoaderReset(Loader<Integer> loader) {
         setLoadingState(LOADING_STATE.LOADED);
-        mLoadingType = LOADING_TYPES.PULL_TO_REFRESH;
+        mLoadingType = EventItemsModel.REFRESH_EVENT_ITEMS;
         mSwipeRefreshLayout.setRefreshing(false);
     }
 

@@ -68,6 +68,8 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     private ProgressWheel mProgressWheel;
     private GeoPoint mGeoPoint;
     private RelativeLayout mMapViewContainer;
+    private ImageView mPosterThumbView;
+    private boolean mPosterViewIsEmpty;
 
     public EventDetailFragment() {
     }
@@ -88,6 +90,11 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     public void onResume() {
         super.onResume();
         ((ActionBarActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
     }
 
     private void createMap() {
@@ -141,38 +148,44 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Bundle arg = getArguments();
+        mEventItem = arg.getParcelable(ARG_EVENT_ITEM);
         return constructInterface(inflater.inflate(R.layout.fragment_event_detail, container, false));
     }
 
     private View constructInterface(View view) {
 
         Bundle arg = getArguments();
-        Context context = getActivity();
+        final Context context = getActivity();
         mEventItem = arg.getParcelable(ARG_EVENT_ITEM);
 
         TextView titleView = (TextView) view.findViewById(R.id.title_view);
         ArrayList<String> eventNameArray = ru.nekit.android.nowapp.utils.StringUtil.wrapText(mEventItem.name.toUpperCase());
         titleView.setLines(eventNameArray.size());
         titleView.setText(TextUtils.join("\n", eventNameArray));
-        ImageView posterThumbView = (ImageView) view.findViewById(R.id.poster_thumb_view);
+        mPosterThumbView = (ImageView) view.findViewById(R.id.poster_thumb_view);
         mProgressWheel = (ProgressWheel) view.findViewById(R.id.progress_wheel);
         mProgressWheel.setVisibility(View.VISIBLE);
         if (mEventItem.posterThumb != null && mEventItem.posterThumb != "") {
             Glide.with(context).load(mEventItem.posterThumb).listener(new RequestListener<String, GlideDrawable>() {
                 @Override
                 public boolean onException(Exception exp, String model, Target<GlideDrawable> target, boolean isFirstResource) {
-                    return false;
+                    mProgressWheel.setVisibility(View.GONE);
+                    mPosterThumbView.setImageResource(R.drawable.event_poster_stub);
+                    mPosterViewIsEmpty = true;
+                    return true;
                 }
 
                 @Override
                 public boolean onResourceReady(GlideDrawable resource, String model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
                     mProgressWheel.setVisibility(View.GONE);
+                    mPosterViewIsEmpty = false;
                     return false;
                 }
-            }).into(posterThumbView);
+            }).into(mPosterThumbView);
         } else {
             mProgressWheel.setVisibility(View.GONE);
-            posterThumbView.setImageDrawable(context.getResources().getDrawable(R.drawable.event_poster_stub));
+            mPosterThumbView.setImageDrawable(context.getResources().getDrawable(R.drawable.event_poster_stub));
         }
         String logoThumb = mEventItem.logoThumb;
         final ImageView logoThumbView = (ImageView) view.findViewById(R.id.logo_view);
@@ -205,7 +218,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
             ((ImageView) view.findViewById(R.id.category_type_view)).setImageDrawable(context.getResources().getDrawable(categoryDrawableId));
         }
 
-        posterThumbView.setOnClickListener(this);
+        mPosterThumbView.setOnClickListener(this);
 
         TextView dayDateView = (TextView) view.findViewById(R.id.day_date_view);
         TextView monthView = (TextView) view.findViewById(R.id.month_view);
@@ -405,7 +418,9 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
             case R.id.poster_thumb_view:
 
-                mEventItemPosterSelectListener.onEventItemPosterSelect(mEventItem.posterOriginal);
+                if (!mPosterViewIsEmpty) {
+                    mEventItemPosterSelectListener.onEventItemPosterSelect(mEventItem.posterOriginal);
+                }
 
                 break;
 

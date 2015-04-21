@@ -12,18 +12,23 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.devspark.robototextview.util.RobotoTypefaceManager;
 
+import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.EventItem;
 import ru.nekit.android.nowapp.modelView.listeners.IEventItemPosterSelectListener;
 import ru.nekit.android.nowapp.modelView.listeners.IEventItemSelectListener;
+import ru.nekit.android.nowapp.utils.ConnectivityReceiver;
 
 
-public class EventCollectionActivity extends ActionBarActivity implements IEventItemSelectListener, IEventItemPosterSelectListener{
+public class EventCollectionActivity extends ActionBarActivity implements IEventItemSelectListener, IEventItemPosterSelectListener, ConnectivityReceiver.OnNetworkAvailableListener {
 
     private EventCollectionFragment mEventCollectionFragment;
     private EventDetailFragment mEventDetailFragment;
     private EventPosterViewFragment mEventPosterViewFragment;
+    private ConnectivityReceiver mConnectivityReceiver;
+    private View mOfflineView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +42,33 @@ public class EventCollectionActivity extends ActionBarActivity implements IEvent
         mEventCollectionFragment = new EventCollectionFragment();
         if (fragmentManager.findFragmentByTag(EventCollectionFragment.TAG) == null) {
             getSupportFragmentManager().beginTransaction().add(R.id.event_place_holder, mEventCollectionFragment, EventCollectionFragment.TAG).commit();
+        }
+
+        mOfflineView = findViewById(R.id.offline_view);
+
+        mConnectivityReceiver = new ConnectivityReceiver(this);
+        mConnectivityReceiver.setOnNetworkAvailableListener(this);
+
+        updateOfflineView();
+    }
+
+    @Override
+    public void onNetworkAvailable() {
+        NowApplication.setState(NowApplication.STATE.ONLINE);
+        updateOfflineView();
+    }
+
+    @Override
+    public void onNetworkUnavailable() {
+        NowApplication.setState(NowApplication.STATE.OFFLINE);
+        updateOfflineView();
+    }
+
+    private void updateOfflineView() {
+        if (NowApplication.getState() == NowApplication.STATE.ONLINE) {
+            mOfflineView.setVisibility(View.GONE);
+        } else {
+            mOfflineView.setVisibility(View.VISIBLE);
         }
     }
 
@@ -54,6 +86,8 @@ public class EventCollectionActivity extends ActionBarActivity implements IEvent
 
                 MaterialDialog dialog = new MaterialDialog.Builder(this)
                         .title(getResources().getString(R.string.action_about))
+                        .typeface(RobotoTypefaceManager.obtainTypeface(getApplicationContext(), RobotoTypefaceManager.Typeface.ROBOTO_REGULAR),
+                                RobotoTypefaceManager.obtainTypeface(getApplicationContext(), RobotoTypefaceManager.Typeface.ROBOTO_REGULAR))
                         .disableDefaultFonts()
                         .customView(R.layout.about_layout, false)
                         .show();
@@ -100,6 +134,18 @@ public class EventCollectionActivity extends ActionBarActivity implements IEvent
     @Override
     protected void onDestroy() {
         super.onDestroy();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mConnectivityReceiver.bind(this);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        mConnectivityReceiver.unbind(this);
     }
 
 }

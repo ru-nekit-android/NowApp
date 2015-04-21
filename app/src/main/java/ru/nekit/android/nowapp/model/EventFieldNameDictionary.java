@@ -3,8 +3,7 @@ package ru.nekit.android.nowapp.model;
 /**
  * Created by chuvac on 13.03.15.
  */
-public class JSONDictionary {
-
+public class EventFieldNameDictionary {
 
     public static final String DATE = "date";
     public static final String EVENT_DESCRIPTION = "eventDescription";

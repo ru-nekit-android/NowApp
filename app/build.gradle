@@ -8,8 +8,8 @@ android {
         applicationId "ru.nekit.android.nowapp"
         minSdkVersion 11
         targetSdkVersion 21
-        versionCode 4
-        versionName "1.0.3"
+        versionCode 5
+        versionName "1.0.4"
     }
     buildTypes {
         debug {
@@ -32,4 +32,6 @@ dependencies {
     compile 'org.slf4j:slf4j-simple:1.6.1'
     compile 'com.afollestad:material-dialogs:0.6.7.1'
     compile project(":robototextview")
+    compile 'com.parse.bolts:bolts-android:1.+'
+    compile fileTree(dir: 'libs', include: 'Parse-*.jar')
 }
