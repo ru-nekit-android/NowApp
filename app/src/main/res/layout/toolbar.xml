@@ -19,6 +19,7 @@
 
     <com.devspark.robototextview.widget.RobotoTextView
         android:id="@+id/offline_view"
+        style="@style/OfflineView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignEnd="@+id/now_title"

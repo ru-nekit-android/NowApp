@@ -49,7 +49,7 @@ public class SplashScreenActivity extends ActionBarActivity implements LoaderMan
                     .content(R.string.dialog_content_offline_state)
                     .positiveText(android.R.string.yes)
                     .negativeText(R.string.no)
-                    .typeface(RobotoTypefaceManager.obtainTypeface(getApplicationContext(), RobotoTypefaceManager.Typeface.ROBOTO_LIGHT),
+                    .typeface(RobotoTypefaceManager.obtainTypeface(getApplicationContext(), RobotoTypefaceManager.Typeface.ROBOTO_REGULAR),
                             RobotoTypefaceManager.obtainTypeface(getApplicationContext(), RobotoTypefaceManager.Typeface.ROBOTO_REGULAR))
                     .customView(R.layout.connectivity_content, false)
                     .callback(new MaterialDialog.ButtonCallback() {
@@ -64,6 +64,7 @@ public class SplashScreenActivity extends ActionBarActivity implements LoaderMan
                         }
                     })
                     .disableDefaultFonts()
+                    .cancelable(false)
                     .show();
 
             View view = dialog.getCustomView();
@@ -82,6 +83,7 @@ public class SplashScreenActivity extends ActionBarActivity implements LoaderMan
                     })
                     .customView(R.layout.connectivity_content, false)
                     .disableDefaultFonts()
+                    .cancelable(false)
                     .show();
 
             View view = dialog.getCustomView();
