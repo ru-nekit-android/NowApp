@@ -18,6 +18,7 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -32,6 +33,10 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
+import com.parse.CountCallback;
+import com.parse.ParseAnonymousUtils;
+import com.parse.ParseException;
+import com.parse.ParseUser;
 import com.pnikosis.materialishprogress.ProgressWheel;
 
 import org.osmdroid.DefaultResourceProxyImpl;
@@ -46,9 +51,11 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.concurrent.TimeUnit;
 
+import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.EventItem;
 import ru.nekit.android.nowapp.model.EventItemsModel;
+import ru.nekit.android.nowapp.model.EventViewStatistic;
 import ru.nekit.android.nowapp.modelView.listeners.IEventItemPosterSelectListener;
 import ru.nekit.android.nowapp.utils.RobotoTextAppearanceSpan;
 import ru.nekit.android.nowapp.utils.TextViewUtils;
@@ -84,10 +91,44 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         createMap();
     }
 
+    private void fetchEventViewStatistic() {
+        if (ParseAnonymousUtils.isLinked(ParseUser.getCurrentUser())) {
+            EventViewStatistic.getUniqueViewStatisticForDeviceQuery(mEventItem.id, NowApplication.getDeviceId()).countInBackground(new CountCallback() {
+                @Override
+                public void done(int count, ParseException exp) {
+                    if (exp == null) {
+                        if (count == 0) {
+                            EventViewStatistic eventViewStatistic = new EventViewStatistic();
+                            eventViewStatistic.setEventId(mEventItem.id);
+                            eventViewStatistic.setDeviceId(NowApplication.getDeviceId());
+                            eventViewStatistic.saveInBackground();
+                        }
+                    } else {
+                    }
+                }
+            });
+            EventViewStatistic.getUniqueViewStatisticForEventQuery(mEventItem.id).countInBackground(new CountCallback() {
+                @Override
+                public void done(int count, ParseException exp) {
+                    if (exp == null) {
+                        Log.v("ru.nekit.vtag", "Event item statistic :: view count: " + count);
+                    } else {
+                    }
+                }
+            });
+        }
+    }
+
     @Override
     public void onResume() {
         super.onResume();
+        fetchEventViewStatistic();
         ((ActionBarActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
     }
 
     private void createMap() {
@@ -141,15 +182,13 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Bundle arg = getArguments();
+        mEventItem = arg.getParcelable(ARG_EVENT_ITEM);
         return constructInterface(inflater.inflate(R.layout.fragment_event_detail, container, false));
     }
 
     private View constructInterface(View view) {
-
-        Bundle arg = getArguments();
         Context context = getActivity();
-        mEventItem = arg.getParcelable(ARG_EVENT_ITEM);
-
         TextView titleView = (TextView) view.findViewById(R.id.title_view);
         ArrayList<String> eventNameArray = ru.nekit.android.nowapp.utils.StringUtil.wrapText(mEventItem.name.toUpperCase());
         titleView.setLines(eventNameArray.size());
