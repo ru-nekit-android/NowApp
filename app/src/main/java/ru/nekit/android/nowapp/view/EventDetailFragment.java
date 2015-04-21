@@ -112,13 +112,13 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         mGeoPoint = new GeoPoint(mEventItem.lat, mEventItem.lng);
         mMapView.getController().setZoom(MAX_ZOOM);
         mMapView.getController().setCenter(mGeoPoint);
-        final ArrayList<OverlayItem> items = new ArrayList<OverlayItem>();
+        final ArrayList<OverlayItem> items = new ArrayList<>();
         OverlayItem marker = new OverlayItem(null, null, mGeoPoint);
         marker.setMarkerHotspot(OverlayItem.HotspotPlace.BOTTOM_CENTER);
         items.add(marker);
-        Drawable newMarker = this.getResources().getDrawable(R.drawable.map_marker);
+        Drawable newMarker = this.getResources().getDrawable(R.drawable.ic_action_location);
         DefaultResourceProxyImpl resProxyImp = new DefaultResourceProxyImpl(getActivity().getApplicationContext());
-        ItemizedIconOverlay markersOverlay = new ItemizedIconOverlay<OverlayItem>(items, newMarker, null, resProxyImp);
+        ItemizedIconOverlay markersOverlay = new ItemizedIconOverlay<>(items, newMarker, null, resProxyImp);
         mMapView.getOverlays().add(markersOverlay);
         checkZoomButtons();
     }
@@ -166,7 +166,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         mPosterThumbView = (ImageView) view.findViewById(R.id.poster_thumb_view);
         mProgressWheel = (ProgressWheel) view.findViewById(R.id.progress_wheel);
         mProgressWheel.setVisibility(View.VISIBLE);
-        if (mEventItem.posterThumb != null && mEventItem.posterThumb != "") {
+        if (mEventItem.posterThumb != null && !"".equals(mEventItem.posterThumb)) {
             Glide.with(context).load(mEventItem.posterThumb).listener(new RequestListener<String, GlideDrawable>() {
                 @Override
                 public boolean onException(Exception exp, String model, Target<GlideDrawable> target, boolean isFirstResource) {
@@ -190,7 +190,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         String logoThumb = mEventItem.logoThumb;
         final ImageView logoThumbView = (ImageView) view.findViewById(R.id.logo_view);
         final TextView placeView = (TextView) view.findViewById(R.id.place_view);
-        if (logoThumb == "") {
+        if ("".equals(logoThumb)) {
             logoThumbView.setVisibility(View.GONE);
             placeView.setVisibility(View.VISIBLE);
             placeView.setText(mEventItem.placeName);
@@ -253,7 +253,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(TimeUnit.SECONDS.toMillis(mEventItem.date));
         dayDateView.setText(String.format("%d", calendar.get(Calendar.DAY_OF_MONTH)));
-        monthView.setText(new DateFormatSymbols().getMonths()[calendar.get(Calendar.MONTH)].toLowerCase());
+        monthView.setText(new DateFormatSymbols().getShortMonths()[calendar.get(Calendar.MONTH)].toLowerCase());
         int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK) - 1;
         dayOfWeekView.setText(getResources().getTextArray(R.array.day_of_week)[dayOfWeek]);
         calendar.set(Calendar.SECOND, EventItemsModel.getCurrentTimeFromEventInSeconds(mEventItem));
