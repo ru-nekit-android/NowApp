@@ -13,6 +13,13 @@
     <string name="connection_is_not_available">Проверьте соединение с сетью Интернет</string>
     <string name="site_is_not_available">Сайт в данный момент недоступен</string>
     <string name="error_while_data_loading">Ошибка во время загрузки данных</string>
+    <string name="dialog_title_offline_state">Оффлай режим</string>
+    <string name="dialog_content_offline_state">Вы не подключены к сети Интернет.\nХотите просмотреть события в режиме оффлайн? \n\n<small>Предупреждение: возможно информация о некоторых событиях будет неактуальна.</small></string>
+    <string name="dialog_content_default_state">Вы не подключены к сети Интернет.\nНажмите \"%s\" для закрытия программы.</string>
+    <string name="dialog_title_default_state">Предупреждение</string>
+    <string name="exit">Выход</string>
+    <string name="no">Нет</string>
+    <string name="offline_text">offline</string>
 
     <string-array name="day_of_week">
         <item>ВС</item>

@@ -6,9 +6,11 @@ import android.os.Handler;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v7.app.ActionBarActivity;
-import android.text.Html;
-import android.widget.Toast;
+import android.view.View;
+import android.widget.TextView;
 
+import com.afollestad.materialdialogs.MaterialDialog;
+import com.devspark.robototextview.util.RobotoTypefaceManager;
 import com.pnikosis.materialishprogress.ProgressWheel;
 
 import ru.nekit.android.nowapp.NowApplication;
@@ -35,14 +37,60 @@ public class SplashScreenActivity extends ActionBarActivity implements LoaderMan
             initFirstTimeLoader();
         } else {
             NowApplication.setState(NowApplication.STATE.OFFLINE);
-            initFirstTimeLoader();
-            //exitWitchError(R.string.connection_is_not_available);
+            showConnectivityProblemDialog();
         }
     }
 
-    private void initFirstTimeLoader(){
-        LoaderManager loaderManager = getSupportLoaderManager();
-        loaderManager.initLoader(LOADER_ID, null, this);
+    private void showConnectivityProblemDialog() {
+        mProgressWheel.setVisibility(View.GONE);
+        if (NowApplication.offlineAllow()) {
+            MaterialDialog dialog = new MaterialDialog.Builder(this)
+                    .title(R.string.dialog_title_offline_state)
+                    .content(R.string.dialog_content_offline_state)
+                    .positiveText(android.R.string.yes)
+                    .negativeText(R.string.no)
+                    .typeface(RobotoTypefaceManager.obtainTypeface(getApplicationContext(), RobotoTypefaceManager.Typeface.ROBOTO_LIGHT),
+                            RobotoTypefaceManager.obtainTypeface(getApplicationContext(), RobotoTypefaceManager.Typeface.ROBOTO_REGULAR))
+                    .customView(R.layout.connectivity_content, false)
+                    .callback(new MaterialDialog.ButtonCallback() {
+                        @Override
+                        public void onPositive(MaterialDialog dialog) {
+                            initFirstTimeLoader();
+                        }
+
+                        @Override
+                        public void onNegative(MaterialDialog dialog) {
+                            finish();
+                        }
+                    })
+                    .disableDefaultFonts()
+                    .show();
+
+            View view = dialog.getCustomView();
+            ((TextView) view.findViewById(R.id.text_view)).setText(R.string.dialog_content_offline_state);
+        } else {
+            MaterialDialog dialog = new MaterialDialog.Builder(this)
+                    .title(R.string.dialog_title_default_state)
+                    .negativeText(R.string.exit)
+                    .typeface(RobotoTypefaceManager.obtainTypeface(getApplicationContext(), RobotoTypefaceManager.Typeface.ROBOTO_REGULAR),
+                            RobotoTypefaceManager.obtainTypeface(getApplicationContext(), RobotoTypefaceManager.Typeface.ROBOTO_REGULAR))
+                    .callback(new MaterialDialog.ButtonCallback() {
+                        @Override
+                        public void onNegative(MaterialDialog dialog) {
+                            finish();
+                        }
+                    })
+                    .customView(R.layout.connectivity_content, false)
+                    .disableDefaultFonts()
+                    .show();
+
+            View view = dialog.getCustomView();
+            ((TextView) view.findViewById(R.id.text_view)).setText(String.format(getResources().getString(R.string.dialog_content_default_state), getResources().getString(R.string.exit)));
+        }
+    }
+
+    private void initFirstTimeLoader() {
+        getSupportLoaderManager().initLoader(LOADER_ID, null, this);
     }
 
     @Override
@@ -67,18 +115,8 @@ public class SplashScreenActivity extends ActionBarActivity implements LoaderMan
                 }
             }, 100);
         } else {
-            exitWitchError(R.string.site_is_not_available);
+            showConnectivityProblemDialog();
         }
-    }
-
-    private void exitWitchError(final int errorDescriptionResourceId) {
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(SplashScreenActivity.this, Html.fromHtml(getResources().getString(errorDescriptionResourceId)), Toast.LENGTH_LONG).show();
-                finish();
-            }
-        }, 500);
     }
 
     @Override

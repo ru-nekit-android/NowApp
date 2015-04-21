@@ -6,6 +6,8 @@ import android.support.v4.util.Pair;
 import java.text.DateFormatSymbols;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -218,5 +220,15 @@ public class EventItemsModel {
 
     public EventLocalDataSource getLocalDataSource() {
         return mEventLocalDataSource;
+    }
+
+    public void sortByStartTime() {
+        Collections.sort(mEventItems, new EventNameComparator());
+    }
+
+    public class EventNameComparator implements Comparator<EventItem> {
+        public int compare(EventItem left, EventItem right) {
+            return Long.valueOf(left.date + left.startAt).compareTo(right.date + right.startAt);
+        }
     }
 }

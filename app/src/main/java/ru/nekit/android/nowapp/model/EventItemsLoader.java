@@ -47,7 +47,7 @@ public class EventItemsLoader extends AsyncTaskLoader<Integer> {
         Integer result = RESULT_OK;
 
         Context context = getContext();
-        EventItemsModel eventModel = ((NowApplication) context).getEventModel();
+        EventItemsModel eventModel = NowApplication.getEventModel();
         EventLocalDataSource localDataSource = eventModel.getLocalDataSource();
         if (NowApplication.getState() == NowApplication.STATE.ONLINE) {
             localDataSource.openForWrite();
@@ -167,12 +167,19 @@ public class EventItemsLoader extends AsyncTaskLoader<Integer> {
         } else {
             eventItems = localDataSource.getAllEvents();
             eventModel.setEvents(eventItems);
+            eventModel.sortByStartTime();
             eventsCount = eventItems.size();
         }
 
         eventModel.setAvailableEventCount(eventsCount);
 
+        if (result == RESULT_OK) {
+            NowApplication.updateDataTimestamp();
+        }
+
         return result;
     }
+
+
 
 }

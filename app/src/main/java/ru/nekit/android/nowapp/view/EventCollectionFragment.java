@@ -1,11 +1,15 @@
 package ru.nekit.android.nowapp.view;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -47,6 +51,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private EventItemsModel mEventModel;
     private int mCurrentPage;
+    private BroadcastReceiver mChangeApplicationStateReceiver;
 
     private LOADING_STATE mLoadingState = LOADING_STATE.LOADED;
     private String mLoadingType = EventItemsModel.REFRESH_EVENT_ITEMS;
@@ -67,8 +72,28 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
-        mEventModel = ((NowApplication) getActivity().getApplication()).getEventModel();
+        mEventModel = NowApplication.getEventModel();
         mCurrentPage = mEventModel.getCurrentPage();
+        mChangeApplicationStateReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                updateApplcationStateHandler();
+                if (NowApplication.getState() == ONLINE) {
+                    mLoadingType = EventItemsModel.REFRESH_EVENT_ITEMS;
+                    mEventItemsView.smoothScrollToPosition(0);
+                    mSwipeRefreshLayout.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            mSwipeRefreshLayout.setRefreshing(true);
+                            performLoad();
+                        }
+                    }, SMOOTH_SCROLL_DURATION);
+
+                } else {
+                    performLoad();
+                }
+            }
+        };
     }
 
     @Override
@@ -81,6 +106,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                 mCurrentPage = mEventModel.getCurrentPage();
             }
         }
+        LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mChangeApplicationStateReceiver, new IntentFilter(NowApplication.CHANGE_APPLICATION_STATE));
     }
 
     @Override
@@ -126,7 +152,6 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         });
 
         mSwipeRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.refresh_layout);
-        mSwipeRefreshLayout.setEnabled(NowApplication.getState() == ONLINE);
 
         mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -145,7 +170,13 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
             }
         });
 
+        updateApplcationStateHandler();
+
         return view;
+    }
+
+    private void updateApplcationStateHandler() {
+        mSwipeRefreshLayout.setEnabled(NowApplication.getState() == ONLINE);
     }
 
     private void setLoadingState(LOADING_STATE state) {
@@ -206,6 +237,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         LoaderManager loaderManager = getLoaderManager();
         loaderManager.destroyLoader(LOADER_ID);
         setLoadingState(LOADING_STATE.LOADED);
+        LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mChangeApplicationStateReceiver);
         super.onPause();
     }
 
