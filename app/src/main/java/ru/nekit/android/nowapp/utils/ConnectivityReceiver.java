@@ -57,15 +57,18 @@ public class ConnectivityReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (connection == true && intent.getBooleanExtra(ConnectivityManager.EXTRA_NO_CONNECTIVITY, false)) {
-            connection = false;
-            if (onNetworkAvailableListener != null) {
-                onNetworkAvailableListener.onNetworkUnavailable();
-            }
-        } else if (connection == false && !intent.getBooleanExtra(ConnectivityManager.EXTRA_NO_CONNECTIVITY, false)) {
-            connection = true;
-            if (onNetworkAvailableListener != null) {
-                onNetworkAvailableListener.onNetworkAvailable();
+        String action = intent.getAction();
+        if (action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
+            if (connection && intent.getBooleanExtra(ConnectivityManager.EXTRA_NO_CONNECTIVITY, false)) {
+                connection = false;
+                if (onNetworkAvailableListener != null) {
+                    onNetworkAvailableListener.onNetworkUnavailable();
+                }
+            } else if (!connection && !intent.getBooleanExtra(ConnectivityManager.EXTRA_NO_CONNECTIVITY, false)) {
+                connection = true;
+                if (onNetworkAvailableListener != null) {
+                    onNetworkAvailableListener.onNetworkAvailable();
+                }
             }
         }
     }

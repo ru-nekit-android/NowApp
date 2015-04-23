@@ -68,51 +68,52 @@ public class EventItemsModel {
     }
 
     public static String getStartTimeAlias(Context context, EventItem eventItem) {
-
         long currentTimeTimestamp = getCurrentTimeTimestamp(context, true);
         long startAfterSeconds = eventItem.startAt - currentTimeTimestamp;
         long dateDelta = eventItem.date - getCurrentDateTimestamp(context, true);
         String startTimeAliasString;
-        if (dateDelta == 0 || (dateDelta == 1 && eventItem.startAt <= PERIODS.get(0).second[1])) {
-            if (startAfterSeconds <= 0) {
-                if (eventItem.endAt > currentTimeTimestamp) {
-                    startTimeAliasString = context.getResources().getString(R.string.going_right_now);
-                } else {
-                    startTimeAliasString = context.getResources().getString(R.string.already_ended);
-                }
+        startAfterSeconds += dateDelta;
+        if (startAfterSeconds <= 0) {
+            if (eventItem.endAt > currentTimeTimestamp) {
+                startTimeAliasString = context.getResources().getString(R.string.going_right_now);
             } else {
-                long startAfterMinutesFull = TimeUnit.SECONDS.toMinutes(startAfterSeconds);
-                long startAfterHours = TimeUnit.MINUTES.toHours(startAfterMinutesFull);
-                long startAfterMinutes = startAfterMinutesFull % TimeUnit.HOURS.toMinutes(1);
-                if (startAfterSeconds <= MAXIMUM_TIME_PERIOD_FOR_DATE_ALIAS_SUPPORT) {
-                    startTimeAliasString = context.getResources().getString(R.string.going_in);
-                    if (startAfterHours > 0) {
-                        startTimeAliasString += String.format(" %d ч", startAfterHours);
-                    }
-                    if (startAfterMinutes > 0) {
-                        startTimeAliasString += String.format(" %d мин", startAfterMinutes);
-                    }
-                } else {
-                    startTimeAliasString = String.format("%s %s", context.getResources().getString(R.string.today), getDayPeriodAlias(eventItem.startAt));
-                }
+                startTimeAliasString = context.getResources().getString(R.string.already_ended);
+            }
+        } else if (startAfterSeconds <= MAXIMUM_TIME_PERIOD_FOR_DATE_ALIAS_SUPPORT) {
+            long startAfterMinutesFull = TimeUnit.SECONDS.toMinutes(startAfterSeconds);
+            long startAfterHours = TimeUnit.MINUTES.toHours(startAfterMinutesFull);
+            long startAfterMinutes = startAfterMinutesFull % TimeUnit.HOURS.toMinutes(1);
+            startTimeAliasString = context.getResources().getString(R.string.going_in);
+            if (startAfterHours > 0) {
+                startTimeAliasString += String.format(" %d ч", startAfterHours);
+            }
+            if (startAfterMinutes > 0) {
+                startTimeAliasString += String.format(" %d мин", startAfterMinutes);
             }
         } else {
-            if (dateDelta == TimeUnit.DAYS.toSeconds(1)) {
-                startTimeAliasString = String.format("%s %s", context.getResources().getString(R.string.going_tomorrow), getDayPeriodAlias(eventItem.startAt));
-            } else if (dateDelta == TimeUnit.DAYS.toSeconds(2)) {
-                startTimeAliasString = context.getResources().getString(R.string.going_day_after_tomorrow);
+            if (currentTimeTimestamp <= NIGHT_PERIOD[1] && eventItem.startAt >= MORNING_PERIOD[0]) {
+                dateDelta += TimeUnit.DAYS.toSeconds(1);
+            }
+            if (dateDelta == 0) {
+                startTimeAliasString = String.format("%s %s", context.getResources().getString(R.string.today), getDayPeriodAlias(eventItem.startAt));
+            } else if (dateDelta >= TimeUnit.DAYS.toSeconds(1) && dateDelta < TimeUnit.DAYS.toSeconds(2)) {
+                startTimeAliasString = String.format("%s %s", context.getResources().getString(R.string.tomorrow), getDayPeriodAlias(eventItem.startAt));
+            } else if (dateDelta >= TimeUnit.DAYS.toSeconds(2) && dateDelta < TimeUnit.DAYS.toSeconds(3)) {
+                startTimeAliasString = context.getResources().getString(R.string.day_after_tomorrow);
             } else {
                 Calendar calendar = Calendar.getInstance();
                 calendar.setTimeInMillis(TimeUnit.SECONDS.toMillis(eventItem.date));
-                startTimeAliasString = String.format("%s %s", calendar.get(Calendar.DAY_OF_MONTH), new DateFormatSymbols().getMonths()[calendar.get(Calendar.MONTH)].toLowerCase());
+                startTimeAliasString = String.format("%s %s", calendar.get(Calendar.DAY_OF_MONTH), new DateFormatSymbols().getShortMonths()[calendar.get(Calendar.MONTH)].toLowerCase());
             }
         }
+
+
         return startTimeAliasString;
     }
 
     private static String getDayPeriodAlias(long dayTimeInSeconds) {
-        String alias = null;
-        for (int i = 0; i < PERIODS.size() && alias == null; i++) {
+        String alias = PERIODS.get(0).first;
+        for (int i = 1; i < PERIODS.size(); i++) {
             long[] periodTime = PERIODS.get(i).second;
             if (dayTimeInSeconds >= periodTime[0] && dayTimeInSeconds <= periodTime[1]) {
                 alias = PERIODS.get(i).first;
@@ -123,7 +124,6 @@ public class EventItemsModel {
 
     public static int getCategoryDrawable(String category) {
         return CATEGORY_TYPE.get(category);
-
     }
 
     public static int getCategoryBigDrawable(String category) {

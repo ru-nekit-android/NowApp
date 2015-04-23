@@ -13,10 +13,13 @@ import com.afollestad.materialdialogs.MaterialDialog;
 import com.devspark.robototextview.util.RobotoTypefaceManager;
 import com.pnikosis.materialishprogress.ProgressWheel;
 
-import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.EventItemsLoader;
 import ru.nekit.android.nowapp.utils.ConnectionUtil;
+
+import static ru.nekit.android.nowapp.NowApplication.APP_STATE;
+import static ru.nekit.android.nowapp.NowApplication.getOfflineState;
+import static ru.nekit.android.nowapp.NowApplication.setState;
 
 public class SplashScreenActivity extends ActionBarActivity implements LoaderManager.LoaderCallbacks<Integer> {
 
@@ -33,61 +36,76 @@ public class SplashScreenActivity extends ActionBarActivity implements LoaderMan
         setContentView(R.layout.activity_splash_screen);
         mProgressWheel = (ProgressWheel) findViewById(R.id.progress_wheel);
         if (ConnectionUtil.isInternetAvailable(this)) {
-            NowApplication.setState(NowApplication.STATE.ONLINE);
+            setState(APP_STATE.ONLINE);
             initFirstTimeLoader();
         } else {
-            NowApplication.setState(NowApplication.STATE.OFFLINE);
+            setState(APP_STATE.OFFLINE);
             showConnectivityProblemDialog();
         }
     }
 
     private void showConnectivityProblemDialog() {
         mProgressWheel.setVisibility(View.GONE);
-        if (NowApplication.offlineAllow()) {
-            MaterialDialog dialog = new MaterialDialog.Builder(this)
-                    .title(R.string.dialog_title_offline_state)
-                    .content(R.string.dialog_content_offline_state)
-                    .positiveText(android.R.string.yes)
-                    .negativeText(R.string.no)
-                    .typeface(RobotoTypefaceManager.obtainTypeface(getApplicationContext(), RobotoTypefaceManager.Typeface.ROBOTO_REGULAR),
-                            RobotoTypefaceManager.obtainTypeface(getApplicationContext(), RobotoTypefaceManager.Typeface.ROBOTO_REGULAR))
-                    .customView(R.layout.connectivity_content, false)
-                    .callback(new MaterialDialog.ButtonCallback() {
-                        @Override
-                        public void onPositive(MaterialDialog dialog) {
-                            initFirstTimeLoader();
-                        }
+        MaterialDialog dialog;
+        View view;
+        switch (getOfflineState()) {
 
-                        @Override
-                        public void onNegative(MaterialDialog dialog) {
-                            finish();
-                        }
-                    })
-                    .disableDefaultFonts()
-                    .cancelable(false)
-                    .show();
+            case DATA_IS_UP_TO_DATE:
+                dialog = new MaterialDialog.Builder(this)
+                        .title(R.string.dialog_title_offline_state)
+                        .positiveText(android.R.string.yes)
+                        .negativeText(R.string.no)
+                        .typeface(RobotoTypefaceManager.obtainTypeface(this, RobotoTypefaceManager.Typeface.ROBOTO_REGULAR),
+                                RobotoTypefaceManager.obtainTypeface(this, RobotoTypefaceManager.Typeface.ROBOTO_REGULAR))
+                        .customView(R.layout.text_view_content, false)
+                        .callback(new MaterialDialog.ButtonCallback() {
+                            @Override
+                            public void onPositive(MaterialDialog dialog) {
+                                mProgressWheel.setVisibility(View.VISIBLE);
+                                initFirstTimeLoader();
+                            }
 
-            View view = dialog.getCustomView();
-            ((TextView) view.findViewById(R.id.text_view)).setText(R.string.dialog_content_offline_state);
-        } else {
-            MaterialDialog dialog = new MaterialDialog.Builder(this)
-                    .title(R.string.dialog_title_default_state)
-                    .negativeText(R.string.exit)
-                    .typeface(RobotoTypefaceManager.obtainTypeface(getApplicationContext(), RobotoTypefaceManager.Typeface.ROBOTO_REGULAR),
-                            RobotoTypefaceManager.obtainTypeface(getApplicationContext(), RobotoTypefaceManager.Typeface.ROBOTO_REGULAR))
-                    .callback(new MaterialDialog.ButtonCallback() {
-                        @Override
-                        public void onNegative(MaterialDialog dialog) {
-                            finish();
-                        }
-                    })
-                    .customView(R.layout.connectivity_content, false)
-                    .disableDefaultFonts()
-                    .cancelable(false)
-                    .show();
+                            @Override
+                            public void onNegative(MaterialDialog dialog) {
+                                finish();
+                            }
+                        })
+                        .disableDefaultFonts()
+                        .cancelable(false)
+                        .show();
 
-            View view = dialog.getCustomView();
-            ((TextView) view.findViewById(R.id.text_view)).setText(String.format(getResources().getString(R.string.dialog_content_default_state), getResources().getString(R.string.exit)));
+                view = dialog.getCustomView();
+                ((TextView) view.findViewById(R.id.text_view)).setText(R.string.dialog_content_offline_state);
+
+                break;
+
+            case DATA_IS_OUT_OF_DATE:
+
+                //break;
+
+            case DATA_IS_EMPTY:
+
+                dialog = new MaterialDialog.Builder(this)
+                        .title(R.string.dialog_title_default_state)
+                        .negativeText(R.string.exit)
+                        .typeface(RobotoTypefaceManager.obtainTypeface(this, RobotoTypefaceManager.Typeface.ROBOTO_REGULAR),
+                                RobotoTypefaceManager.obtainTypeface(this, RobotoTypefaceManager.Typeface.ROBOTO_REGULAR))
+                        .callback(new MaterialDialog.ButtonCallback() {
+                            @Override
+                            public void onNegative(MaterialDialog dialog) {
+                                finish();
+                            }
+                        })
+                        .customView(R.layout.text_view_content, false)
+                        .disableDefaultFonts()
+                        .cancelable(false)
+                        .show();
+
+                view = dialog.getCustomView();
+                ((TextView) view.findViewById(R.id.text_view)).setText(String.format(getResources().getString(R.string.dialog_content_default_state), getResources().getString(R.string.exit)));
+
+
+                break;
         }
     }
 

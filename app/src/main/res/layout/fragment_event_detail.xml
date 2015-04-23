@@ -1,9 +1,9 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:wheel="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/scroll_view"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/scroll_view"
     tools:context="ru.nekit.android.nowapp.view.EventDetailFragment">
 
     <FrameLayout
@@ -13,32 +13,32 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginTop="@dimen/large_space">
+            android:layout_marginTop="@dimen/large_space"
+            android:orientation="vertical">
 
             <LinearLayout
-                android:orientation="horizontal"
-                android:layout_marginRight="@dimen/large_space"
-                android:layout_marginLeft="@dimen/large_space"
+                android:id="@+id/top_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/top_layout"
-                android:baselineAligned="false">
+                android:layout_marginLeft="@dimen/large_space"
+                android:layout_marginRight="@dimen/large_space"
+                android:baselineAligned="false"
+                android:orientation="horizontal">
 
                 <FrameLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="2"
+                    android:layout_marginEnd="@dimen/normal_space"
                     android:layout_marginRight="@dimen/normal_space"
-                    android:layout_marginEnd="@dimen/normal_space">
+                    android:layout_weight="2">
 
                     <com.pnikosis.materialishprogress.ProgressWheel
                         android:id="@+id/progress_wheel"
                         android:layout_width="@dimen/progress_wheel_size"
                         android:layout_height="@dimen/progress_wheel_size"
+                        android:layout_gravity="center"
                         wheel:matProg_barColor="@color/main"
-                        wheel:matProg_progressIndeterminate="true"
-                        android:layout_gravity="center" />
+                        wheel:matProg_progressIndeterminate="true" />
 
                     <ImageView
                         android:id="@+id/poster_thumb_view"
@@ -48,12 +48,12 @@
                 </FrameLayout>
 
                 <LinearLayout
-                    android:layout_weight="3"
-                    android:orientation="vertical"
                     android:layout_width="0dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginLeft="@dimen/normal_space"
                     android:layout_marginStart="@dimen/normal_space"
-                    android:layout_height="wrap_content">
+                    android:layout_weight="3"
+                    android:orientation="vertical">
 
                     <ru.nekit.android.nowapp.widget.AutoResizeTextView
                         android:id="@+id/title_view"
@@ -63,8 +63,8 @@
                         android:layout_marginBottom="@dimen/big_space" />
 
                     <View
-                        android:layout_height="1dp"
                         android:layout_width="match_parent"
+                        android:layout_height="1dp"
                         android:background="@color/divide_line" />
 
                     <FrameLayout
@@ -73,19 +73,19 @@
                         android:layout_marginTop="@dimen/small_space">
 
                         <ImageView
-                            android:layout_gravity="center_vertical"
                             android:id="@+id/logo_view"
-                            android:scaleType="fitStart"
                             android:layout_width="@dimen/logo_max_width"
                             android:layout_height="wrap_content"
-                            android:maxHeight="@dimen/logo_max_height" />
+                            android:layout_gravity="center_vertical"
+                            android:maxHeight="@dimen/logo_max_height"
+                            android:scaleType="fitStart" />
 
                         <ru.nekit.android.nowapp.widget.AutoResizeTextView
                             android:id="@+id/place_view"
                             style="@style/PlaceText.Detail"
-                            android:visibility="gone"
                             android:layout_width="match_parent"
-                            android:layout_height="match_parent" />
+                            android:layout_height="match_parent"
+                            android:visibility="gone" />
 
                     </FrameLayout>
 
@@ -93,18 +93,18 @@
             </LinearLayout>
 
             <LinearLayout
-                android:layout_marginRight="@dimen/large_space"
-                android:layout_marginLeft="@dimen/large_space"
                 android:id="@+id/information_layout"
-                android:orientation="horizontal"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_gravity="center_vertical">
+                android:layout_gravity="center_vertical"
+                android:layout_marginLeft="@dimen/large_space"
+                android:layout_marginRight="@dimen/large_space"
+                android:orientation="horizontal">
 
                 <RelativeLayout
-                    android:layout_weight="2"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2">
 
                     <com.devspark.robototextview.widget.RobotoTextView
                         android:id="@+id/day_date_view"
@@ -119,78 +119,78 @@
                     <com.devspark.robototextview.widget.RobotoTextView
                         android:id="@+id/month_view"
                         style="@style/MonthText"
-                        android:layout_height="wrap_content"
                         android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:layout_above="@+id/day_of_week_view"
-                        android:layout_alignParentRight="true"
                         android:layout_alignParentEnd="true"
-                        android:layout_marginRight="@dimen/normal_space"
-                        android:layout_marginEnd="@dimen/normal_space" />
+                        android:layout_alignParentRight="true"
+                        android:layout_marginEnd="@dimen/normal_space"
+                        android:layout_marginRight="@dimen/normal_space" />
 
                     <com.devspark.robototextview.widget.RobotoTextView
                         android:id="@+id/day_of_week_view"
                         style="@style/DayOfWeekText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_alignBaseline="@+id/day_date_view"
                         android:layout_alignBottom="@+id/day_date_view"
                         android:layout_alignLeft="@+id/month_view"
                         android:layout_alignStart="@+id/month_view"
-                        android:layout_alignBaseline="@+id/day_date_view"
-                        android:layout_marginRight="@dimen/normal_space"
-                        android:layout_marginEnd="@dimen/normal_space" />
+                        android:layout_marginEnd="@dimen/normal_space"
+                        android:layout_marginRight="@dimen/normal_space" />
 
                 </RelativeLayout>
 
                 <View
-                    android:layout_height="match_parent"
                     android:layout_width="1dp"
-                    android:background="@color/divide_line"
+                    android:layout_height="match_parent"
+                    android:layout_marginBottom="@dimen/normal_space"
                     android:layout_marginTop="@dimen/normal_space"
-                    android:layout_marginBottom="@dimen/normal_space" />
+                    android:background="@color/divide_line" />
 
                 <com.devspark.robototextview.widget.RobotoTextView
                     android:id="@+id/time_view"
                     style="@style/TimeText"
-                    android:layout_weight="1.5"
                     android:layout_width="0dp"
-                    android:layout_height="match_parent" />
+                    android:layout_height="match_parent"
+                    android:layout_weight="1.5" />
 
                 <View
-                    android:layout_height="match_parent"
                     android:layout_width="1dp"
-                    android:background="@color/divide_line"
+                    android:layout_height="match_parent"
+                    android:layout_marginBottom="@dimen/normal_space"
                     android:layout_marginTop="@dimen/normal_space"
-                    android:layout_marginBottom="@dimen/normal_space" />
+                    android:background="@color/divide_line" />
 
                 <com.devspark.robototextview.widget.RobotoTextView
                     android:id="@+id/entrance_view"
                     style="@style/EntranceTextBlock"
-                    android:layout_weight="1.5"
                     android:layout_width="0dp"
-                    android:layout_height="match_parent" />
+                    android:layout_height="match_parent"
+                    android:layout_weight="1.5" />
 
             </LinearLayout>
 
             <com.devspark.robototextview.widget.RobotoTextView
                 android:id="@+id/description_view"
                 style="@style/EventDescription"
-                android:layout_marginRight="@dimen/large_space"
-                android:layout_marginLeft="@dimen/large_space"
-                android:paddingBottom="@dimen/large_space"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="@dimen/large_space"
+                android:layout_marginRight="@dimen/large_space"
+                android:paddingBottom="@dimen/large_space" />
 
             <com.devspark.robototextview.widget.RobotoButton
                 android:id="@+id/phone_button"
                 style="@style/ActionButton"
-                android:layout_marginBottom="-1dp"
-                android:layout_width="match_parent" />
+                android:layout_width="match_parent"
+                android:layout_marginBottom="-1dp" />
 
             <com.devspark.robototextview.widget.RobotoButton
                 android:id="@+id/site_button"
-                android:layout_marginTop="-1dp"
                 style="@style/ActionButton"
-                android:layout_width="match_parent" />
+                android:layout_width="match_parent"
+                android:layout_marginTop="-1dp" />
 
             <RelativeLayout
                 android:id="@+id/map_view_container"
@@ -210,42 +210,49 @@
 
                 <View
                     android:id="@+id/map_scroll_fake_view"
-                    android:layout_marginLeft="@dimen/large_space"
-                    android:layout_marginRight="@dimen/large_space"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
+                    android:layout_marginLeft="@dimen/large_space"
+                    android:layout_marginRight="@dimen/large_space"
                     android:src="@android:color/transparent" />
 
                 <Button
+                    android:id="@+id/event_location"
                     style="@style/MapActionButton"
-                    android:id="@+id/location"
-                    android:background="@drawable/location"
-                    android:layout_centerVertical="true"
-                    android:layout_alignParentRight="true"
                     android:layout_alignParentEnd="true"
-                    android:layout_marginRight="@dimen/big_space"
-                    android:layout_marginEnd="@dimen/big_space"
-                    />
+                    android:layout_alignParentRight="true"
+                    android:layout_below="@+id/address_view"
+                    android:layout_marginRight="@dimen/small_space"
+                    android:layout_marginEnd="@dimen/small_space"
+                    android:layout_marginTop="@dimen/normal_space"
+                    android:layout_marginBottom="@dimen/small_space"
+                    android:background="@drawable/ic_event_location" />
 
                 <Button
+                    android:id="@+id/my_location"
                     style="@style/MapActionButton"
+                    android:layout_below="@+id/event_location"
+                    android:layout_alignEnd="@+id/event_location"
+                    android:layout_alignRight="@+id/event_location"
+                    android:background="@drawable/ic_my_location" />
+
+                <Button
                     android:id="@+id/zoom_plus"
-                    android:layout_below="@+id/location"
-                    android:background="@drawable/zoom_plus"
-                    android:layout_alignLeft="@+id/location"
-                    android:layout_alignStart="@+id/location"
-                    android:layout_marginTop="@dimen/normal_space"
-                    android:layout_alignRight="@+id/location"
-                    android:layout_alignEnd="@+id/location" />
+                    style="@style/MapActionButton"
+                    android:layout_above="@+id/zoom_minus"
+                    android:layout_alignEnd="@+id/event_location"
+                    android:layout_alignRight="@+id/event_location"
+                    android:background="@drawable/ic_zoom_plus" />
 
                 <Button
-                    style="@style/MapActionButton"
                     android:id="@+id/zoom_minus"
-                    android:background="@drawable/zoom_minus"
-                    android:layout_below="@+id/zoom_plus"
-                    android:layout_marginTop="@dimen/normal_space"
-                    android:layout_alignLeft="@+id/location"
-                    android:layout_alignStart="@+id/location" />
+                    style="@style/MapActionButton"
+                    android:layout_alignParentBottom="true"
+                    android:layout_alignEnd="@+id/event_location"
+                    android:layout_marginTop="@dimen/small_space"
+                    android:layout_alignRight="@+id/event_location"
+                    android:layout_marginBottom="@dimen/normal_space"
+                    android:background="@drawable/ic_zoom_minus" />
 
             </RelativeLayout>
 
@@ -255,9 +262,9 @@
             android:id="@+id/category_type_view"
             android:layout_width="@dimen/event_category_big_view_size"
             android:layout_height="@dimen/event_category_big_view_size"
-            android:src="@drawable/cat_book_big"
+            android:layout_gravity="end|top"
             android:scaleType="fitXY"
-            android:layout_gravity="end|top" />
+            android:src="@drawable/cat_book_big" />
 
     </FrameLayout>
 

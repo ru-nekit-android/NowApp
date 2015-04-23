@@ -49,7 +49,7 @@ public class EventItemsLoader extends AsyncTaskLoader<Integer> {
         Context context = getContext();
         EventItemsModel eventModel = NowApplication.getEventModel();
         EventLocalDataSource localDataSource = eventModel.getLocalDataSource();
-        if (NowApplication.getState() == NowApplication.STATE.ONLINE) {
+        if (NowApplication.getState() == NowApplication.APP_STATE.ONLINE) {
             localDataSource.openForWrite();
         } else {
             localDataSource.openForRead();
@@ -58,7 +58,7 @@ public class EventItemsLoader extends AsyncTaskLoader<Integer> {
         int eventsCount = 0;
         ArrayList<EventItem> eventItems = new ArrayList<>();
 
-        if (NowApplication.getState() == NowApplication.STATE.ONLINE) {
+        if (NowApplication.getState() == NowApplication.APP_STATE.ONLINE) {
             Uri.Builder uriBuilder = new Uri.Builder()
                     .scheme("http")
                     .authority(SITE_NAME)

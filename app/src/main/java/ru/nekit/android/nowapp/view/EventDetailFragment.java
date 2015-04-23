@@ -1,16 +1,20 @@
 package ru.nekit.android.nowapp.view;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
-import android.graphics.drawable.Drawable;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBarActivity;
 import android.telephony.TelephonyManager;
 import android.text.SpannableString;
@@ -28,24 +32,30 @@ import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
+import com.devspark.robototextview.util.RobotoTypefaceManager;
 import com.pnikosis.materialishprogress.ProgressWheel;
 
 import org.osmdroid.DefaultResourceProxyImpl;
+import org.osmdroid.api.IGeoPoint;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.ItemizedIconOverlay;
 import org.osmdroid.views.overlay.OverlayItem;
+import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
+import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
 import java.text.DateFormatSymbols;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.concurrent.TimeUnit;
 
+import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.EventItem;
 import ru.nekit.android.nowapp.model.EventItemsModel;
@@ -53,6 +63,8 @@ import ru.nekit.android.nowapp.modelView.listeners.IEventItemPosterSelectListene
 import ru.nekit.android.nowapp.utils.RobotoTextAppearanceSpan;
 import ru.nekit.android.nowapp.utils.TextViewUtils;
 import ru.nekit.android.nowapp.widget.OnSwipeTouchListener;
+
+import static ru.nekit.android.nowapp.NowApplication.APP_STATE.ONLINE;
 
 @SuppressWarnings("ResourceType")
 public class EventDetailFragment extends Fragment implements View.OnClickListener {
@@ -66,10 +78,13 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     private EventItem mEventItem;
     private IEventItemPosterSelectListener mEventItemPosterSelectListener;
     private ProgressWheel mProgressWheel;
-    private GeoPoint mGeoPoint;
+    private GeoPoint mEventLocationPoint;
     private RelativeLayout mMapViewContainer;
     private ImageView mPosterThumbView;
     private boolean mPosterViewIsEmpty;
+    private BroadcastReceiver mChangeApplicationStateReceiver;
+    private MyLocationNewOverlay myLocationOverLay;
+    private LocationManager mLocationManager;
 
     public EventDetailFragment() {
     }
@@ -78,6 +93,17 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
+        mChangeApplicationStateReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                appleApplicationState();
+            }
+        };
+        mLocationManager = (LocationManager) getActivity().getSystemService(Activity.LOCATION_SERVICE);
+    }
+
+    private void appleApplicationState() {
+        mMapView.setUseDataConnection(NowApplication.getState() == ONLINE);
     }
 
     @Override
@@ -90,14 +116,26 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     public void onResume() {
         super.onResume();
         ((ActionBarActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        appleApplicationState();
+        LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mChangeApplicationStateReceiver, new IntentFilter(NowApplication.CHANGE_APPLICATION_STATE));
+
+        GpsMyLocationProvider gpsLocationProvider = new GpsMyLocationProvider(getActivity());
+        gpsLocationProvider.setLocationUpdateMinTime(TimeUnit.SECONDS.toMillis(5));
+        gpsLocationProvider.setLocationUpdateMinDistance(50);
+        myLocationOverLay.enableMyLocation(gpsLocationProvider);
+        myLocationOverLay.setDrawAccuracyEnabled(true);
     }
 
     @Override
     public void onPause() {
         super.onPause();
+        LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mChangeApplicationStateReceiver);
+        myLocationOverLay.disableMyLocation();
     }
 
     private void createMap() {
+
+        Context context = getActivity();
 
         //configure map view container :: set height - half of screen height
         DisplayMetrics displaymetrics = new DisplayMetrics();
@@ -109,17 +147,23 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         mMapView.setBuiltInZoomControls(false);
         mMapView.setMultiTouchControls(true);
         mMapView.setTileSource(TileSourceFactory.MAPNIK);
-        mGeoPoint = new GeoPoint(mEventItem.lat, mEventItem.lng);
+        mEventLocationPoint = new GeoPoint(mEventItem.lat, mEventItem.lng);
         mMapView.getController().setZoom(MAX_ZOOM);
-        mMapView.getController().setCenter(mGeoPoint);
+        mMapView.getController().setCenter(mEventLocationPoint);
+
+        //configure map view overlay :: add map marker
         final ArrayList<OverlayItem> items = new ArrayList<>();
-        OverlayItem marker = new OverlayItem(null, null, mGeoPoint);
-        marker.setMarkerHotspot(OverlayItem.HotspotPlace.BOTTOM_CENTER);
-        items.add(marker);
-        Drawable newMarker = this.getResources().getDrawable(R.drawable.map_marker);
-        DefaultResourceProxyImpl resProxyImp = new DefaultResourceProxyImpl(getActivity().getApplicationContext());
-        ItemizedIconOverlay markersOverlay = new ItemizedIconOverlay<>(items, newMarker, null, resProxyImp);
+        OverlayItem overlayItem = new OverlayItem(null, null, mEventLocationPoint);
+        overlayItem.setMarkerHotspot(OverlayItem.HotspotPlace.BOTTOM_CENTER);
+        items.add(overlayItem);
+        DefaultResourceProxyImpl resProxyImp = new DefaultResourceProxyImpl(context);
+        ItemizedIconOverlay markersOverlay = new ItemizedIconOverlay<>(items, getResources().getDrawable(R.drawable.ic_action_location), null, resProxyImp);
         mMapView.getOverlays().add(markersOverlay);
+
+        //configure map view overlay :: add my location marker
+        myLocationOverLay = new MyLocationNewOverlay(context, mMapView);
+        mMapView.getOverlays().add(myLocationOverLay);
+
         checkZoomButtons();
     }
 
@@ -296,7 +340,8 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
         view.findViewById(R.id.zoom_minus).setOnClickListener(this);
         view.findViewById(R.id.zoom_plus).setOnClickListener(this);
-        view.findViewById(R.id.location).setOnClickListener(this);
+        view.findViewById(R.id.event_location).setOnClickListener(this);
+        view.findViewById(R.id.my_location).setOnClickListener(this);
 
         TextView addressButton = (TextView) view.findViewById(R.id.address_view);
         addressButton.setText(mEventItem.address);
@@ -365,7 +410,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         super.onAttach(activity);
         try {
             mEventItemPosterSelectListener = (IEventItemPosterSelectListener) getActivity();
-        } catch (ClassCastException e) {
+        } catch (ClassCastException exp) {
             throw new ClassCastException(activity.toString()
                     + " must implement IEventItemPosterSelectListener");
         }
@@ -394,10 +439,10 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                 startActivity(intent);
                 break;
 
-            case R.id.location:
+            case R.id.event_location:
 
-                mMapView.getController().setZoom(MAX_ZOOM);
-                mMapView.getController().animateTo(mGeoPoint);
+                //mMapView.getController().setZoom(MAX_ZOOM);
+                mMapView.getController().animateTo(mEventLocationPoint);
                 checkZoomButtons();
 
                 break;
@@ -424,8 +469,49 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
                 break;
 
+            case R.id.my_location:
+
+                IGeoPoint myLocationPoint = myLocationOverLay.getMyLocation();
+                if (!mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                    showGPSDisabledDialog();
+                }
+                if (myLocationPoint != null) {
+                    mMapView.getController().animateTo(myLocationPoint);
+                } else {
+                    //wait??
+                }
+                checkZoomButtons();
+
+                break;
+
             default:
         }
+    }
+
+    private void showGPSDisabledDialog() {
+        Context context = getActivity();
+        MaterialDialog dialog = new MaterialDialog.Builder(context)
+                .title(R.string.gps_is_off)
+                .content(R.string.gps_switch_on_ask)
+                .positiveText(R.string.switch_on)
+                .negativeText(R.string.no)
+                .typeface(RobotoTypefaceManager.obtainTypeface(context, RobotoTypefaceManager.Typeface.ROBOTO_REGULAR),
+                        RobotoTypefaceManager.obtainTypeface(context, RobotoTypefaceManager.Typeface.ROBOTO_REGULAR))
+                .customView(R.layout.text_view_content, false)
+                .callback(new MaterialDialog.ButtonCallback() {
+                    @Override
+                    public void onPositive(MaterialDialog dialog) {
+                        mProgressWheel.setVisibility(View.VISIBLE);
+                        Intent callGPSSettingIntent = new Intent(
+                                Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                        startActivity(callGPSSettingIntent);
+                    }
+                })
+                .disableDefaultFonts()
+                .cancelable(true)
+                .show();
+        View view = dialog.getCustomView();
+        ((TextView) view.findViewById(R.id.text_view)).setText(R.string.gps_switch_on_ask);
     }
 
     public static EventDetailFragment getInstance(EventItem eventItem) {

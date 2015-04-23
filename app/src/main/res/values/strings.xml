@@ -6,8 +6,8 @@
     <string name="going_right_now">уже идет!</string>
     <string name="already_ended">уже закончилось!</string>
     <string name="today">Сегодня</string>
-    <string name="going_tomorrow">Завтра</string>
-    <string name="going_day_after_tomorrow">Послезавтра</string>
+    <string name="tomorrow">Завтра</string>
+    <string name="day_after_tomorrow">Послезавтра</string>
     <string name="going_in">через</string>
     <string name="about_text"><b>Твой город интересный сейчас</b>\n\nПрограмма доступна для использования лицам от 16 лет и старше\n\nЕсли хотите сообщить нам о предстоящем событии, свяжитесь с нами \n\n<a href="mailto:event@nowapp.ru">event@nowapp.ru</a>\n\n\u00A9 2014\u20132015 &#171;Джус&#187;</string>
     <string name="connection_is_not_available">Проверьте соединение с сетью Интернет</string>
@@ -20,6 +20,9 @@
     <string name="exit">Выход</string>
     <string name="no">Нет</string>
     <string name="offline_text">offline</string>
+    <string name="switch_on">Включить</string>
+    <string name="gps_is_off">GPS выключен</string>
+    <string name="gps_switch_on_ask">GPS выключен. Хотите его включить?</string>
 
     <string-array name="day_of_week">
         <item>ВС</item>

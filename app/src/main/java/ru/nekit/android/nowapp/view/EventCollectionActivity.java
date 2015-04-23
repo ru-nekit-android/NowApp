@@ -1,8 +1,13 @@
 package ru.nekit.android.nowapp.view;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.method.LinkMovementMethod;
@@ -19,15 +24,14 @@ import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.EventItem;
 import ru.nekit.android.nowapp.modelView.listeners.IEventItemPosterSelectListener;
 import ru.nekit.android.nowapp.modelView.listeners.IEventItemSelectListener;
-import ru.nekit.android.nowapp.utils.ConnectivityReceiver;
 
 
-public class EventCollectionActivity extends ActionBarActivity implements IEventItemSelectListener, IEventItemPosterSelectListener, ConnectivityReceiver.OnNetworkAvailableListener {
+public class EventCollectionActivity extends ActionBarActivity implements IEventItemSelectListener, IEventItemPosterSelectListener {
 
     private EventCollectionFragment mEventCollectionFragment;
     private EventDetailFragment mEventDetailFragment;
     private EventPosterViewFragment mEventPosterViewFragment;
-    private ConnectivityReceiver mConnectivityReceiver;
+    private BroadcastReceiver mChangeApplicationStateReceiver;
     private View mOfflineView;
 
     @Override
@@ -45,27 +49,18 @@ public class EventCollectionActivity extends ActionBarActivity implements IEvent
         }
 
         mOfflineView = findViewById(R.id.offline_view);
-
-        mConnectivityReceiver = new ConnectivityReceiver(this);
-        mConnectivityReceiver.setOnNetworkAvailableListener(this);
-
-        updateOfflineView();
-    }
-
-    @Override
-    public void onNetworkAvailable() {
-        NowApplication.setState(NowApplication.STATE.ONLINE);
-        updateOfflineView();
-    }
-
-    @Override
-    public void onNetworkUnavailable() {
-        NowApplication.setState(NowApplication.STATE.OFFLINE);
+        mChangeApplicationStateReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                updateOfflineView();
+            }
+        };
+        LocalBroadcastManager.getInstance(this).registerReceiver(mChangeApplicationStateReceiver, new IntentFilter(NowApplication.CHANGE_APPLICATION_STATE));
         updateOfflineView();
     }
 
     private void updateOfflineView() {
-        if (NowApplication.getState() == NowApplication.STATE.ONLINE) {
+        if (NowApplication.getState() == NowApplication.APP_STATE.ONLINE) {
             mOfflineView.setVisibility(View.GONE);
         } else {
             mOfflineView.setVisibility(View.VISIBLE);
@@ -139,13 +134,13 @@ public class EventCollectionActivity extends ActionBarActivity implements IEvent
     @Override
     protected void onResume() {
         super.onResume();
-        mConnectivityReceiver.bind(this);
+        NowApplication.setConnectionReceiverActive(true);
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        mConnectivityReceiver.unbind(this);
+        NowApplication.setConnectionReceiverActive(false);
     }
 
 }

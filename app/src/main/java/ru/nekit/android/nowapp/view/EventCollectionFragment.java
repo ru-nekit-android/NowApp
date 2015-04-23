@@ -30,7 +30,7 @@ import ru.nekit.android.nowapp.modelView.EventCollectionAdapter;
 import ru.nekit.android.nowapp.modelView.listeners.IEventItemSelectListener;
 import ru.nekit.android.nowapp.widget.ScrollingGridLayoutManager;
 
-import static ru.nekit.android.nowapp.NowApplication.STATE.ONLINE;
+import static ru.nekit.android.nowapp.NowApplication.APP_STATE.ONLINE;
 
 public class EventCollectionFragment extends Fragment implements LoaderManager.LoaderCallbacks<Integer>, IEventItemSelectListener, View.OnClickListener {
 
@@ -38,7 +38,6 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
 
     private static final int LOADER_ID = 2;
     private static final int SMOOTH_SCROLL_DURATION = 1000;
-
 
     enum LOADING_STATE {
         LOADING, LOADED
@@ -77,7 +76,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         mChangeApplicationStateReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                updateApplcationStateHandler();
+                appleApplicationState();
                 if (NowApplication.getState() == ONLINE) {
                     mLoadingType = EventItemsModel.REFRESH_EVENT_ITEMS;
                     mEventItemsView.smoothScrollToPosition(0);
@@ -88,7 +87,6 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                             performLoad();
                         }
                     }, SMOOTH_SCROLL_DURATION);
-
                 } else {
                     performLoad();
                 }
@@ -106,6 +104,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                 mCurrentPage = mEventModel.getCurrentPage();
             }
         }
+        appleApplicationState();
         LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mChangeApplicationStateReceiver, new IntentFilter(NowApplication.CHANGE_APPLICATION_STATE));
     }
 
@@ -170,12 +169,10 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
             }
         });
 
-        updateApplcationStateHandler();
-
         return view;
     }
 
-    private void updateApplcationStateHandler() {
+    private void appleApplicationState() {
         mSwipeRefreshLayout.setEnabled(NowApplication.getState() == ONLINE);
     }
 

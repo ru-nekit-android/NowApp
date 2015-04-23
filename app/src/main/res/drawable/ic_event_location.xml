@@ -10,7 +10,7 @@
                 </shape>
             </item>
 
-            <item android:drawable="@drawable/ic_action_location_2" />
+            <item android:drawable="@drawable/ic_action_location_3" />
         </layer-list>
     </item>
 
