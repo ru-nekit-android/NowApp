@@ -5,10 +5,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.DisplayMetrics;
+import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
+import ru.nekit.android.nowapp.model.EventItem;
 import ru.nekit.android.nowapp.model.EventItemsModel;
+import ru.nekit.android.nowapp.model.db.EventLocalDataSource;
 import ru.nekit.android.nowapp.utils.ConnectionUtil;
 import ru.nekit.android.nowapp.utils.ConnectivityReceiver;
 
@@ -50,10 +55,26 @@ public class NowApplication extends Application implements ConnectivityReceiver.
 
     @Override
     public void onCreate() {
+
         mEventModel = EventItemsModel.getInstance(this);
         mSharedPreferences = getSharedPreferences("nowapp", Context.MODE_PRIVATE);
         mConnectivityReceiver = new ConnectivityReceiver(this);
         mConnectivityReceiver.setOnNetworkAvailableListener(this);
+
+        EventLocalDataSource localDataSource = mEventModel.getLocalDataSource();
+        localDataSource.openForWrite();
+        ArrayList<EventItem> allEvents = localDataSource.getAllEvents();
+        for (int i = 0; i < allEvents.size(); i++) {
+            EventItem event = allEvents.get(i);
+            if (!EventItemsModel.eventIsActual(this, event)) {
+                localDataSource.removeEventByID(event.id);
+            }
+        }
+        localDataSource.close();
+
+        DisplayMetrics metrics = getResources().getDisplayMetrics();
+        Log.v("ru.nekit.vtag", "!" + metrics.density);
+
     }
 
     public static void updateDataTimestamp() {

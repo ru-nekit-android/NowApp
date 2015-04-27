@@ -67,6 +67,12 @@ public class EventItemsModel {
         mEventLocalDataSource = new EventLocalDataSource(context);
     }
 
+    public static boolean eventIsActual(Context context, EventItem eventItem) {
+        long currentTimeTimestamp = getCurrentTimeTimestamp(context, true);
+        long startAfterSeconds = eventItem.startAt - currentTimeTimestamp;
+        return startAfterSeconds <= 0 && ((eventItem.date + eventItem.endAt) > (currentTimeTimestamp + getCurrentDateTimestamp(context, true)));
+    }
+
     public static String getStartTimeAlias(Context context, EventItem eventItem) {
         long currentTimeTimestamp = getCurrentTimeTimestamp(context, true);
         long startAfterSeconds = eventItem.startAt - currentTimeTimestamp;
