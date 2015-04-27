@@ -6,10 +6,10 @@ android {
 
     defaultConfig {
         applicationId "ru.nekit.android.nowapp"
-        minSdkVersion 11
+        minSdkVersion 14
         targetSdkVersion 21
-        versionCode 5
-        versionName "1.0.4"
+        versionCode 6
+        versionName "1.0.5"
     }
     buildTypes {
         debug {
@@ -33,5 +33,6 @@ dependencies {
     compile 'com.afollestad:material-dialogs:0.6.7.1'
     compile project(":robototextview")
     compile 'com.parse.bolts:bolts-android:1.+'
+    compile 'com.getbase:floatingactionbutton:1.9.0'
     compile fileTree(dir: 'libs', include: 'Parse-*.jar')
 }
