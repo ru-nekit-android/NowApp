@@ -103,7 +103,7 @@ public class EventItemsModel {
             } else {
                 Calendar calendar = Calendar.getInstance();
                 calendar.setTimeInMillis(TimeUnit.SECONDS.toMillis(eventItem.date));
-                startTimeAliasString = String.format("%s %s", calendar.get(Calendar.DAY_OF_MONTH), new DateFormatSymbols().getShortMonths()[calendar.get(Calendar.MONTH)].toLowerCase());
+                startTimeAliasString = String.format("%s %s", calendar.get(Calendar.DAY_OF_MONTH), new DateFormatSymbols().getMonths()[calendar.get(Calendar.MONTH)].toLowerCase());
             }
         }
 
