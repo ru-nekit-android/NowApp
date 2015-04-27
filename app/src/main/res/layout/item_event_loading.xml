@@ -6,5 +6,5 @@
     android:layout_width="@dimen/progress_wheel_size"
     android:layout_height="@dimen/progress_wheel_size"
     android:layout_gravity="center"
-    wheel:matProg_barColor="@color/main"
+    wheel:matProg_barColor="@color/primary"
     wheel:matProg_progressIndeterminate="true" />
