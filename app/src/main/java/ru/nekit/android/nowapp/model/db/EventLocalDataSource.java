@@ -131,4 +131,9 @@ public class EventLocalDataSource {
     public void close() {
         dbHelper.close();
     }
+
+    public void removeEventByID(int id) {
+        String idString = String.valueOf(id);
+        database.execSQL(String.format("DELETE FROM %s WHERE %s = '" + idString + "';", EventSQLiteHelper.TABLE_NAME, EventFieldNameDictionary.ID));
+    }
 }
