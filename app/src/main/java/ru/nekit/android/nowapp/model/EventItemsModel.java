@@ -13,6 +13,8 @@ import java.util.concurrent.TimeUnit;
 
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.db.EventLocalDataSource;
+import ru.nekit.android.nowapp.model.db.EventToCalendarLinker;
+import ru.nekit.android.nowapp.model.db.vo.EventToCalendarLink;
 
 /**
  * Created by chuvac on 15.03.15.
@@ -34,43 +36,53 @@ public class EventItemsModel {
         add(new Pair<>("вечером", EVENING_PERIOD));
     }};
 
-    public static final String LOADING_TYPE = "loading_type";
+    private static final String LOCAL_DATABASE_NAME = "nowapp.db";
 
+    public static final String LOADING_TYPE = "loading_type";
     public static final String REQUEST_NEW_EVENT_ITEMS = "request_new_event_items";
     public static final String REFRESH_EVENT_ITEMS = "refresh_event_items";
 
     private static final HashMap<String, Integer> CATEGORY_TYPE = new HashMap<>();
+    private static final HashMap<String, Integer> CATEGORY_TYPE_COLOR = new HashMap<>();
     private static final HashMap<String, Integer> CATEGORY_TYPE_BIG = new HashMap<>();
 
     private static EventItemsModel instance;
 
     private final ArrayList<EventItem> mEventItems;
     private final ArrayList<EventItem> mLastAddedEventItems;
+    private final EventToCalendarLinker mEventToCalendarLinker;
+    private final Context mContext;
     private int mAvailableEventCount;
     private int mCurrentPage;
     private boolean mReachEndOfDataList;
     private EventLocalDataSource mEventLocalDataSource;
 
     private EventItemsModel(Context context) {
+        mContext = context;
         mEventItems = new ArrayList<>();
         mLastAddedEventItems = new ArrayList<>();
         mCurrentPage = 1;
         mReachEndOfDataList = false;
-        CATEGORY_TYPE.put("category_sport", R.drawable.cat_sport);
-        CATEGORY_TYPE.put("category_entertainment", R.drawable.cat_drink);
-        CATEGORY_TYPE.put("category_other", R.drawable.cat_crown);
-        CATEGORY_TYPE.put("category_education", R.drawable.cat_book);
-        CATEGORY_TYPE_BIG.put("category_sport", R.drawable.cat_sport_big);
-        CATEGORY_TYPE_BIG.put("category_entertainment", R.drawable.cat_drink_big);
-        CATEGORY_TYPE_BIG.put("category_other", R.drawable.cat_crown_big);
-        CATEGORY_TYPE_BIG.put("category_education", R.drawable.cat_book_big);
-        mEventLocalDataSource = new EventLocalDataSource(context);
+        CATEGORY_TYPE.put("category_sport", R.drawable.category_sport);
+        CATEGORY_TYPE.put("category_entertainment", R.drawable.category_entertainment);
+        CATEGORY_TYPE.put("category_other", R.drawable.category_other);
+        CATEGORY_TYPE.put("category_education", R.drawable.category_education);
+        CATEGORY_TYPE_BIG.put("category_sport", R.drawable.category_sport_big);
+        CATEGORY_TYPE_BIG.put("category_entertainment", R.drawable.category_entertainment_big);
+        CATEGORY_TYPE_BIG.put("category_other", R.drawable.category_other_big);
+        CATEGORY_TYPE_BIG.put("category_education", R.drawable.category_education_big);
+        CATEGORY_TYPE_COLOR.put("category_sport", context.getResources().getColor(R.color.category_sport));
+        CATEGORY_TYPE_COLOR.put("category_entertainment", context.getResources().getColor(R.color.category_entertainment));
+        CATEGORY_TYPE_COLOR.put("category_other", context.getResources().getColor(R.color.category_other));
+        CATEGORY_TYPE_COLOR.put("category_education", context.getResources().getColor(R.color.category_education));
+        mEventLocalDataSource = new EventLocalDataSource(context, LOCAL_DATABASE_NAME);
+        mEventToCalendarLinker = new EventToCalendarLinker(context, LOCAL_DATABASE_NAME);
     }
 
-    public static boolean eventIsActual(Context context, EventItem eventItem) {
-        long currentTimeTimestamp = getCurrentTimeTimestamp(context, true);
+    private boolean eventIsActual(EventItem eventItem) {
+        long currentTimeTimestamp = getCurrentTimeTimestamp(mContext, true);
         long startAfterSeconds = eventItem.startAt - currentTimeTimestamp;
-        return startAfterSeconds <= 0 && ((eventItem.date + eventItem.endAt) > (currentTimeTimestamp + getCurrentDateTimestamp(context, true)));
+        return startAfterSeconds >= 0 && ((eventItem.date + eventItem.endAt) > (currentTimeTimestamp + getCurrentDateTimestamp(mContext, true)));
     }
 
     public static String getStartTimeAlias(Context context, EventItem eventItem) {
@@ -126,6 +138,10 @@ public class EventItemsModel {
             }
         }
         return alias;
+    }
+
+    public static int getCategoryColor(String category) {
+        return CATEGORY_TYPE_COLOR.get(category);
     }
 
     public static int getCategoryDrawable(String category) {
@@ -192,8 +208,12 @@ public class EventItemsModel {
         return TimeUnit.MILLISECONDS.toSeconds(Calendar.getInstance().getTimeZone().getRawOffset());
     }
 
-    public static int getCurrentTimeFromEventInSeconds(EventItem eventItem) {
-        return (int) (eventItem.date + eventItem.startAt - getTimeZoneOffsetInSeconds());
+    public static long getEventStartTimeInSeconds(EventItem eventItem) {
+        return eventItem.date + eventItem.startAt - getTimeZoneOffsetInSeconds();
+    }
+
+    public static long getEventEndTimeInSeconds(EventItem eventItem) {
+        return eventItem.date + eventItem.endAt - getTimeZoneOffsetInSeconds();
     }
 
     public void setAvailableEventCount(int count) {
@@ -232,9 +252,40 @@ public class EventItemsModel {
         Collections.sort(mEventItems, new EventNameComparator());
     }
 
+    public EventToCalendarLinker getEventToCalendarLinker() {
+        return mEventToCalendarLinker;
+    }
+
+    public void removeIrrelevantEvents() {
+        mEventLocalDataSource.openForWrite();
+        mEventToCalendarLinker.openForWrite();
+        ArrayList<EventItem> allEvents = mEventLocalDataSource.getAllEvents();
+        for (int i = 0; i < allEvents.size(); i++) {
+            EventItem event = allEvents.get(i);
+            if (!eventIsActual(event)) {
+                mEventLocalDataSource.removeEventByID(event.id);
+                mEventToCalendarLinker.removeLinkByEventID(event.id);
+            }
+        }
+        mEventLocalDataSource.close();
+        mEventToCalendarLinker.close();
+    }
+
     public class EventNameComparator implements Comparator<EventItem> {
         public int compare(EventItem left, EventItem right) {
             return Long.valueOf(left.date + left.startAt).compareTo(right.date + right.startAt);
         }
+    }
+
+    public EventToCalendarLink addEventToCalendarLink(EventItem eventItem, long calendarEventID) {
+        return mEventToCalendarLinker.addLink(eventItem.id, calendarEventID);
+    }
+
+    public void removeEventToCalendarLink(EventItem eventItem) {
+        mEventToCalendarLinker.removeLinkByEventID(eventItem.id);
+    }
+
+    public EventToCalendarLink getEventToCalendarLink(EventItem eventItem) {
+        return mEventToCalendarLinker.getLinkByEventID(eventItem.id);
     }
 }

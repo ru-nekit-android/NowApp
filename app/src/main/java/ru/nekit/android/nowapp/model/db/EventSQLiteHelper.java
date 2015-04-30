@@ -13,13 +13,12 @@ public class EventSQLiteHelper extends SQLiteOpenHelper {
 
 
     public static final String TABLE_NAME = "events";
-
-    private static final String DATABASE_NAME = "nowapp.db";
+    private String mDataBaseName;
 
     private static final int DATABASE_VERSION = 1;
 
     private static final String DATABASE_CREATE = "CREATE TABLE "
-            + TABLE_NAME + "("
+            + TABLE_NAME + " ("
             + EventFieldNameDictionary.ID + " INTEGER PRIMARY KEY, "
             + EventFieldNameDictionary.ADDRESS + " TEXT NOT NULL, "
             + EventFieldNameDictionary.ALL_NIGHT_PARTY + " INTEGER DEFAULT 0, "
@@ -44,12 +43,15 @@ public class EventSQLiteHelper extends SQLiteOpenHelper {
             + EventFieldNameDictionary.POSTER_THUMB + " TEXT"
             + ");";
 
-    public EventSQLiteHelper(Context context) {
-        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+
+    public EventSQLiteHelper(Context context, String dataBaseName) {
+        super(context, dataBaseName, null, DATABASE_VERSION);
+        mDataBaseName = dataBaseName;
     }
 
     @Override
     public void onCreate(SQLiteDatabase database) {
+
         database.execSQL(DATABASE_CREATE);
     }
 
@@ -57,5 +59,10 @@ public class EventSQLiteHelper extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase database, int oldVersion, int newVersion) {
         database.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
         onCreate(database);
+    }
+
+    @Override
+    public void onDowngrade(SQLiteDatabase database, int oldVersion, int newVersion) {
+        onUpgrade(database, oldVersion, newVersion);
     }
 }

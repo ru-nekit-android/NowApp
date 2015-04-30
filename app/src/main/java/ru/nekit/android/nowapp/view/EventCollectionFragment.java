@@ -45,7 +45,6 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
 
     private RecyclerView mEventItemsView;
     private EventCollectionAdapter mEventCollectionAdapter;
-    private ScrollingGridLayoutManager mEventCollectionLayoutManager;
     private IEventItemSelectListener mEventItemSelectListener;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private EventItemsModel mEventModel;
@@ -76,7 +75,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         mChangeApplicationStateReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                appleApplicationState();
+                applyApplicationState();
                 if (NowApplication.getState() == ONLINE) {
                     mLoadingType = EventItemsModel.REFRESH_EVENT_ITEMS;
                     mEventItemsView.smoothScrollToPosition(0);
@@ -98,19 +97,6 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     public void onResume() {
         super.onResume();
         ((ActionBarActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(false);
-        if (!mEventModel.isEventItemsListEmpty()) {
-            if (mEventModel.getCurrentPage() != mCurrentPage) {
-                mEventCollectionAdapter.setItems(mEventModel.getEventItems());
-                mCurrentPage = mEventModel.getCurrentPage();
-            }
-        }
-        appleApplicationState();
-        LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mChangeApplicationStateReceiver, new IntentFilter(NowApplication.CHANGE_APPLICATION_STATE));
-    }
-
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
         if (mEventModel.isEventItemsListEmpty()) {
             mSwipeRefreshLayout.post(new Runnable() {
                 @Override
@@ -120,7 +106,20 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
             });
             mLoadingType = EventItemsModel.REFRESH_EVENT_ITEMS;
             performLoad();
+        } else {
+            if (mEventModel.getCurrentPage() != mCurrentPage) {
+                mEventCollectionAdapter.setItems(mEventModel.getEventItems());
+                mCurrentPage = mEventModel.getCurrentPage();
+            }
         }
+        applyApplicationState();
+        LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mChangeApplicationStateReceiver, new IntentFilter(NowApplication.CHANGE_APPLICATION_STATE));
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
         View view = getView();
         if (view != null) {
             view.getRootView().findViewById(R.id.now_title).setOnClickListener(this);
@@ -137,7 +136,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         mEventItemsView.setItemAnimator(new DefaultItemAnimator());
         int listColumn = getResources().getInteger(R.integer.event_collection_column_count);
 
-        mEventCollectionLayoutManager = new ScrollingGridLayoutManager(context, listColumn, SMOOTH_SCROLL_DURATION);
+        ScrollingGridLayoutManager mEventCollectionLayoutManager = new ScrollingGridLayoutManager(context, listColumn, SMOOTH_SCROLL_DURATION);
         mEventCollectionAdapter = new EventCollectionAdapter(context, mEventModel, listColumn);
         mEventCollectionAdapter.setHasStableIds(true);
         mEventItemsView.setAdapter(mEventCollectionAdapter);
@@ -172,7 +171,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         return view;
     }
 
-    private void appleApplicationState() {
+    private void applyApplicationState() {
         mSwipeRefreshLayout.setEnabled(NowApplication.getState() == ONLINE);
     }
 

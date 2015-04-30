@@ -2,6 +2,7 @@ package ru.nekit.android.nowapp.view;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -12,8 +13,12 @@ import android.graphics.PorterDuffColorFilter;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.CalendarContract;
 import android.provider.Settings;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.Loader;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBarActivity;
 import android.telephony.TelephonyManager;
@@ -26,6 +31,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -38,10 +44,14 @@ import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 import com.devspark.robototextview.util.RobotoTypefaceManager;
+import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.pnikosis.materialishprogress.ProgressWheel;
 
 import org.osmdroid.DefaultResourceProxyImpl;
 import org.osmdroid.api.IGeoPoint;
+import org.osmdroid.events.MapListener;
+import org.osmdroid.events.ScrollEvent;
+import org.osmdroid.events.ZoomEvent;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
@@ -59,6 +69,8 @@ import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.EventItem;
 import ru.nekit.android.nowapp.model.EventItemsModel;
+import ru.nekit.android.nowapp.model.EventToCalendarLoader;
+import ru.nekit.android.nowapp.model.db.vo.EventToCalendarLink;
 import ru.nekit.android.nowapp.modelView.listeners.IEventItemPosterSelectListener;
 import ru.nekit.android.nowapp.utils.RobotoTextAppearanceSpan;
 import ru.nekit.android.nowapp.utils.TextViewUtils;
@@ -67,11 +79,13 @@ import ru.nekit.android.nowapp.widget.OnSwipeTouchListener;
 import static ru.nekit.android.nowapp.NowApplication.APP_STATE.ONLINE;
 
 @SuppressWarnings("ResourceType")
-public class EventDetailFragment extends Fragment implements View.OnClickListener {
+public class EventDetailFragment extends Fragment implements View.OnClickListener, LoaderManager.LoaderCallbacks<EventToCalendarLink> {
 
     public static final String TAG = "ru.nekit.android.event_detail_fragment";
 
-    private static final String ARG_EVENT_ITEM = "ru.nekit.android.event_item";
+    private static final int LOADER_ID = 0;
+
+    private static final String EVENT_ITEM_KEY = "ru.nekit.android.event_item";
     private static final int MAX_ZOOM = 19;
 
     private MapView mMapView;
@@ -85,6 +99,42 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     private BroadcastReceiver mChangeApplicationStateReceiver;
     private MyLocationNewOverlay myLocationOverLay;
     private LocationManager mLocationManager;
+    private FloatingActionButton mFloatingActionButton;
+    private MapListener mMapListener = new MapListener() {
+        @Override
+        public boolean onScroll(ScrollEvent event) {
+            return false;
+        }
+
+        @Override
+        public boolean onZoom(ZoomEvent event) {
+            checkZoomButtons();
+            return false;
+        }
+    };
+
+    private ViewTreeObserver.OnScrollChangedListener scrollListener = new ViewTreeObserver.OnScrollChangedListener() {
+
+        @Override
+        public void onScrollChanged() {
+            updateFloatingActionButtonPosition();
+        }
+    };
+
+    ViewTreeObserver.OnGlobalLayoutListener floatingActionButtonLayoutListener = new ViewTreeObserver.OnGlobalLayoutListener() {
+
+        @Override
+        public void onGlobalLayout() {
+            updateFloatingActionButtonPosition();
+        }
+
+    };
+
+    private ScrollView mScrollView;
+    private TextView mDescriptionView;
+    private Button mPhoneButton;
+    private Button mSiteButton;
+    private EventToCalendarLink mEventToCalendarLink;
 
     public EventDetailFragment() {
     }
@@ -96,13 +146,13 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         mChangeApplicationStateReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                appleApplicationState();
+                applyApplicationState();
             }
         };
         mLocationManager = (LocationManager) getActivity().getSystemService(Activity.LOCATION_SERVICE);
     }
 
-    private void appleApplicationState() {
+    private void applyApplicationState() {
         mMapView.setUseDataConnection(NowApplication.getState() == ONLINE);
     }
 
@@ -115,22 +165,47 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     @Override
     public void onResume() {
         super.onResume();
-        ((ActionBarActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        appleApplicationState();
-        LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mChangeApplicationStateReceiver, new IntentFilter(NowApplication.CHANGE_APPLICATION_STATE));
+        FragmentActivity activity = getActivity();
+        ((ActionBarActivity) activity).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        applyApplicationState();
+        LocalBroadcastManager.getInstance(activity).registerReceiver(mChangeApplicationStateReceiver, new IntentFilter(NowApplication.CHANGE_APPLICATION_STATE));
 
-        GpsMyLocationProvider gpsLocationProvider = new GpsMyLocationProvider(getActivity());
+        GpsMyLocationProvider gpsLocationProvider = new GpsMyLocationProvider(activity);
         gpsLocationProvider.setLocationUpdateMinTime(TimeUnit.SECONDS.toMillis(5));
         gpsLocationProvider.setLocationUpdateMinDistance(50);
         myLocationOverLay.enableMyLocation(gpsLocationProvider);
         myLocationOverLay.setDrawAccuracyEnabled(true);
+        mFloatingActionButton.getViewTreeObserver().addOnGlobalLayoutListener(floatingActionButtonLayoutListener);
+        mScrollView.getViewTreeObserver().addOnScrollChangedListener(scrollListener);
+        initEventToCalendarLoader(EventToCalendarLoader.CHECK);
     }
 
     @Override
     public void onPause() {
         super.onPause();
         LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mChangeApplicationStateReceiver);
+        mScrollView.getViewTreeObserver().removeOnScrollChangedListener(scrollListener);
+        mFloatingActionButton.getViewTreeObserver().removeGlobalOnLayoutListener(floatingActionButtonLayoutListener);
         myLocationOverLay.disableMyLocation();
+    }
+
+    private void updateFloatingActionButtonPosition() {
+        View bottomView = mDescriptionView;
+        if (mPhoneButton.getVisibility() == View.VISIBLE) {
+            bottomView = mPhoneButton;
+        } else if (mSiteButton.getVisibility() == View.VISIBLE) {
+            bottomView = mSiteButton;
+        }
+        int scrollY = mScrollView.getScrollY();
+        int fabHeight = mFloatingActionButton.getHeight();
+        float screenBottom = mScrollView.getHeight();
+        float bottomViewBottom = bottomView.getY() - scrollY;
+        if (screenBottom < bottomViewBottom) {
+            mFloatingActionButton.setY(screenBottom - fabHeight);
+        } else {
+            mFloatingActionButton.setY(bottomViewBottom - fabHeight);
+        }
+        mDescriptionView.setPadding(0, 0, 0, fabHeight - (int) getActivity().getResources().getDimension(R.dimen.normal_space));
     }
 
     private void createMap() {
@@ -164,6 +239,8 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         myLocationOverLay = new MyLocationNewOverlay(context, mMapView);
         mMapView.getOverlays().add(myLocationOverLay);
 
+        mMapView.setMapListener(mMapListener);
+
         checkZoomButtons();
     }
 
@@ -193,7 +270,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         Bundle arg = getArguments();
-        mEventItem = arg.getParcelable(ARG_EVENT_ITEM);
+        mEventItem = arg.getParcelable(EVENT_ITEM_KEY);
         return constructInterface(inflater.inflate(R.layout.fragment_event_detail, container, false));
     }
 
@@ -201,7 +278,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
         Bundle arg = getArguments();
         final Context context = getActivity();
-        mEventItem = arg.getParcelable(ARG_EVENT_ITEM);
+        mEventItem = arg.getParcelable(EVENT_ITEM_KEY);
 
         TextView titleView = (TextView) view.findViewById(R.id.title_view);
         ArrayList<String> eventNameArray = ru.nekit.android.nowapp.utils.StringUtil.wrapText(mEventItem.name.toUpperCase());
@@ -269,28 +346,28 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         TextView dayOfWeekView = (TextView) view.findViewById(R.id.day_of_week_view);
         TextView timeView = (TextView) view.findViewById(R.id.time_view);
         TextView entranceView = (TextView) view.findViewById(R.id.entrance_view);
-        TextView descriptionView = (TextView) view.findViewById(R.id.description_view);
-        Button phoneButton = (Button) view.findViewById(R.id.phone_button);
-        Button siteButton = (Button) view.findViewById(R.id.site_button);
-        phoneButton.setVisibility(View.GONE);
-        siteButton.setVisibility(View.GONE);
+        mDescriptionView = (TextView) view.findViewById(R.id.description_view);
+        mPhoneButton = (Button) view.findViewById(R.id.phone_button);
+        mSiteButton = (Button) view.findViewById(R.id.site_button);
+        mPhoneButton.setVisibility(View.GONE);
+        mSiteButton.setVisibility(View.GONE);
         if (!"".equals(mEventItem.site)) {
-            siteButton.setVisibility(View.VISIBLE);
-            siteButton.setOnClickListener(this);
-            siteButton.setText(mEventItem.site);
-            siteButton.setTransformationMethod(null);
+            mSiteButton.setVisibility(View.VISIBLE);
+            mSiteButton.setOnClickListener(this);
+            mSiteButton.setText(mEventItem.site);
+            mSiteButton.setTransformationMethod(null);
         }
         if (!"".equals(mEventItem.phone)) {
             if (mEventItem.phone.length() > 1) {
                 TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
                 if (tm.getPhoneType() == TelephonyManager.PHONE_TYPE_NONE) {
-                    phoneButton.setEnabled(false);
+                    mPhoneButton.setEnabled(false);
                 } else {
-                    phoneButton.setEnabled(true);
-                    phoneButton.setOnClickListener(this);
+                    mPhoneButton.setEnabled(true);
+                    mPhoneButton.setOnClickListener(this);
                 }
-                phoneButton.setVisibility(View.VISIBLE);
-                phoneButton.setText(mEventItem.phone);
+                mPhoneButton.setVisibility(View.VISIBLE);
+                mPhoneButton.setText(mEventItem.phone);
             }
         }
 
@@ -300,12 +377,12 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         monthView.setText(new DateFormatSymbols().getShortMonths()[calendar.get(Calendar.MONTH)].toLowerCase());
         int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK) - 1;
         dayOfWeekView.setText(getResources().getTextArray(R.array.day_of_week)[dayOfWeek]);
-        calendar.set(Calendar.SECOND, EventItemsModel.getCurrentTimeFromEventInSeconds(mEventItem));
+        calendar.set(Calendar.SECOND, (int) EventItemsModel.getEventStartTimeInSeconds(mEventItem));
         createEventTimeTextBlock(context, timeView, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE));
         createEventEntranceTextBlock(context, entranceView, mEventItem.entrance);
-        descriptionView.setText(mEventItem.eventDescription);
+        mDescriptionView.setText(mEventItem.eventDescription);
         mMapView = (MapView) view.findViewById(R.id.map_view);
-        final ScrollView scrollView = (ScrollView) view.findViewById(R.id.scroll_view);
+        mScrollView = (ScrollView) view.findViewById(R.id.scroll_view);
         View mapScrollFakeView = view.findViewById(R.id.map_scroll_fake_view);
 
         mapScrollFakeView.setOnTouchListener(new View.OnTouchListener() {
@@ -315,15 +392,15 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                 int action = event.getAction();
                 switch (action) {
                     case MotionEvent.ACTION_DOWN:
-                        scrollView.requestDisallowInterceptTouchEvent(true);
+                        mScrollView.requestDisallowInterceptTouchEvent(true);
                         return false;
 
                     case MotionEvent.ACTION_UP:
-                        scrollView.requestDisallowInterceptTouchEvent(false);
+                        mScrollView.requestDisallowInterceptTouchEvent(false);
                         return true;
 
                     case MotionEvent.ACTION_MOVE:
-                        scrollView.requestDisallowInterceptTouchEvent(true);
+                        mScrollView.requestDisallowInterceptTouchEvent(true);
                         return false;
 
                     default:
@@ -349,8 +426,12 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         addressButton.setOnClickListener(this);
 
         mMapViewContainer = (RelativeLayout) view.findViewById(R.id.map_view_container);
+        mFloatingActionButton = (FloatingActionButton) view.findViewById(R.id.fab);
+        mFloatingActionButton.setColorNormal(EventItemsModel.getCategoryColor(mEventItem.category));
 
-        view.findViewById(R.id.scroll_view).scrollTo(0, 0);
+        mFloatingActionButton.setOnClickListener(this);
+
+        mScrollView.scrollTo(0, 0);
 
         return view;
     }
@@ -395,14 +476,14 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
     private void setEventItem(EventItem eventItem) {
         Bundle arg = new Bundle();
-        arg.putParcelable(ARG_EVENT_ITEM, eventItem);
+        arg.putParcelable(EVENT_ITEM_KEY, eventItem);
         setArguments(arg);
     }
 
 
     public void updateEventItem(EventItem eventItem) {
         Bundle arg = getArguments();
-        arg.putParcelable(ARG_EVENT_ITEM, eventItem);
+        arg.putParcelable(EVENT_ITEM_KEY, eventItem);
     }
 
     @Override
@@ -484,7 +565,33 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
                 break;
 
+            case R.id.fab:
+
+                if (mEventToCalendarLink != null) {
+                    intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setData(ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, mEventToCalendarLink.getCalendarEventID()));
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(Intent.createChooser(intent, "XUI"));
+                } else {
+                    initEventToCalendarLoader(EventToCalendarLoader.ADD);
+                }
+
+                break;
+
             default:
+        }
+    }
+
+    private void initEventToCalendarLoader(int method) {
+        Bundle loaderArgs = new Bundle();
+        loaderArgs.putInt(EventToCalendarLoader.METHOD_KEY, method);
+        loaderArgs.putParcelable(EventToCalendarLoader.EVENT_ITEM_KEY, mEventItem);
+        LoaderManager loaderManager = getActivity().getSupportLoaderManager();
+        final Loader<EventToCalendarLink> loader = loaderManager.getLoader(LOADER_ID);
+        if (loader != null) {
+            loaderManager.restartLoader(LOADER_ID, loaderArgs, this);
+        } else {
+            loaderManager.initLoader(LOADER_ID, loaderArgs, this);
         }
     }
 
@@ -519,4 +626,32 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         fragment.setEventItem(eventItem);
         return fragment;
     }
+
+
+    @Override
+    public Loader<EventToCalendarLink> onCreateLoader(int id, Bundle args) {
+        mFloatingActionButton.setEnabled(false);
+        mEventToCalendarLink = null;
+        EventToCalendarLoader loader = new EventToCalendarLoader(getActivity(), args);
+        loader.forceLoad();
+        return loader;
+    }
+
+    @Override
+    public void onLoadFinished(Loader<EventToCalendarLink> loader, EventToCalendarLink result) {
+        mEventToCalendarLink = result;
+        mFloatingActionButton.setEnabled(true);
+        if (result == null) {
+            mFloatingActionButton.setIcon(R.drawable.ic_action_calendar);
+        } else {
+            mFloatingActionButton.setIcon(R.drawable.ic_action_calendar_added);
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<EventToCalendarLink> loader) {
+
+    }
+
+
 }

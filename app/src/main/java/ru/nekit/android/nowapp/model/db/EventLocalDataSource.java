@@ -45,8 +45,8 @@ public class EventLocalDataSource {
                     EventFieldNameDictionary.POSTER_THUMB
             };
 
-    public EventLocalDataSource(Context context) {
-        dbHelper = new EventSQLiteHelper(context);
+    public EventLocalDataSource(Context context, String dataBaseName) {
+        dbHelper = new EventSQLiteHelper(context, dataBaseName);
     }
 
     public void openForWrite() throws SQLException {
@@ -132,8 +132,8 @@ public class EventLocalDataSource {
         dbHelper.close();
     }
 
-    public void removeEventByID(int id) {
-        String idString = String.valueOf(id);
-        database.execSQL(String.format("DELETE FROM %s WHERE %s = '" + idString + "';", EventSQLiteHelper.TABLE_NAME, EventFieldNameDictionary.ID));
+    public void removeEventByID(int ID) {
+        String idString = String.valueOf(ID);
+        database.delete(EventSQLiteHelper.TABLE_NAME, String.format("%s = %s", EventFieldNameDictionary.ID, idString), null);
     }
 }
