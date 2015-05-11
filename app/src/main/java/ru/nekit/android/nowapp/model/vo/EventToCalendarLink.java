@@ -1,4 +1,4 @@
-package ru.nekit.android.nowapp.model.db.vo;
+package ru.nekit.android.nowapp.model.vo;
 
 import android.support.v4.util.Pair;
 
