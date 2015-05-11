@@ -24,7 +24,6 @@ import com.bumptech.glide.request.target.Target;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
 
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.EventItem;
@@ -53,7 +52,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     private RecyclerView mRecyclerView;
     private RecyclerView.OnScrollListener mScrollListener;
-    private int mItemHeight, mColumns, mMargin;
+    private final int mItemHeight, mColumns, mMargin;
     private IEventItemSelectListener mItemClickListener;
     private boolean mImmediateImageLoading;
     private OnLoadMorelListener mLoadMoreListener;
@@ -65,9 +64,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         mItemClickListener = listener;
     }
 
-    @Override
-    public void onAttachedToRecyclerView(final RecyclerView recyclerView) {
-        super.onAttachedToRecyclerView(recyclerView);
+    public void registerRecyclerView(RecyclerView recyclerView) {
         mRecyclerView = recyclerView;
         mScrollListener = new RecyclerView.OnScrollListener() {
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
@@ -117,7 +114,9 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                                     if (firstVisibleItem > -1 && lastVisibleItem > -1) {
                                         for (int i = firstVisibleItem; i <= lastVisibleItem; i++) {
                                             EventCollectionItemViewHolder eventCollectionItemViewHolder = (EventCollectionItemViewHolder) mRecyclerView.findViewHolderForAdapterPosition(i);
-                                            setStartTimeForEvent(getItem(i).eventItem, eventCollectionItemViewHolder);
+                                            if (eventCollectionItemViewHolder != null) {
+                                                setStartTimeForEvent(getItem(i).eventItem, eventCollectionItemViewHolder);
+                                            }
                                         }
                                     }
                                 }
@@ -126,9 +125,8 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                     }
                 },
                 0,
-                TimeUnit.MINUTES.toMillis(mContext.getResources().getInteger(R.integer.event_time_precision_in_minutes)) / 2);
+                1000);
     }
-
 
     public void setLoadMoreListener(OnLoadMorelListener listener) {
         mLoadMoreListener = listener;
@@ -139,13 +137,9 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         }
     }
 
-    @Override
-    public void onDetachedFromRecyclerView(RecyclerView recyclerView) {
-        super.onDetachedFromRecyclerView(recyclerView);
-        mEventItems.clear();
+    public void unregisterRecyclerView(RecyclerView recyclerView) {
         mScrollListener = null;
         recyclerView.setOnScrollListener(null);
-        mRecyclerView = null;
         mTimer.cancel();
         mTimer = null;
         mHandler = null;
@@ -186,7 +180,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         }
     }
 
-    public boolean setItems(ArrayList<EventItem> eventItems, boolean addState) {
+    private boolean setItems(ArrayList<EventItem> eventItems, boolean addState) {
         if (!addState) {
             mEventItems.clear();
         }
@@ -214,7 +208,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         notifyDataSetChanged();
     }
 
-    public static int getScreenWidth(Context context) {
+    private static int getScreenWidth(Context context) {
         WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         DisplayMetrics displaymetrics = new DisplayMetrics();
         wm.getDefaultDisplay().getMetrics(displaymetrics);
@@ -340,7 +334,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         return NORMAL;
     }
 
-    public EventItemWrapper getItem(int position) {
+    private EventItemWrapper getItem(int position) {
         if (position < 0 || mEventItems.size() <= position) return null;
         return mEventItems.get(position);
     }

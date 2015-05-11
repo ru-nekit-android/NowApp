@@ -112,6 +112,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                 mCurrentPage = mEventModel.getCurrentPage();
             }
         }
+        mEventCollectionAdapter.registerRecyclerView(mEventItemsView);
         applyApplicationState();
         LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mChangeApplicationStateReceiver, new IntentFilter(NowApplication.CHANGE_APPLICATION_STATE));
     }
@@ -234,6 +235,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         loaderManager.destroyLoader(LOADER_ID);
         setLoadingState(LOADING_STATE.LOADED);
         LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mChangeApplicationStateReceiver);
+        mEventCollectionAdapter.unregisterRecyclerView(mEventItemsView);
         super.onPause();
     }
 
