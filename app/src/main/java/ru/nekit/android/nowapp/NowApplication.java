@@ -57,11 +57,9 @@ public class NowApplication extends Application implements ConnectivityReceiver.
         mSharedPreferences = getSharedPreferences("nowapp", Context.MODE_PRIVATE);
         mConnectivityReceiver = new ConnectivityReceiver(this);
         mConnectivityReceiver.setOnNetworkAvailableListener(this);
-        mEventModel.removeIrrelevantEvents();
 
         DisplayMetrics metrics = getResources().getDisplayMetrics();
         Log.v("ru.nekit.vtag", "!" + metrics.density);
-
     }
 
     public static void updateDataTimestamp() {
@@ -113,6 +111,4 @@ public class NowApplication extends Application implements ConnectivityReceiver.
             mConnectivityReceiver.unbind(instance);
         }
     }
-
-
 }
