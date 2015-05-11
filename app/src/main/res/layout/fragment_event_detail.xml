@@ -282,6 +282,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="end"
         app:fab_addButtonSize="normal"
+        android:layout_marginRight="@dimen/normal_space"
         app:fab_colorNormal="@color/primary"
         app:fab_colorPressed="@color/primary_transparent"
         app:fab_icon="@drawable/ic_action_calendar"

@@ -1,7 +1,7 @@
 <resources>
 
     <string name="app_name">Сейчас</string>
-    <string name="action_about">О программе</string>
+    <string name="about_title">О программе</string>
 
     <string name="going_right_now">уже идет!</string>
     <string name="already_ended">уже закончилось!</string>
@@ -13,16 +13,20 @@
     <string name="connection_is_not_available">Проверьте соединение с сетью Интернет</string>
     <string name="site_is_not_available">Сайт в данный момент недоступен</string>
     <string name="error_while_data_loading">Ошибка во время загрузки данных</string>
-    <string name="dialog_title_offline_state">Оффлай режим</string>
-    <string name="dialog_content_offline_state">Вы не подключены к сети Интернет.\nХотите просмотреть события в режиме оффлайн? \n\n<small>Предупреждение: возможно информация о некоторых событиях будет неактуальна.</small></string>
-    <string name="dialog_content_default_state">Вы не подключены к сети Интернет.\nНажмите \"%s\" для закрытия программы.</string>
-    <string name="dialog_title_default_state">Предупреждение</string>
+    <string name="offline_state_dialog_title">Оффлай режим</string>
+    <string name="offline_state_dialog_text">Вы не подключены к сети Интернет.\nХотите просмотреть события в режиме оффлайн? \n\n<small>Предупреждение: возможно информация о некоторых событиях будет неактуальна.</small></string>
+    <string name="default_state_dialog_text">Вы не подключены к сети Интернет.\nНажмите \"%s\" для закрытия программы.</string>
+    <string name="default_state_dialog_title">Предупреждение</string>
     <string name="exit">Выход</string>
     <string name="no">Нет</string>
+    <string name="add">Добавить</string>
+    <string name="open_calendar">Открыть календарь после добавления события</string>
     <string name="offline_text">offline</string>
     <string name="switch_on">Включить</string>
     <string name="gps_is_off">GPS выключен</string>
     <string name="gps_switch_on_ask">GPS выключен. Хотите его включить?</string>
+    <string name="dialog_title_add_to_calendar">Добавление события</string>
+    <string name="dialog_text_add_to_calendar">Добавить событие в ваш календарь?\nВ дальнейшем данное событие можно всегда посмотреть в календаре.</string>
 
     <string-array name="day_of_week">
         <item>ВС</item>
