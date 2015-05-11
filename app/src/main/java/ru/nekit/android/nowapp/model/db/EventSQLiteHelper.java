@@ -13,11 +13,12 @@ public class EventSQLiteHelper extends SQLiteOpenHelper {
 
 
     public static final String TABLE_NAME = "events";
+    private static EventSQLiteHelper sInstance;
     private String mDataBaseName;
 
     private static final int DATABASE_VERSION = 1;
 
-    private static final String DATABASE_CREATE = "CREATE TABLE "
+    private static final String DATABASE_CREATE = "CREATE TABLE IF NOT EXISTS "
             + TABLE_NAME + " ("
             + EventFieldNameDictionary.ID + " INTEGER PRIMARY KEY, "
             + EventFieldNameDictionary.ADDRESS + " TEXT NOT NULL, "
@@ -44,14 +45,13 @@ public class EventSQLiteHelper extends SQLiteOpenHelper {
             + ");";
 
 
-    public EventSQLiteHelper(Context context, String dataBaseName) {
+    private EventSQLiteHelper(Context context, String dataBaseName) {
         super(context, dataBaseName, null, DATABASE_VERSION);
         mDataBaseName = dataBaseName;
     }
 
     @Override
     public void onCreate(SQLiteDatabase database) {
-
         database.execSQL(DATABASE_CREATE);
     }
 
@@ -65,4 +65,13 @@ public class EventSQLiteHelper extends SQLiteOpenHelper {
     public void onDowngrade(SQLiteDatabase database, int oldVersion, int newVersion) {
         onUpgrade(database, oldVersion, newVersion);
     }
+
+    public synchronized static EventSQLiteHelper getInstance(Context context, String dataBaseName) {
+        if (sInstance == null) {
+            sInstance = new EventSQLiteHelper(context, dataBaseName);
+        }
+        return sInstance;
+    }
+
+
 }
