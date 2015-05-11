@@ -14,20 +14,21 @@ public class EventToCalendarSQLiteHelper extends SQLiteOpenHelper implements Bas
 
 
     public static final String TABLE_NAME = "event_to_calendar";
+    private static EventToCalendarSQLiteHelper sInstance;
     private String mDataBaseName;
 
     private static final int DATABASE_VERSION = 1;
     public static final String EVENT_ID = "event_" + EventFieldNameDictionary.ID;
     public static final String CALENDAR_EVENT_ID = "calendar_event_" + EventFieldNameDictionary.ID;
 
-    private static final String DATABASE_CREATE = "CREATE TABLE "
+    private static final String DATABASE_CREATE = "CREATE TABLE IF NOT EXISTS "
             + TABLE_NAME + " ("
             + EVENT_ID + " INTEGER UNIQUE, "
             + CALENDAR_EVENT_ID + " INTEGER"
             + ");";
 
 
-    public EventToCalendarSQLiteHelper(Context context, String dataBaseName) {
+    private EventToCalendarSQLiteHelper(Context context, String dataBaseName) {
         super(context, dataBaseName, null, DATABASE_VERSION);
         mDataBaseName = dataBaseName;
     }
@@ -46,5 +47,12 @@ public class EventToCalendarSQLiteHelper extends SQLiteOpenHelper implements Bas
     @Override
     public void onDowngrade(SQLiteDatabase database, int oldVersion, int newVersion) {
         onUpgrade(database, oldVersion, newVersion);
+    }
+
+    public static EventToCalendarSQLiteHelper getInstance(Context context, String dataBaseName) {
+        if (sInstance == null) {
+            sInstance = new EventToCalendarSQLiteHelper(context, dataBaseName);
+        }
+        return sInstance;
     }
 }

@@ -8,7 +8,7 @@ import android.database.sqlite.SQLiteDatabase;
 
 import java.util.ArrayList;
 
-import ru.nekit.android.nowapp.model.db.vo.EventToCalendarLink;
+import ru.nekit.android.nowapp.model.vo.EventToCalendarLink;
 
 /**
  * Created by chuvac on 21.04.15.
@@ -25,7 +25,7 @@ public class EventToCalendarLinker {
             };
 
     public EventToCalendarLinker(Context context, String dataBaseName) {
-        dbHelper = new EventToCalendarSQLiteHelper(context, dataBaseName);
+        dbHelper = EventToCalendarSQLiteHelper.getInstance(context, dataBaseName);
     }
 
     public void openForWrite() throws SQLException {
@@ -40,7 +40,11 @@ public class EventToCalendarLinker {
         ContentValues values = new ContentValues();
         values.put(EventToCalendarSQLiteHelper.EVENT_ID, eventID);
         values.put(EventToCalendarSQLiteHelper.CALENDAR_EVENT_ID, calendarID);
-        return new EventToCalendarLink(eventID, database.insert(EventToCalendarSQLiteHelper.TABLE_NAME, null, values));
+        long result = database.insert(EventToCalendarSQLiteHelper.TABLE_NAME, null, values);
+        if(result != -1){
+            return new EventToCalendarLink(eventID, calendarID);
+        }
+        return null;
     }
 
     public ArrayList<EventToCalendarLink> getAllEventToCalendarLinks() {
