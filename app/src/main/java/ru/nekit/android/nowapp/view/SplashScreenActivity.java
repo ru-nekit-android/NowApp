@@ -1,16 +1,17 @@
 package ru.nekit.android.nowapp.view;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatDialog;
 import android.view.View;
 import android.widget.TextView;
 
-import com.afollestad.materialdialogs.MaterialDialog;
-import com.devspark.robototextview.util.RobotoTypefaceManager;
 import com.pnikosis.materialishprogress.ProgressWheel;
 
 import ru.nekit.android.nowapp.R;
@@ -45,68 +46,60 @@ public class SplashScreenActivity extends ActionBarActivity implements LoaderMan
     }
 
     private void showConnectivityProblemDialog() {
+        AlertDialog.Builder builder;
+        AppCompatDialog dialog;
+        View dialogContentView = getLayoutInflater().inflate(R.layout.dialog_content, null, false);
+        View dialogTitleView = getLayoutInflater().inflate(R.layout.dialog_title, null, false);
+        TextView dialogTextView = (TextView) dialogContentView.findViewById(R.id.text_view);
+        dialogTextView.setTextAppearance(this, R.style.DialogContent);
+        TextView dialogTitleTextView = (TextView) dialogTitleView.findViewById(R.id.text_view);
+        dialogTitleTextView.setTextAppearance(this, R.style.DialogTitle);
+        builder = new AlertDialog.Builder(this, R.style.Alert_Theme);
+
         mProgressWheel.setVisibility(View.GONE);
-        MaterialDialog dialog;
-        View view;
         switch (getOfflineState()) {
 
             case DATA_IS_UP_TO_DATE:
-                dialog = new MaterialDialog.Builder(this)
-                        .title(R.string.dialog_title_offline_state)
-                        .positiveText(android.R.string.yes)
-                        .negativeText(R.string.no)
-                        .typeface(RobotoTypefaceManager.obtainTypeface(this, RobotoTypefaceManager.Typeface.ROBOTO_REGULAR),
-                                RobotoTypefaceManager.obtainTypeface(this, RobotoTypefaceManager.Typeface.ROBOTO_REGULAR))
-                        .customView(R.layout.text_view_content, false)
-                        .callback(new MaterialDialog.ButtonCallback() {
-                            @Override
-                            public void onPositive(MaterialDialog dialog) {
-                                mProgressWheel.setVisibility(View.VISIBLE);
-                                initFirstTimeLoader();
-                            }
 
-                            @Override
-                            public void onNegative(MaterialDialog dialog) {
-                                finish();
-                            }
-                        })
-                        .disableDefaultFonts()
-                        .cancelable(false)
-                        .show();
+                builder.setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        finish();
+                    }
+                }).setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        mProgressWheel.setVisibility(View.VISIBLE);
+                        initFirstTimeLoader();
+                    }
+                }).setCancelable(false)
+                        .setView(dialogContentView)
+                        .setCustomTitle(dialogTitleView);
 
-                view = dialog.getCustomView();
-                ((TextView) view.findViewById(R.id.text_view)).setText(R.string.dialog_content_offline_state);
+                dialogTextView.setText(R.string.offline_state_dialog_text);
+                dialogTitleTextView.setText(R.string.offline_state_dialog_title);
 
                 break;
 
             case DATA_IS_OUT_OF_DATE:
-
-                //break;
-
             case DATA_IS_EMPTY:
 
-                dialog = new MaterialDialog.Builder(this)
-                        .title(R.string.dialog_title_default_state)
-                        .negativeText(R.string.exit)
-                        .typeface(RobotoTypefaceManager.obtainTypeface(this, RobotoTypefaceManager.Typeface.ROBOTO_REGULAR),
-                                RobotoTypefaceManager.obtainTypeface(this, RobotoTypefaceManager.Typeface.ROBOTO_REGULAR))
-                        .callback(new MaterialDialog.ButtonCallback() {
-                            @Override
-                            public void onNegative(MaterialDialog dialog) {
-                                finish();
-                            }
-                        })
-                        .customView(R.layout.text_view_content, false)
-                        .disableDefaultFonts()
-                        .cancelable(false)
-                        .show();
-
-                view = dialog.getCustomView();
-                ((TextView) view.findViewById(R.id.text_view)).setText(String.format(getResources().getString(R.string.dialog_content_default_state), getResources().getString(R.string.exit)));
-
+                builder.setNegativeButton(R.string.exit, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        finish();
+                    }
+                }).setCancelable(false)
+                        .setView(dialogContentView)
+                        .setCustomTitle(dialogTitleView);
+                dialogTextView.setText(R.string.default_state_dialog_text);
+                dialogTitleTextView.setText(R.string.default_state_dialog_title);
 
                 break;
         }
+
+        dialog = builder.create();
+        dialog.show();
     }
 
     private void initFirstTimeLoader() {
