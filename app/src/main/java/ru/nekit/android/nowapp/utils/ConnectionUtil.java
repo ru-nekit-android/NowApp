@@ -14,11 +14,8 @@ public class ConnectionUtil {
         NetworkInfo networkInfo = cm.getActiveNetworkInfo();
         // if network is NOT available networkInfo will be null
         // otherwise check if we are connected
-        if (networkInfo != null && networkInfo.isConnected()) {
-            return true;
-        }
+        return networkInfo != null && networkInfo.isConnected();
 
-        return false;
     }
 
     public static int getDataConnectionType(Context ctx) {

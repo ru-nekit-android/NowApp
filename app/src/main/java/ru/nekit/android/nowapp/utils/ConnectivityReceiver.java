@@ -41,13 +41,13 @@ public class ConnectivityReceiver extends BroadcastReceiver {
     private void checkConnectionOnDemand() {
         final NetworkInfo info = connectivityManager.getActiveNetworkInfo();
         if (info == null || info.getState() != NetworkInfo.State.CONNECTED) {
-            if (connection == true) {
+            if (connection) {
                 connection = false;
                 if (onNetworkAvailableListener != null)
                     onNetworkAvailableListener.onNetworkUnavailable();
             }
         } else {
-            if (connection == false) {
+            if (!connection) {
                 connection = true;
                 if (onNetworkAvailableListener != null)
                     onNetworkAvailableListener.onNetworkAvailable();
