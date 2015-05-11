@@ -46,7 +46,7 @@ public class EventLocalDataSource {
             };
 
     public EventLocalDataSource(Context context, String dataBaseName) {
-        dbHelper = new EventSQLiteHelper(context, dataBaseName);
+        dbHelper = EventSQLiteHelper.getInstance(context, dataBaseName);
     }
 
     public void openForWrite() throws SQLException {
@@ -85,12 +85,12 @@ public class EventLocalDataSource {
     }
 
     public ArrayList<EventItem> getAllEvents() {
-        ArrayList<EventItem> eventItems = new ArrayList<EventItem>();
 
+        ArrayList<EventItem> eventItems = new ArrayList<>();
         Cursor cursor = database.query(EventSQLiteHelper.TABLE_NAME,
                 ALL_COLUMNS, null, null, null, null, null);
-
         cursor.moveToFirst();
+        eventItems.clear();
         while (!cursor.isAfterLast()) {
             EventItem eventitem = cursorToEventItem(cursor);
             eventItems.add(eventitem);
@@ -135,5 +135,9 @@ public class EventLocalDataSource {
     public void removeEventByID(int ID) {
         String idString = String.valueOf(ID);
         database.delete(EventSQLiteHelper.TABLE_NAME, String.format("%s = %s", EventFieldNameDictionary.ID, idString), null);
+    }
+
+    public void clear() {
+        database.delete(EventSQLiteHelper.TABLE_NAME, null, null);
     }
 }
