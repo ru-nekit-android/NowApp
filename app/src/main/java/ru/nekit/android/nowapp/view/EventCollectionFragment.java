@@ -6,70 +6,116 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Handler;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.text.Html;
+import android.text.TextUtils;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import com.getbase.floatingactionbutton.FloatingActionButton;
+
+import java.util.ArrayList;
 
 import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.EventItem;
 import ru.nekit.android.nowapp.model.EventItemsLoader;
 import ru.nekit.android.nowapp.model.EventItemsModel;
+import ru.nekit.android.nowapp.model.EventItemsSearcher;
 import ru.nekit.android.nowapp.modelView.EventCollectionAdapter;
+import ru.nekit.android.nowapp.modelView.listeners.IBackPressedListener;
 import ru.nekit.android.nowapp.modelView.listeners.IEventItemSelectListener;
 import ru.nekit.android.nowapp.widget.ScrollingGridLayoutManager;
 
 import static ru.nekit.android.nowapp.NowApplication.APP_STATE.ONLINE;
 
-public class EventCollectionFragment extends Fragment implements LoaderManager.LoaderCallbacks<Integer>, IEventItemSelectListener, View.OnClickListener {
+public class EventCollectionFragment extends Fragment implements LoaderManager.LoaderCallbacks, IEventItemSelectListener, View.OnClickListener, SearchView.OnQueryTextListener, IBackPressedListener, TextView.OnEditorActionListener {
 
     public static final String TAG = "ru.nekit.android.event_collection_fragment";
 
     private static final int LOADER_ID = 2;
+    private static final int SEARCHER_ID = 3;
     private static final int SMOOTH_SCROLL_DURATION = 1000;
+
+    enum MODE {
+        NORMAL, SEARCH
+    }
 
     enum LOADING_STATE {
         LOADING, LOADED
     }
 
-    private RecyclerView mEventItemsView;
+    private EventItemsModel mEventModel;
+    private boolean mRestoreSearchMode;
+    private String mQuery;
+    private int mCurrentPage;
+
     private EventCollectionAdapter mEventCollectionAdapter;
     private IEventItemSelectListener mEventItemSelectListener;
-    private SwipeRefreshLayout mSwipeRefreshLayout;
-    private EventItemsModel mEventModel;
-    private int mCurrentPage;
-    private BroadcastReceiver mChangeApplicationStateReceiver;
 
-    private LOADING_STATE mLoadingState = LOADING_STATE.LOADED;
-    private String mLoadingType = EventItemsModel.REFRESH_EVENTS;
+    private RecyclerView mEventItemsView;
+    private SwipeRefreshLayout mSwipeRefreshLayout;
+    private BroadcastReceiver mChangeApplicationStateReceiver;
+    private SearchView mSearchView;
+    private FloatingActionButton mFloatingActionButton;
+    private TextView mSearchStatus;
+
+    private LOADING_STATE mLoadingState;
+    private MODE mMode;
+    private String mLoadingType;
 
     public EventCollectionFragment() {
+        mLoadingState = LOADING_STATE.LOADED;
+        mLoadingType = null;
+        mMode = MODE.NORMAL;
     }
 
     @Override
-    public void onEventItemSelect(EventItem eventItem) {
+    public void onEventItemSelect(final EventItem eventItem) {
         if (mLoadingState == LOADING_STATE.LOADED) {
-            mEventItemSelectListener.onEventItemSelect(eventItem);
+            int wait = mMode == MODE.SEARCH ? 200 : 50;
+            mRestoreSearchMode = mMode == MODE.SEARCH && searchQueryIsValid();
+            if (searchViewVisible()) {
+                applyMode(MODE.NORMAL);
+            }
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    mEventItemSelectListener.onEventItemSelect(eventItem);
+                }
+            }, wait);
         } else {
             //strange behavior on usual user-case
         }
+    }
+
+    private boolean searchQueryIsValid() {
+        return TextUtils.getTrimmedLength(mSearchView.getQuery().toString()) > 0;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
+        setHasOptionsMenu(true);
         mEventModel = NowApplication.getEventModel();
         mCurrentPage = mEventModel.getCurrentPage();
         mChangeApplicationStateReceiver = new BroadcastReceiver() {
@@ -94,39 +140,110 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        ((ActionBarActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(false);
-        if (mEventModel.dataIsActual()) {
-            if (mEventModel.getCurrentPage() != mCurrentPage) {
-                mEventCollectionAdapter.setItems(mEventModel.getEventItems());
-                mCurrentPage = mEventModel.getCurrentPage();
-            }
-        } else {
-            if (NowApplication.getState() == ONLINE) {
-                mSwipeRefreshLayout.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        mSwipeRefreshLayout.setRefreshing(true);
-                    }
-                });
-                mLoadingType = EventItemsModel.REFRESH_EVENTS;
-                performLoad();
+    public boolean onQueryTextSubmit(String query) {
+        if (mMode == MODE.SEARCH) {
+            if (searchQueryIsValid()) {
+                mQuery = query;
+                performSearch(query);
+            } else {
+                setEventsFromModel();
             }
         }
+        return false;
+    }
+
+    private void setEventsFromModel() {
+        mEventCollectionAdapter.setItems(mEventModel.getEventItems());
+    }
+
+    @Override
+    public boolean onQueryTextChange(String newText) {
+        if (mMode == MODE.SEARCH && searchQueryIsValid()) {
+            return true;
+        }
+        return false;
+    }
+
+    private View getViewFromRoot(int id) {
+        View view = getView();
+        if (view != null) {
+            return view.getRootView().findViewById(id);
+        }
+        return null;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        ((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+        if (mRestoreSearchMode) {
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    restoreMode();
+                }
+            }, getActivity().getResources().getInteger(R.integer.slide_animation_duration) / 2);
+        } else {
+            setEventsFromModel();
+            if (mEventModel.dataIsActual()) {
+                if (mEventModel.getCurrentPage() != mCurrentPage) {
+                    mCurrentPage = mEventModel.getCurrentPage();
+                }
+            } else {
+                if (NowApplication.getState() == ONLINE) {
+                    mSwipeRefreshLayout.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            mSwipeRefreshLayout.setRefreshing(true);
+                        }
+                    });
+                    mLoadingType = EventItemsModel.REFRESH_EVENTS;
+                    performLoad();
+                }
+            }
+        }
+
         mEventCollectionAdapter.registerRecyclerView(mEventItemsView);
         applyApplicationState();
         LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mChangeApplicationStateReceiver, new IntentFilter(NowApplication.CHANGE_APPLICATION_STATE));
     }
 
+    private void restoreMode() {
+        applyMode(MODE.SEARCH);
+        mSearchView.setQuery(mQuery, true);
+    }
+
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        getViewFromRoot(R.id.now_title).setOnClickListener(this);
+    }
 
-        View view = getView();
-        if (view != null) {
-            view.getRootView().findViewById(R.id.now_title).setOnClickListener(this);
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        mSearchView = (SearchView) getViewFromRoot(R.id.search_view);
+        mSearchView.setVisibility(View.GONE);
+        mSearchView.setOnQueryTextListener(this);
+        mSearchView.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
+
+        ((EditText) mSearchView.findViewById(android.support.v7.appcompat.R.id.search_src_text)).setOnEditorActionListener(this);
+        ImageView searchCloseButton = (ImageView) mSearchView.findViewById(android.support.v7.appcompat.R.id.search_close_btn);
+        searchCloseButton.setOnClickListener(this);
+    }
+
+    @Override
+    public boolean onEditorAction(TextView view, int actionId, KeyEvent event) {
+        if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+            if (!searchQueryIsValid()) {
+                setEventsFromModel();
+                return true;
+            } else {
+                onQueryTextSubmit(mSearchView.getQuery().toString());
+            }
         }
+        return false;
     }
 
     @Override
@@ -166,15 +283,22 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         mEventCollectionAdapter.setLoadMoreListener(new EventCollectionAdapter.OnLoadMorelListener() {
             @Override
             public void onLoadMore() {
-                mLoadingType = EventItemsModel.REQUEST_NEW_EVENTS;
-                setLoadingState(LOADING_STATE.LOADING);
+                if (mMode == MODE.NORMAL) {
+                    mLoadingType = EventItemsModel.REQUEST_NEW_EVENTS;
+                    setLoadingState(LOADING_STATE.LOADING);
+                }
             }
         });
+
+        mFloatingActionButton = (FloatingActionButton) view.findViewById(R.id.fab_events);
+        mFloatingActionButton.setOnClickListener(this);
+
+        mSearchStatus = (TextView) view.findViewById(R.id.search_status);
         return view;
     }
 
     private void applyApplicationState() {
-        mSwipeRefreshLayout.setEnabled(NowApplication.getState() == ONLINE);
+        updateRefreshLayoutEnabled();
     }
 
     private void setLoadingState(LOADING_STATE state) {
@@ -197,6 +321,18 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                 default:
                     break;
             }
+        }
+    }
+
+    private void performSearch(String query) {
+        LoaderManager loaderManager = getLoaderManager();
+        Bundle searchArgs = new Bundle();
+        searchArgs.putString(EventItemsSearcher.EVENT_ITEMS_SEARCH_KEY, query);
+        final Loader<ArrayList<EventItem>> loader = loaderManager.getLoader(SEARCHER_ID);
+        if (loader != null) {
+            loaderManager.restartLoader(SEARCHER_ID, searchArgs, EventCollectionFragment.this);
+        } else {
+            loaderManager.initLoader(SEARCHER_ID, searchArgs, EventCollectionFragment.this);
         }
     }
 
@@ -234,6 +370,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         mSwipeRefreshLayout.setRefreshing(false);
         LoaderManager loaderManager = getLoaderManager();
         loaderManager.destroyLoader(LOADER_ID);
+        loaderManager.destroyLoader(SEARCHER_ID);
         setLoadingState(LOADING_STATE.LOADED);
         LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mChangeApplicationStateReceiver);
         mEventCollectionAdapter.unregisterRecyclerView(mEventItemsView);
@@ -241,47 +378,148 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     }
 
     @Override
-    public Loader<Integer> onCreateLoader(int id, Bundle args) {
-        if (id == LOADER_ID) {
-            EventItemsLoader loader = new EventItemsLoader(getActivity(), args);
-            loader.forceLoad();
-            return loader;
+    public Loader onCreateLoader(int id, Bundle args) {
+        Loader loader = null;
+        switch (id) {
+            case LOADER_ID:
+
+                loader = new EventItemsLoader(getActivity(), args);
+
+                break;
+            case SEARCHER_ID:
+
+                loader = new EventItemsSearcher(getActivity(), args);
+
+                break;
+            default:
+
         }
-        return null;
+        loader.forceLoad();
+        return loader;
     }
 
+
     @Override
-    public void onLoadFinished(Loader<Integer> loader, Integer result) {
+    public void onLoadFinished(Loader loader, Object result) {
         if (isResumed()) {
-            if (result == EventItemsModel.RESULT_OK) {
-                mEventCollectionAdapter.setItems(mEventModel.getEventItems());
-                mCurrentPage = mEventModel.getCurrentPage();
-            } else {
-                Toast.makeText(getActivity(), Html.fromHtml(getResources().getString(R.string.error_while_data_loading)), Toast.LENGTH_LONG).show();
+            switch (loader.getId()) {
+                case LOADER_ID:
+                    int resultForLoad = (int) result;
+                    mLoadingType = EventItemsModel.REFRESH_EVENTS;
+                    mSwipeRefreshLayout.setRefreshing(false);
+                    if (resultForLoad == EventItemsModel.RESULT_OK) {
+                        setEventsFromModel();
+                        mCurrentPage = mEventModel.getCurrentPage();
+                    } else if (resultForLoad == EventItemsModel.DATA_IS_EMPTY) {
+                        //
+                    } else {
+                        Toast.makeText(getActivity(), Html.fromHtml(getResources().getString(R.string.error_while_data_loading)), Toast.LENGTH_LONG).show();
+                    }
+                    setLoadingState(LOADING_STATE.LOADED);
+
+                    break;
+
+                case SEARCHER_ID:
+
+                    ArrayList<EventItem> resultForSearch = (ArrayList<EventItem>) result;
+                    mEventCollectionAdapter.setItems(resultForSearch);
+                    setSearchStatus(resultForSearch.size() == 0 ? getActivity().getString(R.string.nothing_found) : null);
+
+                    break;
+                default:
+
             }
-            setLoadingState(LOADING_STATE.LOADED);
-            mLoadingType = EventItemsModel.REFRESH_EVENTS;
-            mSwipeRefreshLayout.setRefreshing(false);
+
+
         }
     }
 
     @Override
-    public void onLoaderReset(Loader<Integer> loader) {
-        setLoadingState(LOADING_STATE.LOADED);
-        mLoadingType = EventItemsModel.REFRESH_EVENTS;
-        mSwipeRefreshLayout.setRefreshing(false);
+    public void onLoaderReset(Loader loader) {
+        switch (loader.getId()) {
+
+            case LOADER_ID:
+
+                setLoadingState(LOADING_STATE.LOADED);
+                mLoadingType = EventItemsModel.REFRESH_EVENTS;
+                mSwipeRefreshLayout.setRefreshing(false);
+
+                break;
+
+            case SEARCHER_ID:
+
+
+                break;
+            default:
+
+        }
+    }
+
+    public void setSearchStatus(@Nullable String searchStatus) {
+        mSearchStatus.setVisibility(searchStatus == null ? View.INVISIBLE : View.VISIBLE);
+        if (searchStatus != null) {
+            mSearchStatus.setText(searchStatus);
+        }
+    }
+
+    private void applyMode(MODE mode) {
+        mMode = mode;
+        boolean searchVisible = mode == MODE.SEARCH;
+        //mFloatingActionButton.setVisibility(searchVisible ? View.INVISIBLE : View.VISIBLE);
+        mSearchView.setVisibility(searchVisible ? View.VISIBLE : View.GONE);
+        mSearchView.setIconified(!searchVisible);
+        getViewFromRoot(R.id.title_container).setVisibility(searchVisible ? View.INVISIBLE : View.VISIBLE);
+        updateRefreshLayoutEnabled();
+    }
+
+    private void updateRefreshLayoutEnabled() {
+        mSwipeRefreshLayout.setEnabled(mMode == MODE.NORMAL && NowApplication.getState() == ONLINE);
+    }
+
+    private boolean searchViewVisible() {
+        return mSearchView.getVisibility() == View.VISIBLE;
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (searchViewVisible()) {
+            applyMode(MODE.NORMAL);
+        }
     }
 
     @Override
     public void onClick(View view) {
+
         switch (view.getId()) {
             case R.id.now_title:
                 if (isResumed()) {
                     mEventItemsView.smoothScrollToPosition(0);
                 }
                 break;
+
+            case R.id.fab_events:
+
+                applyMode(searchViewVisible() ? MODE.NORMAL : MODE.SEARCH);
+                if (!searchViewVisible()) {
+                    setEventsFromModel();
+                }
+
+                break;
+
+            case android.support.v7.appcompat.R.id.search_close_btn:
+
+                if (!searchQueryIsValid()) {
+                    applyMode(MODE.NORMAL);
+                    setEventsFromModel();
+                } else {
+                    mSearchView.setQuery("", true);
+                }
+
+                break;
+
             default:
                 break;
         }
+
     }
 }
