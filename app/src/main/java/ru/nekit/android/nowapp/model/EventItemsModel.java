@@ -4,7 +4,6 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.util.Pair;
-import android.util.Log;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -28,8 +27,9 @@ import java.util.concurrent.TimeUnit;
 
 import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
+import ru.nekit.android.nowapp.VTAG;
 import ru.nekit.android.nowapp.model.db.EventLocalDataSource;
-import ru.nekit.android.nowapp.model.db.EventToCalendarLinker;
+import ru.nekit.android.nowapp.model.db.EventToCalendarDataSource;
 import ru.nekit.android.nowapp.model.vo.EventToCalendarLink;
 
 /**
@@ -65,6 +65,8 @@ public class EventItemsModel {
     public static final String REFRESH_EVENTS = "refresh_event_items";
     public static final String LOAD_IN_BACKGROUND = "load_in_background";
 
+    private static final boolean FEATURE_LOAD_IN_BACKGROUND = true;
+
     private static final HashMap<String, Integer> CATEGORY_TYPE = new HashMap<>();
     private static final HashMap<String, Integer> CATEGORY_TYPE_COLOR = new HashMap<>();
     private static final HashMap<String, Integer> CATEGORY_TYPE_BIG = new HashMap<>();
@@ -73,7 +75,7 @@ public class EventItemsModel {
 
     private final Context mContext;
     private final ArrayList<EventItem> mEventItems;
-    private final EventToCalendarLinker mEventToCalendarLinker;
+    private final EventToCalendarDataSource mEventToCalendarDataSource;
     private final EventLocalDataSource mEventLocalDataSource;
     private final Runnable mBackgroundRunnable;
 
@@ -94,6 +96,7 @@ public class EventItemsModel {
         mPageLoadedInBackground = 1;
         mEventsCountPerPage = 0;
         mReachEndOfDataList = false;
+
         CATEGORY_TYPE.put("category_sport", R.drawable.category_sport);
         CATEGORY_TYPE.put("category_entertainment", R.drawable.category_entertainment);
         CATEGORY_TYPE.put("category_other", R.drawable.category_other);
@@ -106,23 +109,35 @@ public class EventItemsModel {
         CATEGORY_TYPE_COLOR.put("category_entertainment", context.getResources().getColor(R.color.category_entertainment));
         CATEGORY_TYPE_COLOR.put("category_other", context.getResources().getColor(R.color.category_other));
         CATEGORY_TYPE_COLOR.put("category_education", context.getResources().getColor(R.color.category_education));
+
         mEventLocalDataSource = new EventLocalDataSource(context, LOCAL_DATABASE_NAME);
-        mEventToCalendarLinker = new EventToCalendarLinker(context, LOCAL_DATABASE_NAME);
-        mEventLocalDataSource.openForWrite();
-        removeIrrelevantEvents();
-        setEventsFromLocalDataSource();
+        mEventToCalendarDataSource = new EventToCalendarDataSource(context, LOCAL_DATABASE_NAME);
+
         mBackgroundRunnable = new Runnable() {
             @Override
             public void run() {
                 Bundle args = new Bundle();
                 args.putString(LOADING_TYPE, LOAD_IN_BACKGROUND);
                 int result = RESULT_OK;
-                while (!Thread.interrupted() && mPageLoadedInBackground < getAvailablePageCount() && result != DATA_IS_EMPTY) {
+                while (!Thread.interrupted() && mPageLoadedInBackground < getAvailablePageCount() && result == RESULT_OK) {
                     result = performLoad(context, args);
+                    VTAG.call("Background: " + mPageLoadedInBackground + " : " + getAvailablePageCount() + " : " + result);
                 }
-                Log.v("ru.nekit.vtag", "background end");
             }
         };
+
+        mEventLocalDataSource.openForWrite();
+        mEventToCalendarDataSource.openForWrite();
+
+        ArrayList<EventItem> allEvents = mEventLocalDataSource.getAllEvents();
+        for (EventItem event : allEvents) {
+            if (!eventIsActual(event)) {
+                mEventLocalDataSource.removeEventByID(event.id);
+                mEventToCalendarDataSource.removeLinkByEventID(event.id);
+            }
+        }
+
+        setEventsFromLocalDataSource(allEvents);
     }
 
     private boolean eventIsActual(EventItem eventItem) {
@@ -184,6 +199,7 @@ public class EventItemsModel {
         return alias;
     }
 
+    //TODO: get from database!!!
     public EventItem getEventItemByID(int ID) {
         EventItem result = null;
         for (int i = 0; i < mEventItems.size() && result == null; i++) {
@@ -273,29 +289,16 @@ public class EventItemsModel {
         return mCurrentPage;
     }
 
-    private void setReachEndOfDataList(boolean value) {
-        mReachEndOfDataList = value;
-    }
 
     private ArrayList<EventItem> sortByStartTime(ArrayList<EventItem> eventItems) {
         Collections.sort(eventItems, new EventNameComparator());
         return eventItems;
     }
 
-    private void removeIrrelevantEvents() {
-        mEventToCalendarLinker.openForWrite();
-        ArrayList<EventItem> allEvents = mEventLocalDataSource.getAllEvents();
-        for (int i = 0; i < allEvents.size(); i++) {
-            EventItem event = allEvents.get(i);
-            if (!eventIsActual(event)) {
-                mEventToCalendarLinker.removeLinkByEventID(event.id);
-            }
-        }
-    }
-
-    private void setEventsFromLocalDataSource() {
+    private void setEventsFromLocalDataSource(ArrayList<EventItem> allEvewnts) {
         mDataIsActual = false;
-        setEvents(sortByStartTime(mEventLocalDataSource.getAllEvents()));
+        VTAG.call("setEventsFromLocalDataSource: " + allEvewnts.size());
+        setEvents(sortByStartTime(allEvewnts));
     }
 
     private void insertEventToLocalDataSource(EventItem eventItem) {
@@ -304,18 +307,20 @@ public class EventItemsModel {
 
     public void openEventToCalendarLinker(boolean forWrite) {
         if (forWrite) {
-            mEventToCalendarLinker.openForWrite();
+            mEventToCalendarDataSource.openForWrite();
         } else {
-            mEventToCalendarLinker.openForRead();
+            mEventToCalendarDataSource.openForRead();
         }
     }
 
     private void loadInBackground() {
-        if (mBackgroundThread != null && mBackgroundThread.isAlive()) {
-            mBackgroundThread.interrupt();
+        if (FEATURE_LOAD_IN_BACKGROUND) {
+            if (mBackgroundThread != null && mBackgroundThread.isAlive()) {
+                mBackgroundThread.interrupt();
+            }
+            mBackgroundThread = new Thread(mBackgroundRunnable);
+            mBackgroundThread.start();
         }
-        mBackgroundThread = new Thread(mBackgroundRunnable);
-        mBackgroundThread.start();
     }
 
     private int getAvailablePageCount() {
@@ -329,23 +334,24 @@ public class EventItemsModel {
     }
 
     public EventToCalendarLink addEventToCalendarLink(EventItem eventItem, long calendarEventID) {
-        return mEventToCalendarLinker.addLink(eventItem.id, calendarEventID);
-    }
-
-    public void removeEventToCalendarLink(EventItem eventItem) {
-        mEventToCalendarLinker.removeLinkByEventID(eventItem.id);
+        return mEventToCalendarDataSource.addLink(eventItem.id, calendarEventID);
     }
 
     public void removeEventToCalendarLinkByEventId(long eventItemId) {
-        mEventToCalendarLinker.removeLinkByEventID(eventItemId);
-    }
-
-    public EventToCalendarLink getEventToCalendarLink(EventItem eventItem) {
-        return mEventToCalendarLinker.getLinkByEventID(eventItem.id);
+        mEventToCalendarDataSource.removeLinkByEventID(eventItemId);
     }
 
     public EventToCalendarLink getEventToCalendarLinkByEventId(long eventItemId) {
-        return mEventToCalendarLinker.getLinkByEventID(eventItemId);
+        return mEventToCalendarDataSource.getLinkByEventID(eventItemId);
+    }
+
+    ArrayList<EventItem> performSearch(String query) {
+        String[] splitQuery = query.toLowerCase().split(" ");
+        String queryResult = "";
+        for (String item : splitQuery) {
+            queryResult += "^" + item + "*";
+        }
+        return sortByStartTime(mEventLocalDataSource.getByEventIDs(mEventLocalDataSource.fullTextSearchByField(null, queryResult)));
     }
 
     int performLoad(Context context, Bundle args) {
@@ -360,11 +366,17 @@ public class EventItemsModel {
 
         boolean requestNewEvents = REQUEST_NEW_EVENTS.equals(type);
 
-        if (requestNewEvents) {
-            if (mCurrentPage <= getAvailablePageCount() && mCurrentPage <= mPageLoadedInBackground) {
-                mCurrentPage = mPageLoadedInBackground;
-                setEvents(sortByStartTime(mEventLocalDataSource.getAllEvents()));
-                return result;
+        if (FEATURE_LOAD_IN_BACKGROUND) {
+            if (requestNewEvents) {
+                if (mCurrentPage < mPageLoadedInBackground) {
+                    if (mCurrentPage <= getAvailablePageCount()) {
+                        mCurrentPage = mPageLoadedInBackground;
+                        setEvents(sortByStartTime(mEventLocalDataSource.getAllEvents()));
+                        return result;
+                    }
+                } else {
+                    mReachEndOfDataList = true;
+                }
             }
         }
 
@@ -413,7 +425,6 @@ public class EventItemsModel {
 
                     if ("ok".equals(response)) {
                         JSONArray eventJsonArray = jsonRootObject.getJSONArray(TAG_EVENTS);
-                        setReachEndOfDataList(eventJsonArray.length() == 0);
                         for (int i = 0; i < eventJsonArray.length(); i++) {
                             JSONObject jsonEventItem = eventJsonArray.getJSONObject(i);
 
@@ -467,6 +478,7 @@ public class EventItemsModel {
                     mCurrentPage++;
                 } else if (refreshEvents) {
                     setEvents(eventList);
+                    mReachEndOfDataList = false;
                     mCurrentPage = 1;
                     mPageLoadedInBackground = 1;
                 } else if (loadInBackground) {
@@ -479,19 +491,20 @@ public class EventItemsModel {
                     }
                     if (mPageLoadedInBackground == 1) {
                         mEventLocalDataSource.clear();
-                        NowApplication.updateDataTimestamp();
                         loadInBackground();
                     }
                     for (int i = 0; i < eventList.size(); i++) {
                         insertEventToLocalDataSource(eventList.get(i));
                     }
+                    NowApplication.updateDataTimestamp();
                 }
                 mDataIsActual = true;
             } else {
-                return DATA_IS_EMPTY;
+                mReachEndOfDataList = !loadInBackground;
+                result = DATA_IS_EMPTY;
             }
         } else {
-            setEventsFromLocalDataSource();
+            setEventsFromLocalDataSource(mEventLocalDataSource.getAllEvents());
             mAvailableEventCount = getEventItems().size();
         }
 
