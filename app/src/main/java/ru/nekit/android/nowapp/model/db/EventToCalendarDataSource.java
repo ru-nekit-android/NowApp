@@ -13,7 +13,7 @@ import ru.nekit.android.nowapp.model.vo.EventToCalendarLink;
 /**
  * Created by chuvac on 21.04.15.
  */
-public class EventToCalendarLinker {
+public class EventToCalendarDataSource {
 
     private SQLiteDatabase database;
     private EventToCalendarSQLiteHelper dbHelper;
@@ -24,7 +24,7 @@ public class EventToCalendarLinker {
                     EventToCalendarSQLiteHelper.CALENDAR_EVENT_ID
             };
 
-    public EventToCalendarLinker(Context context, String dataBaseName) {
+    public EventToCalendarDataSource(Context context, String dataBaseName) {
         dbHelper = EventToCalendarSQLiteHelper.getInstance(context, dataBaseName);
     }
 
