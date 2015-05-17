@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import ru.nekit.android.nowapp.VTAG;
 import ru.nekit.android.nowapp.model.EventFieldNameDictionary;
 
 /**
@@ -13,12 +14,12 @@ public class EventSQLiteHelper extends SQLiteOpenHelper {
 
 
     public static final String TABLE_NAME = "events";
+
     private static EventSQLiteHelper sInstance;
-    private String mDataBaseName;
 
     private static final int DATABASE_VERSION = 1;
 
-    private static final String DATABASE_CREATE = "CREATE TABLE IF NOT EXISTS "
+    private static final String DATABASE_CREATE = "CREATE TABLE "
             + TABLE_NAME + " ("
             + EventFieldNameDictionary.ID + " INTEGER PRIMARY KEY, "
             + EventFieldNameDictionary.ADDRESS + " TEXT NOT NULL, "
@@ -44,25 +45,26 @@ public class EventSQLiteHelper extends SQLiteOpenHelper {
             + EventFieldNameDictionary.POSTER_THUMB + " TEXT"
             + ");";
 
-
     private EventSQLiteHelper(Context context, String dataBaseName) {
         super(context, dataBaseName, null, DATABASE_VERSION);
-        mDataBaseName = dataBaseName;
     }
 
     @Override
     public void onCreate(SQLiteDatabase database) {
+
         database.execSQL(DATABASE_CREATE);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase database, int oldVersion, int newVersion) {
+        VTAG.call("onUpgrade " + oldVersion + " : " + newVersion);
         database.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
         onCreate(database);
     }
 
     @Override
     public void onDowngrade(SQLiteDatabase database, int oldVersion, int newVersion) {
+        VTAG.call("onDowngrade " + oldVersion + " : " + newVersion);
         onUpgrade(database, oldVersion, newVersion);
     }
 
