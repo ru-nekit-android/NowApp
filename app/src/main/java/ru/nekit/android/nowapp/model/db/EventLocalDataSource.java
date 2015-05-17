@@ -5,6 +5,9 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.text.TextUtils;
 
 import java.util.ArrayList;
 
@@ -17,7 +20,8 @@ import ru.nekit.android.nowapp.model.EventItem;
 public class EventLocalDataSource {
 
     private SQLiteDatabase database;
-    private EventSQLiteHelper dbHelper;
+    private EventSQLiteHelper eventSQLHelper;
+    private EventsFTSSQLiteHelper eventsFTSQLHelper;
 
     private static final String[] ALL_COLUMNS =
             {
@@ -46,57 +50,80 @@ public class EventLocalDataSource {
             };
 
     public EventLocalDataSource(Context context, String dataBaseName) {
-        dbHelper = EventSQLiteHelper.getInstance(context, dataBaseName);
+        eventSQLHelper = EventSQLiteHelper.getInstance(context, dataBaseName);
+        eventsFTSQLHelper = EventsFTSSQLiteHelper.getInstance(context, dataBaseName);
     }
 
     public void openForWrite() throws SQLException {
-        database = dbHelper.getWritableDatabase();
+        database = eventSQLHelper.getWritableDatabase();
     }
 
     public void openForRead() throws SQLException {
-        database = dbHelper.getReadableDatabase();
+        database = eventSQLHelper.getReadableDatabase();
     }
 
     public void createOrUpdateEvent(EventItem eventItem) {
-        ContentValues values = new ContentValues();
-        values.put(EventFieldNameDictionary.ID, eventItem.id);
-        values.put(EventFieldNameDictionary.ADDRESS, eventItem.address);
-        values.put(EventFieldNameDictionary.ALL_NIGHT_PARTY, eventItem.allNightParty);
-        values.put(EventFieldNameDictionary.DATE, eventItem.date);
-        values.put(EventFieldNameDictionary.EMAIL, eventItem.email);
-        values.put(EventFieldNameDictionary.END_AT, eventItem.endAt);
-        values.put(EventFieldNameDictionary.START_AT, eventItem.startAt);
-        values.put(EventFieldNameDictionary.ENTRANCE, eventItem.entrance);
-        values.put(EventFieldNameDictionary.EVENT_CATEGORY, eventItem.category);
-        values.put(EventFieldNameDictionary.NAME, eventItem.name);
-        values.put(EventFieldNameDictionary.EVENT_DESCRIPTION, eventItem.eventDescription);
-        values.put(EventFieldNameDictionary.LOGO_ORIGINAL, eventItem.logoOriginal);
-        values.put(EventFieldNameDictionary.LOGO_THUMB, eventItem.logoThumb);
-        values.put(EventFieldNameDictionary.EVENT_GEO_POSITION_LATITUDE, eventItem.lat);
-        values.put(EventFieldNameDictionary.EVENT_GEO_POSITION_LONGITUDE, eventItem.lng);
-        values.put(EventFieldNameDictionary.PHONE, eventItem.phone);
-        values.put(EventFieldNameDictionary.SITE, eventItem.site);
-        values.put(EventFieldNameDictionary.PLACE_ID, eventItem.placeId);
-        values.put(EventFieldNameDictionary.PLACE_NAME, eventItem.placeName);
-        values.put(EventFieldNameDictionary.POSTER_BLUR, eventItem.posterBlur);
-        values.put(EventFieldNameDictionary.POSTER_ORIGINAL, eventItem.posterOriginal);
-        values.put(EventFieldNameDictionary.POSTER_THUMB, eventItem.posterThumb);
-        database.insertWithOnConflict(EventSQLiteHelper.TABLE_NAME, EventFieldNameDictionary.ID, values, SQLiteDatabase.CONFLICT_REPLACE);
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(EventFieldNameDictionary.ID, eventItem.id);
+        contentValues.put(EventFieldNameDictionary.ADDRESS, eventItem.address);
+        contentValues.put(EventFieldNameDictionary.ALL_NIGHT_PARTY, eventItem.allNightParty);
+        contentValues.put(EventFieldNameDictionary.DATE, eventItem.date);
+        contentValues.put(EventFieldNameDictionary.EMAIL, eventItem.email);
+        contentValues.put(EventFieldNameDictionary.END_AT, eventItem.endAt);
+        contentValues.put(EventFieldNameDictionary.START_AT, eventItem.startAt);
+        contentValues.put(EventFieldNameDictionary.ENTRANCE, eventItem.entrance);
+        contentValues.put(EventFieldNameDictionary.EVENT_CATEGORY, eventItem.category);
+        contentValues.put(EventFieldNameDictionary.NAME, eventItem.name);
+        contentValues.put(EventFieldNameDictionary.EVENT_DESCRIPTION, eventItem.eventDescription);
+        contentValues.put(EventFieldNameDictionary.LOGO_ORIGINAL, eventItem.logoOriginal);
+        contentValues.put(EventFieldNameDictionary.LOGO_THUMB, eventItem.logoThumb);
+        contentValues.put(EventFieldNameDictionary.EVENT_GEO_POSITION_LATITUDE, eventItem.lat);
+        contentValues.put(EventFieldNameDictionary.EVENT_GEO_POSITION_LONGITUDE, eventItem.lng);
+        contentValues.put(EventFieldNameDictionary.PHONE, eventItem.phone);
+        contentValues.put(EventFieldNameDictionary.SITE, eventItem.site);
+        contentValues.put(EventFieldNameDictionary.PLACE_ID, eventItem.placeId);
+        contentValues.put(EventFieldNameDictionary.PLACE_NAME, eventItem.placeName);
+        contentValues.put(EventFieldNameDictionary.POSTER_BLUR, eventItem.posterBlur);
+        contentValues.put(EventFieldNameDictionary.POSTER_ORIGINAL, eventItem.posterOriginal);
+        contentValues.put(EventFieldNameDictionary.POSTER_THUMB, eventItem.posterThumb);
+        long id = database.insertWithOnConflict(EventSQLiteHelper.TABLE_NAME, EventFieldNameDictionary.ID, contentValues, SQLiteDatabase.CONFLICT_REPLACE);
+
+        ContentValues contentValuesFTS = new ContentValues();
+        contentValuesFTS.put(EventFieldNameDictionary.ID, id);
+        contentValuesFTS.put(EventFieldNameDictionary.NAME, eventItem.name.toLowerCase());
+        contentValuesFTS.put(EventFieldNameDictionary.EVENT_DESCRIPTION, eventItem.eventDescription.toLowerCase());
+        contentValuesFTS.put(EventFieldNameDictionary.PLACE_NAME, eventItem.placeName.toLowerCase());
+        contentValuesFTS.put(EventFieldNameDictionary.ADDRESS, eventItem.address.toLowerCase());
+        database.insert(EventsFTSSQLiteHelper.TABLE_NAME, null, contentValuesFTS);
     }
 
     public ArrayList<EventItem> getAllEvents() {
-
-        ArrayList<EventItem> eventItems = new ArrayList<>();
+        ArrayList<EventItem> eventList = new ArrayList<>();
         Cursor cursor = database.query(EventSQLiteHelper.TABLE_NAME,
                 ALL_COLUMNS, null, null, null, null, null);
         cursor.moveToFirst();
-        eventItems.clear();
         while (!cursor.isAfterLast()) {
-            EventItem eventitem = cursorToEventItem(cursor);
-            eventItems.add(eventitem);
+            EventItem event = cursorToEventItem(cursor);
+            eventList.add(event);
             cursor.moveToNext();
         }
         cursor.close();
+        return eventList;
+    }
+
+    public ArrayList<EventItem> getByEventIDs(ArrayList<Integer> ids) {
+        ArrayList<EventItem> eventItems = new ArrayList<>();
+        if (ids.size() > 0) {
+            Cursor cursor = database.query(EventSQLiteHelper.TABLE_NAME,
+                    ALL_COLUMNS, EventFieldNameDictionary.ID + " IN (" + TextUtils.join(",", ids) + ")", null, null, null, null);
+            cursor.moveToFirst();
+            while (!cursor.isAfterLast()) {
+                EventItem eventitem = cursorToEventItem(cursor);
+                eventItems.add(eventitem);
+                cursor.moveToNext();
+            }
+            cursor.close();
+        }
         return eventItems;
     }
 
@@ -127,17 +154,44 @@ public class EventLocalDataSource {
         return eventItem;
     }
 
+    public ArrayList<EventItem> searchByField(String field, String query) {
+        ArrayList<EventItem> eventList = new ArrayList<>();
+        Cursor cursor = database.query(EventSQLiteHelper.TABLE_NAME, ALL_COLUMNS, field + " LIKE '%" + query + "%'", null, null, null, null);
 
-    public void close() {
-        dbHelper.close();
+        cursor.moveToFirst();
+        while (!cursor.isAfterLast()) {
+            EventItem event = cursorToEventItem(cursor);
+            eventList.add(event);
+            cursor.moveToNext();
+        }
+        cursor.close();
+        return eventList;
     }
 
-    public void removeEventByID(int ID) {
-        String idString = String.valueOf(ID);
-        database.delete(EventSQLiteHelper.TABLE_NAME, String.format("%s = %s", EventFieldNameDictionary.ID, idString), null);
+    public ArrayList<Integer> fullTextSearchByField(@Nullable String field, @NonNull String query) {
+        ArrayList<Integer> eventIDList = new ArrayList<>();
+        Cursor cursor = database.query(EventsFTSSQLiteHelper.TABLE_NAME, new String[]{EventFieldNameDictionary.ID}, (field == null ? EventsFTSSQLiteHelper.TABLE_NAME : field) + " MATCH '" + query + "'", null, null, null, null);
+        cursor.moveToFirst();
+        while (!cursor.isAfterLast()) {
+            eventIDList.add(cursor.getInt(cursor.getColumnIndex(EventFieldNameDictionary.ID)));
+            cursor.moveToNext();
+        }
+        cursor.close();
+        return eventIDList;
+    }
+
+    public void close() {
+        eventSQLHelper.close();
+        eventsFTSQLHelper.close();
+    }
+
+    public void removeEventByID(int id) {
+        database.delete(EventSQLiteHelper.TABLE_NAME, String.format("%s = %s", EventFieldNameDictionary.ID, id), null);
+        database.delete(EventsFTSSQLiteHelper.TABLE_NAME, String.format("%s = %s", EventFieldNameDictionary.ID, id), null);
     }
 
     public void clear() {
         database.delete(EventSQLiteHelper.TABLE_NAME, null, null);
+        database.delete(EventsFTSSQLiteHelper.TABLE_NAME, null, null);
     }
 }
