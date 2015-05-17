@@ -54,7 +54,7 @@ public class SplashScreenActivity extends ActionBarActivity implements LoaderMan
         dialogTextView.setTextAppearance(this, R.style.DialogContent);
         TextView dialogTitleTextView = (TextView) dialogTitleView.findViewById(R.id.text_view);
         dialogTitleTextView.setTextAppearance(this, R.style.DialogTitle);
-        builder = new AlertDialog.Builder(this, R.style.Alert_Theme);
+        builder = new AlertDialog.Builder(this, R.style.DialogTheme);
 
         mProgressWheel.setVisibility(View.GONE);
         switch (getOfflineState()) {
