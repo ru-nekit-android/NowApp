@@ -24,6 +24,7 @@ import com.bumptech.glide.request.target.Target;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.EventItem;
@@ -40,7 +41,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
 
     private static final int NORMAL = 0, LOADING = 1;
-    private static final boolean USE_IMAGE_LOADING_FOR_QUICK_SCROLLING = true;
+    private static final boolean STOP_IMAGE_LOADING_WITH_QUICK_SCROLLING = true;
     private static final int MAX_SCROLL_SPEED = 70;
 
     private final LayoutInflater mInflater;
@@ -59,6 +60,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     private Timer mTimer;
     private Handler mHandler;
     private int mLoadMoreCount;
+    private EventItemWrapper mLoadingItem;
 
     public void setOnItemClickListener(IEventItemSelectListener listener) {
         mItemClickListener = listener;
@@ -88,7 +90,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 int speed = Math.abs(dy);
-                if (USE_IMAGE_LOADING_FOR_QUICK_SCROLLING && speed > MAX_SCROLL_SPEED) {
+                if (STOP_IMAGE_LOADING_WITH_QUICK_SCROLLING && speed > MAX_SCROLL_SPEED) {
                     stopImageLoading();
                 }
             }
@@ -107,25 +109,31 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
                         mHandler.post(new Runnable() {
                             public void run() {
-                                GridLayoutManager layoutManager = (GridLayoutManager) mRecyclerView.getLayoutManager();
-                                if (layoutManager != null) {
-                                    int firstVisibleItem = layoutManager.findFirstVisibleItemPosition();
-                                    int lastVisibleItem = layoutManager.findLastVisibleItemPosition();
-                                    if (firstVisibleItem > -1 && lastVisibleItem > -1) {
-                                        for (int i = firstVisibleItem; i <= lastVisibleItem; i++) {
-                                            EventCollectionItemViewHolder eventCollectionItemViewHolder = (EventCollectionItemViewHolder) mRecyclerView.findViewHolderForAdapterPosition(i);
-                                            if (eventCollectionItemViewHolder != null) {
-                                                setStartTimeForEvent(getItem(i).eventItem, eventCollectionItemViewHolder);
-                                            }
-                                        }
-                                    }
-                                }
+                                updateEventStartTime();
                             }
                         });
                     }
                 },
                 0,
-                1000);
+                TimeUnit.MINUTES.toMillis(mContext.getResources().getInteger(R.integer.event_time_precision_in_minutes)) / 2);
+
+        updateEventStartTime();
+    }
+
+    private void updateEventStartTime() {
+        GridLayoutManager layoutManager = (GridLayoutManager) mRecyclerView.getLayoutManager();
+        if (layoutManager != null) {
+            int firstVisibleItem = layoutManager.findFirstVisibleItemPosition();
+            int lastVisibleItem = layoutManager.findLastVisibleItemPosition();
+            if (firstVisibleItem > -1 && lastVisibleItem > -1) {
+                for (int i = firstVisibleItem; i <= lastVisibleItem; i++) {
+                    EventCollectionItemViewHolder eventCollectionItemViewHolder = (EventCollectionItemViewHolder) mRecyclerView.findViewHolderForAdapterPosition(i);
+                    if (eventCollectionItemViewHolder != null) {
+                        setStartTimeForEvent(getItem(i).eventItem, eventCollectionItemViewHolder);
+                    }
+                }
+            }
+        }
     }
 
     public void setLoadMoreListener(OnLoadMorelListener listener) {
@@ -156,7 +164,6 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         mMargin = context.getResources().getDimensionPixelSize(R.dimen.event_collection_space);
         mEventItems = new ArrayList<>();
         mLoadingList = new ArrayList<>();
-        setItems(model.getEventItems());
         mEventModel = model;
         mImmediateImageLoading = true;
         mLoadMoreCount = columns > 2 ? 0 : columns;
@@ -195,11 +202,14 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 notifyDataSetChanged();
             }
             return true;
+        }else{
+            notifyDataSetChanged();
         }
         return false;
     }
 
     public boolean setItems(ArrayList<EventItem> eventItems) {
+
         return setItems(eventItems, false);
     }
 
@@ -341,29 +351,24 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     public void removeLoading() {
         if (getItemCount() <= 0) return;
-        int position = getItemCount() - 1;
-        EventItemWrapper item = mEventItems.get(position);
-        if (item.isLoadingItem) {
-            mEventItems.remove(position);
+        if (mLoadingItem != null) {
+            int position = getItemCount();
+            mEventItems.remove(position - 1);
             notifyItemRemoved(position);
+            mLoadingItem = null;
         }
     }
 
     public void addLoading() {
-        EventItemWrapper item = null;
-        int position = getItemCount() - 1;
-        if (getItemCount() != 0) {
-            item = mEventItems.get(position);
-        }
-        if (getItemCount() == 0 || (item != null && !item.isLoadingItem)) {
-            mEventItems.add(new EventItemWrapper(true));
-            notifyItemInserted(position + 1);
+        if (mLoadingItem == null) {
+            int position = getItemCount();
+            mEventItems.add(mLoadingItem = new EventItemWrapper(true));
+            notifyItemInserted(position);
         }
     }
 
     public boolean isLoading() {
-        if (getItemCount() <= 0) return false;
-        return getItemViewType(getItemCount() - 1) == LOADING;
+        return mLoadingItem != null;
     }
 
     public int getSpanSize(int position) {
@@ -444,7 +449,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
         public EventCollectionItemViewHolder(View view) {
             super(view);
-            mPlaceView = (TextView) view.findViewById(R.id.place_view);
+            mPlaceView = (TextView) view.findViewById(R.id.place_name_view);
             mNameView = (TextView) view.findViewById(R.id.name_view);
             mPosterThumbView = (ImageView) view.findViewById(R.id.poster_thumb_view);
             mCatalogIcon = (ImageView) view.findViewById(R.id.category_view);
