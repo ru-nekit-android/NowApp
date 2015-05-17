@@ -62,8 +62,8 @@
         android:padding="@dimen/small_space" />
 
     <ru.nekit.android.nowapp.widget.AutoResizeTextView
-        android:id="@+id/place_view"
-        style="@style/PlaceText"
+        android:id="@+id/place_name_view"
+        style="@style/Place"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_toRightOf="@+id/icon_view"
@@ -77,7 +77,7 @@
 
     <ru.nekit.android.nowapp.widget.AutoResizeTextView
         android:id="@+id/name_view"
-        style="@style/EventNameText"
+        style="@style/EventName"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_above="@+id/event_start_time_view"

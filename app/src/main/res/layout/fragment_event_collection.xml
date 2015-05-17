@@ -1,18 +1,50 @@
-<android.support.v4.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/refresh_layout"
+    android:id="@+id/root_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="ru.nekit.android.nowapp.view.EventCollectionFragment">
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/event_collection_list"
-        android:scrollbars="vertical"
+    <android.support.v4.widget.SwipeRefreshLayout
+        android:id="@+id/refresh_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:paddingRight="@dimen/event_collection_padding"
-        android:paddingLeft="@dimen/event_collection_padding" />
+        android:layout_height="match_parent">
 
-</android.support.v4.widget.SwipeRefreshLayout>
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/event_collection_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingLeft="@dimen/event_collection_padding"
+            android:paddingRight="@dimen/event_collection_padding"
+            android:scrollbars="vertical" />
 
+    </android.support.v4.widget.SwipeRefreshLayout>
+
+    <com.devspark.robototextview.widget.RobotoTextView
+        android:id="@+id/search_status"
+        style="@style/NothingFound"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:gravity="center"
+        android:text="@string/nothing_found"
+        android:visibility="invisible" />
+
+
+    <com.getbase.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_events"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        app:fab_addButtonSize="normal"
+        app:fab_colorNormal="@color/primary_color"
+        app:fab_colorPressed="@color/primary_color"
+        app:fab_icon="@drawable/ic_search"
+        app:fab_plusIconColor="@android:color/white" />
+
+</RelativeLayout>
 

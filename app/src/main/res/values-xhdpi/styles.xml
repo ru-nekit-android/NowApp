@@ -1,17 +1,22 @@
 <resources>
 
     <style name="NowTheme" parent="Theme.AppCompat.NoActionBar">
-        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimary">@color/primary_color</item>
         <item name="typeface">roboto_light</item>
         <item name="android:windowBackground">@color/background</item>
     </style>
 
     <style name="SplashScreenTheme" parent="Theme.AppCompat.NoActionBar">
-        <item name="android:windowBackground">@color/primary</item>
+        <item name="android:windowBackground">@color/primary_color</item>
         <item name="typeface">roboto_light</item>
+        <item name="android:alertDialogStyle">@style/Theme.AppCompat.Light.Dialog</item>
     </style>
 
-    <style name="EventNameText">
+    <style name="DialogTheme" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="android:background">@android:color/white</item>
+    </style>
+
+    <style name="EventName">
         <item name="maxTextSize">32sp</item>
         <item name="minTextSize">10sp</item>
         <item name="android:paddingBottom">4dp</item>
@@ -23,7 +28,7 @@
         <item name="android:textColor">@android:color/white</item>
     </style>
 
-    <style name="EventNameText.DetailTitle">
+    <style name="EventName.DetailTitle">
         <item name="maxTextSize">42sp</item>
         <item name="minTextSize">10sp</item>
         <item name="android:textColor">@android:color/black</item>
@@ -73,7 +78,7 @@
         <item name="android:textColor">@android:color/black</item>
     </style>
 
-    <style name="EntranceTextBlock">
+    <style name="EntranceBlock">
         <item name="android:gravity">center</item>
     </style>
 
@@ -84,7 +89,7 @@
         <item name="android:textColor">@android:color/black</item>
     </style>
 
-    <style name="EntranceTitleText">
+    <style name="EntranceTitle">
         <item name="android:textSize">26sp</item>
         <item name="android:singleLine">true</item>
         <item name="android:gravity">center</item>
@@ -92,7 +97,7 @@
         <item name="android:textColor">@android:color/black</item>
     </style>
 
-    <style name="EntranceText">
+    <style name="Entrance">
         <item name="android:textSize">14sp</item>
         <item name="android:textStyle">normal</item>
         <item name="android:singleLine">true</item>
@@ -101,7 +106,7 @@
         <item name="android:textColor">@android:color/black</item>
     </style>
 
-    <style name="PlaceText">
+    <style name="Place">
         <item name="maxTextSize">18sp</item>
         <item name="minTextSize">8sp</item>
         <item name="android:singleLine">true</item>
@@ -111,10 +116,18 @@
         <item name="android:textColor">@android:color/black</item>
     </style>
 
-    <style name="PlaceText.Detail">
-        <item name="maxTextSize">20sp</item>
-        <item name="minTextSize">10sp</item>
-        <item name="android:gravity">top</item>
+    <style name="Place.Detail">
+        <item name="android:textSize">18sp</item>
+        <item name="typeface">roboto_medium</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textColor">@android:color/black</item>
+    </style>
+
+    <style name="Place.Address">
+        <item name="android:textSize">18sp</item>
+        <item name="typeface">roboto_light</item>
+        <item name="android:textColor">@android:color/black</item>
     </style>
 
     <style name="EventDescription">
@@ -125,17 +138,10 @@
 
     <style name="ActionButton">
         <item name="android:textSize">20sp</item>
-        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
         <item name="android:textColor">@android:color/black</item>
         <item name="android:singleLine">true</item>
         <item name="android:background">@drawable/action_button_background</item>
-    </style>
-
-    <style name="AddressText">
-        <item name="android:textSize">20sp</item>
-        <item name="android:background">#55000000</item>
-        <item name="android:textColor">@android:color/white</item>
-        <item name="android:gravity">center</item>
     </style>
 
     <style name="NowLogoOnSplashScreen">

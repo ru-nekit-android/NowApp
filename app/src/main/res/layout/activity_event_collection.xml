@@ -1,18 +1,16 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".EventCollectionActivity"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    tools:context=".EventCollectionActivity">
 
     <include layout="@layout/toolbar" />
 
-
-        <FrameLayout
-            android:foreground="@drawable/header_shadow"
-            android:id="@+id/event_place_holder"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-
+    <FrameLayout
+        android:id="@+id/event_place_holder"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:foreground="@drawable/header_shadow" />
 
 </LinearLayout>

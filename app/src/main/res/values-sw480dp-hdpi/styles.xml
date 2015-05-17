@@ -2,11 +2,18 @@
 <resources>
 
     <style name="NowTheme" parent="Theme.AppCompat.NoActionBar">
-        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimary">@color/primary_color</item>
         <item name="typeface">roboto_light</item>
-        <item name="android:windowBackground">@color/background</item>
-        <item name="android:actionBarSize">64dp</item>
-        <item name="actionBarSize">64dp</item>
+    </style>
+
+    <style name="SplashScreenTheme" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@color/primary_color</item>
+        <item name="typeface">roboto_light</item>
+        <item name="android:alertDialogStyle">@style/Theme.AppCompat.Light.Dialog</item>
+    </style>
+
+    <style name="DialogTheme" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="android:background">@android:color/white</item>
     </style>
 
     <style name="EventStartTime">
@@ -31,11 +38,11 @@
         <item name="android:textColor">@android:color/black</item>
     </style>
 
-    <style name="EntranceTextBlock">
+    <style name="EntranceBlock">
         <item name="android:gravity">center</item>
     </style>
 
-    <style name="EntranceTitleText">
+    <style name="EntranceTitle">
         <item name="android:textSize">20sp</item>
         <item name="android:singleLine">true</item>
         <item name="android:gravity">center</item>
@@ -43,7 +50,7 @@
         <item name="android:textColor">@android:color/black</item>
     </style>
 
-    <style name="EntranceText">
+    <style name="Entrance">
         <item name="android:textSize">12sp</item>
         <item name="android:textStyle">normal</item>
         <item name="android:singleLine">true</item>

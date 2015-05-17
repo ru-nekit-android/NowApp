@@ -19,7 +19,7 @@
     <dimen name="event_name_height">140dp</dimen>
     <dimen name="large_space">24dp</dimen>
     <dimen name="logo_max_width">148dp</dimen>
-    <dimen name="logo_max_height">56dp</dimen>
+    <dimen name="logo_max_height">54dp</dimen>
     <item name="event_name_line_spacing_multiplier" format="float" type="dimen">0.8</item>
     <item name="event_item_view_height_ratio" format="float" type="dimen">1.0</item>
 
