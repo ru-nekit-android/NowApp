@@ -8,11 +8,12 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.AppCompatDialog;
 import android.support.v7.widget.Toolbar;
 import android.text.method.LinkMovementMethod;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -21,11 +22,12 @@ import android.widget.TextView;
 import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.EventItem;
+import ru.nekit.android.nowapp.modelView.listeners.IBackPressedListener;
 import ru.nekit.android.nowapp.modelView.listeners.IEventItemPosterSelectListener;
 import ru.nekit.android.nowapp.modelView.listeners.IEventItemSelectListener;
 
 
-public class EventCollectionActivity extends ActionBarActivity implements IEventItemSelectListener, IEventItemPosterSelectListener {
+public class EventCollectionActivity extends AppCompatActivity implements IEventItemSelectListener, IEventItemPosterSelectListener {
 
     private EventDetailFragment mEventDetailFragment;
     private EventPosterViewFragment mEventPosterViewFragment;
@@ -54,6 +56,7 @@ public class EventCollectionActivity extends ActionBarActivity implements IEvent
         };
         LocalBroadcastManager.getInstance(this).registerReceiver(mChangeApplicationStateReceiver, new IntentFilter(NowApplication.CHANGE_APPLICATION_STATE));
         updateOfflineView();
+
     }
 
     private void updateOfflineView() {
@@ -64,18 +67,41 @@ public class EventCollectionActivity extends ActionBarActivity implements IEvent
         }
     }
 
-    public boolean onOptionsItemSelected(MenuItem item) {
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_event_collection, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+    
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            Fragment fragment = getCurrentFragment();
+            if (fragment != null && fragment.isVisible() && fragment instanceof IBackPressedListener) {
+                ((IBackPressedListener) fragment).onBackPressed();
+            }
+        }
 
+        return super.onKeyDown(keyCode, event);
+    }
+
+    private Fragment getCurrentFragment() {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        return fragmentManager.findFragmentById(R.id.event_place_holder);
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+
             case android.R.id.home:
 
-                FragmentManager fragmentManager = getSupportFragmentManager();
-                Fragment fragment = fragmentManager.findFragmentById(R.id.event_place_holder);
+                Fragment fragment = getCurrentFragment();
                 if (fragment != null && fragment.isVisible()) {
-                    fragmentManager.popBackStack();
+                    getSupportFragmentManager().popBackStack();
                 }
 
                 return true;
+
             case R.id.action_about:
 
                 AlertDialog.Builder builder;
@@ -86,7 +112,7 @@ public class EventCollectionActivity extends ActionBarActivity implements IEvent
                 dialogTextView.setTextAppearance(this, R.style.DialogContent);
                 TextView dialogTitleTextView = (TextView) dialogTitleView.findViewById(R.id.text_view);
                 dialogTitleTextView.setTextAppearance(this, R.style.DialogTitle);
-                builder = new AlertDialog.Builder(this, R.style.Alert_Theme);
+                builder = new AlertDialog.Builder(this, R.style.DialogTheme);
                 builder.setCancelable(true)
                         .setView(dialogContentView)
                         .setCustomTitle(dialogTitleView);
@@ -101,7 +127,6 @@ public class EventCollectionActivity extends ActionBarActivity implements IEvent
                 return super.onOptionsItemSelected(item);
         }
     }
-
 
     @Override
     public void onEventItemSelect(EventItem eventItem) {
@@ -125,12 +150,6 @@ public class EventCollectionActivity extends ActionBarActivity implements IEvent
         if (!mEventPosterViewFragment.isAdded()) {
             getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left, R.anim.enter_from_left, R.anim.exit_to_right).replace(R.id.event_place_holder, mEventPosterViewFragment, EventPosterViewFragment.TAG).addToBackStack(null).commit();
         }
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_event_collection, menu);
-        return true;
     }
 
     @Override
