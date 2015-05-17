@@ -21,7 +21,7 @@ public class EventToCalendarSQLiteHelper extends SQLiteOpenHelper implements Bas
     public static final String EVENT_ID = "event_" + EventFieldNameDictionary.ID;
     public static final String CALENDAR_EVENT_ID = "calendar_event_" + EventFieldNameDictionary.ID;
 
-    private static final String DATABASE_CREATE = "CREATE TABLE IF NOT EXISTS "
+    private static final String DATABASE_CREATE = "CREATE TABLE "
             + TABLE_NAME + " ("
             + EVENT_ID + " INTEGER UNIQUE, "
             + CALENDAR_EVENT_ID + " INTEGER"
