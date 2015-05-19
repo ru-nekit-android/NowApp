@@ -21,7 +21,6 @@ public class EventLocalDataSource {
 
     private SQLiteDatabase database;
     private EventSQLiteHelper eventSQLHelper;
-    private EventsFTSSQLiteHelper eventsFTSQLHelper;
 
     private static final String[] ALL_COLUMNS =
             {
@@ -49,9 +48,8 @@ public class EventLocalDataSource {
                     EventFieldNameDictionary.POSTER_THUMB
             };
 
-    public EventLocalDataSource(Context context, String dataBaseName) {
-        eventSQLHelper = EventSQLiteHelper.getInstance(context, dataBaseName);
-        eventsFTSQLHelper = EventsFTSSQLiteHelper.getInstance(context, dataBaseName);
+    public EventLocalDataSource(Context context, String dataBaseName, int databaseVersion) {
+        eventSQLHelper = EventSQLiteHelper.getInstance(context, dataBaseName, databaseVersion);
     }
 
     public void openForWrite() throws SQLException {
@@ -86,15 +84,14 @@ public class EventLocalDataSource {
         contentValues.put(EventFieldNameDictionary.POSTER_BLUR, eventItem.posterBlur);
         contentValues.put(EventFieldNameDictionary.POSTER_ORIGINAL, eventItem.posterOriginal);
         contentValues.put(EventFieldNameDictionary.POSTER_THUMB, eventItem.posterThumb);
-        long id = database.insertWithOnConflict(EventSQLiteHelper.TABLE_NAME, EventFieldNameDictionary.ID, contentValues, SQLiteDatabase.CONFLICT_REPLACE);
-
+        database.insertWithOnConflict(EventSQLiteHelper.TABLE_NAME, EventFieldNameDictionary.ID, contentValues, SQLiteDatabase.CONFLICT_REPLACE);
         ContentValues contentValuesFTS = new ContentValues();
-        contentValuesFTS.put(EventFieldNameDictionary.ID, id);
+        contentValuesFTS.put(EventFieldNameDictionary.ID, eventItem.id);
         contentValuesFTS.put(EventFieldNameDictionary.NAME, eventItem.name.toLowerCase());
         contentValuesFTS.put(EventFieldNameDictionary.EVENT_DESCRIPTION, eventItem.eventDescription.toLowerCase());
         contentValuesFTS.put(EventFieldNameDictionary.PLACE_NAME, eventItem.placeName.toLowerCase());
         contentValuesFTS.put(EventFieldNameDictionary.ADDRESS, eventItem.address.toLowerCase());
-        database.insert(EventsFTSSQLiteHelper.TABLE_NAME, null, contentValuesFTS);
+        long id = database.insert(EventSQLiteHelper.FTS_TABLE_NAME, null, contentValuesFTS);
     }
 
     public ArrayList<EventItem> getAllEvents() {
@@ -157,7 +154,6 @@ public class EventLocalDataSource {
     public ArrayList<EventItem> searchByField(String field, String query) {
         ArrayList<EventItem> eventList = new ArrayList<>();
         Cursor cursor = database.query(EventSQLiteHelper.TABLE_NAME, ALL_COLUMNS, field + " LIKE '%" + query + "%'", null, null, null, null);
-
         cursor.moveToFirst();
         while (!cursor.isAfterLast()) {
             EventItem event = cursorToEventItem(cursor);
@@ -170,7 +166,7 @@ public class EventLocalDataSource {
 
     public ArrayList<Integer> fullTextSearchByField(@Nullable String field, @NonNull String query) {
         ArrayList<Integer> eventIDList = new ArrayList<>();
-        Cursor cursor = database.query(EventsFTSSQLiteHelper.TABLE_NAME, new String[]{EventFieldNameDictionary.ID}, (field == null ? EventsFTSSQLiteHelper.TABLE_NAME : field) + " MATCH '" + query + "'", null, null, null, null);
+        Cursor cursor = database.query(EventSQLiteHelper.FTS_TABLE_NAME, new String[]{EventFieldNameDictionary.ID}, EventSQLiteHelper.FTS_TABLE_NAME + " MATCH '" + (field == null ? "" : field + ":") + query + "';", null, null, null, null);
         cursor.moveToFirst();
         while (!cursor.isAfterLast()) {
             eventIDList.add(cursor.getInt(cursor.getColumnIndex(EventFieldNameDictionary.ID)));
@@ -182,16 +178,15 @@ public class EventLocalDataSource {
 
     public void close() {
         eventSQLHelper.close();
-        eventsFTSQLHelper.close();
     }
 
     public void removeEventByID(int id) {
         database.delete(EventSQLiteHelper.TABLE_NAME, String.format("%s = %s", EventFieldNameDictionary.ID, id), null);
-        database.delete(EventsFTSSQLiteHelper.TABLE_NAME, String.format("%s = %s", EventFieldNameDictionary.ID, id), null);
+        database.delete(EventSQLiteHelper.FTS_TABLE_NAME, String.format("%s = %s", EventFieldNameDictionary.ID, id), null);
     }
 
     public void clear() {
         database.delete(EventSQLiteHelper.TABLE_NAME, null, null);
-        database.delete(EventsFTSSQLiteHelper.TABLE_NAME, null, null);
+        database.delete(EventSQLiteHelper.FTS_TABLE_NAME, null, null);
     }
 }

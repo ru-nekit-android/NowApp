@@ -4,7 +4,6 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import ru.nekit.android.nowapp.VTAG;
 import ru.nekit.android.nowapp.model.EventFieldNameDictionary;
 
 /**
@@ -14,10 +13,10 @@ public class EventSQLiteHelper extends SQLiteOpenHelper {
 
 
     public static final String TABLE_NAME = "events";
+    public static final String FTS_TABLE_NAME = "events_fts";
+    public static final String FTS_ENGINE = "fts4";
 
     private static EventSQLiteHelper sInstance;
-
-    private static final int DATABASE_VERSION = 1;
 
     private static final String DATABASE_CREATE = "CREATE TABLE "
             + TABLE_NAME + " ("
@@ -45,32 +44,38 @@ public class EventSQLiteHelper extends SQLiteOpenHelper {
             + EventFieldNameDictionary.POSTER_THUMB + " TEXT"
             + ");";
 
-    private EventSQLiteHelper(Context context, String dataBaseName) {
-        super(context, dataBaseName, null, DATABASE_VERSION);
+    private static final String DATABASE_CREATE_FTS = "CREATE VIRTUAL TABLE " + FTS_TABLE_NAME +
+            " USING " + FTS_ENGINE + "(" + EventFieldNameDictionary.ID + " integer unique, "
+            + EventFieldNameDictionary.NAME + ", "
+            + EventFieldNameDictionary.EVENT_DESCRIPTION + ", "
+            + EventFieldNameDictionary.PLACE_NAME + ", "
+            + EventFieldNameDictionary.ADDRESS + ");";
+
+    private EventSQLiteHelper(Context context, String dataBaseName, int databaseVersion) {
+        super(context, dataBaseName, null, databaseVersion);
     }
 
     @Override
     public void onCreate(SQLiteDatabase database) {
-
         database.execSQL(DATABASE_CREATE);
+        database.execSQL(DATABASE_CREATE_FTS);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase database, int oldVersion, int newVersion) {
-        VTAG.call("onUpgrade " + oldVersion + " : " + newVersion);
         database.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
+        database.execSQL("DROP TABLE IF EXISTS " + FTS_TABLE_NAME);
         onCreate(database);
     }
 
     @Override
     public void onDowngrade(SQLiteDatabase database, int oldVersion, int newVersion) {
-        VTAG.call("onDowngrade " + oldVersion + " : " + newVersion);
         onUpgrade(database, oldVersion, newVersion);
     }
 
-    public synchronized static EventSQLiteHelper getInstance(Context context, String dataBaseName) {
+    public synchronized static EventSQLiteHelper getInstance(Context context, String dataBaseName, int databaseVersion) {
         if (sInstance == null) {
-            sInstance = new EventSQLiteHelper(context, dataBaseName);
+            sInstance = new EventSQLiteHelper(context, dataBaseName, databaseVersion);
         }
         return sInstance;
     }
