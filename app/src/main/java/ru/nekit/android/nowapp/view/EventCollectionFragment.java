@@ -54,6 +54,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     private static final int LOADER_ID = 2;
     private static final int SEARCHER_ID = 3;
     private static final int SMOOTH_SCROLL_DURATION = 1000;
+    private static final boolean FEATURE_LIVE_SEARCH = true;
 
     enum MODE {
         NORMAL, SEARCH
@@ -66,6 +67,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     private EventItemsModel mEventModel;
     private boolean mRestoreSearchMode;
     private String mQuery;
+    private boolean mHasResultOfSearch;
     private int mCurrentPage;
 
     private EventCollectionAdapter mEventCollectionAdapter;
@@ -146,6 +148,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                 mQuery = query;
                 performSearch(query);
             } else {
+                mHasResultOfSearch = false;
                 setEventsFromModel();
             }
         }
@@ -157,9 +160,22 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     }
 
     @Override
-    public boolean onQueryTextChange(String newText) {
-        if (mMode == MODE.SEARCH && searchQueryIsValid()) {
-            return true;
+    public boolean onQueryTextChange(String query) {
+        if (mMode == MODE.SEARCH) {
+            if (FEATURE_LIVE_SEARCH) {
+                if (searchQueryIsValid()) {
+                    mQuery = query;
+                    performSearch(query);
+                } else {
+                    mHasResultOfSearch = false;
+                    setSearchStatus(null);
+                    setEventsFromModel();
+                }
+            } else {
+                if (searchQueryIsValid()) {
+                    return true;
+                }
+            }
         }
         return false;
     }
@@ -224,12 +240,12 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         mSearchView = (SearchView) getViewFromRoot(R.id.search_view);
-        mSearchView.setVisibility(View.GONE);
         mSearchView.setOnQueryTextListener(this);
         mSearchView.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
-
+        ((SearchView.SearchAutoComplete) mSearchView.findViewById(android.support.v7.appcompat.R.id.search_src_text)).setHint(" " + getActivity().getString(R.string.search_hint));
         ((EditText) mSearchView.findViewById(android.support.v7.appcompat.R.id.search_src_text)).setOnEditorActionListener(this);
         ImageView searchCloseButton = (ImageView) mSearchView.findViewById(android.support.v7.appcompat.R.id.search_close_btn);
+        searchCloseButton.setAlpha(192);
         searchCloseButton.setOnClickListener(this);
     }
 
@@ -283,7 +299,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         mEventCollectionAdapter.setLoadMoreListener(new EventCollectionAdapter.OnLoadMorelListener() {
             @Override
             public void onLoadMore() {
-                if (mMode == MODE.NORMAL) {
+                if (mMode == MODE.NORMAL || !mHasResultOfSearch) {
                     mLoadingType = EventItemsModel.REQUEST_NEW_EVENTS;
                     setLoadingState(LOADING_STATE.LOADING);
                 }
@@ -422,6 +438,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                 case SEARCHER_ID:
 
                     ArrayList<EventItem> resultForSearch = (ArrayList<EventItem>) result;
+                    mHasResultOfSearch = resultForSearch.size() > 0;
                     mEventCollectionAdapter.setItems(resultForSearch);
                     setSearchStatus(resultForSearch.size() == 0 ? getActivity().getString(R.string.nothing_found) : null);
 
@@ -429,8 +446,6 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                 default:
 
             }
-
-
         }
     }
 
@@ -465,9 +480,12 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     private void applyMode(MODE mode) {
         mMode = mode;
         boolean searchVisible = mode == MODE.SEARCH;
+        if (!searchVisible) {
+            setSearchStatus(null);
+        }
         //mFloatingActionButton.setVisibility(searchVisible ? View.INVISIBLE : View.VISIBLE);
+        mSearchView.setIconified(false);
         mSearchView.setVisibility(searchVisible ? View.VISIBLE : View.GONE);
-        mSearchView.setIconified(!searchVisible);
         getViewFromRoot(R.id.title_container).setVisibility(searchVisible ? View.INVISIBLE : View.VISIBLE);
         updateRefreshLayoutEnabled();
     }
