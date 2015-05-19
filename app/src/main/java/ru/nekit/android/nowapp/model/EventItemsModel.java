@@ -58,7 +58,8 @@ public class EventItemsModel {
     private static final String TAG_EVENTS = "events";
     private static final String SITE_NAME = "nowapp.ru";
     private static final String API_ROOT = "api/events.get";
-    private static final String LOCAL_DATABASE_NAME = "nowapp.db";
+    private static final String DATABASE_NAME = "nowapp.db";
+    private static final int DATABASE_VERSION = 3;
 
     public static final String LOADING_TYPE = "loading_type";
     public static final String REQUEST_NEW_EVENTS = "request_new_event_items";
@@ -77,14 +78,14 @@ public class EventItemsModel {
     private final ArrayList<EventItem> mEventItems;
     private final EventToCalendarDataSource mEventToCalendarDataSource;
     private final EventLocalDataSource mEventLocalDataSource;
-    private final Runnable mBackgroundRunnable;
+    private final Runnable mBackgroundLoadTask;
 
     private int mAvailableEventCount;
     private int mCurrentPage;
     private boolean mReachEndOfDataList;
 
     private boolean mDataIsActual;
-    private int mPageLoadedInBackground;
+    private int mLoadedInBackgroundPage;
     private int mEventsCountPerPage;
     private EventItem mLastAddedInBackgroundEventItem;
     private Thread mBackgroundThread;
@@ -93,7 +94,7 @@ public class EventItemsModel {
         mContext = context;
         mEventItems = new ArrayList<>();
         mCurrentPage = 1;
-        mPageLoadedInBackground = 1;
+        mLoadedInBackgroundPage = 1;
         mEventsCountPerPage = 0;
         mReachEndOfDataList = false;
 
@@ -110,18 +111,18 @@ public class EventItemsModel {
         CATEGORY_TYPE_COLOR.put("category_other", context.getResources().getColor(R.color.category_other));
         CATEGORY_TYPE_COLOR.put("category_education", context.getResources().getColor(R.color.category_education));
 
-        mEventLocalDataSource = new EventLocalDataSource(context, LOCAL_DATABASE_NAME);
-        mEventToCalendarDataSource = new EventToCalendarDataSource(context, LOCAL_DATABASE_NAME);
+        mEventLocalDataSource = new EventLocalDataSource(context, DATABASE_NAME, DATABASE_VERSION);
+        mEventToCalendarDataSource = new EventToCalendarDataSource(context, DATABASE_NAME, DATABASE_VERSION);
 
-        mBackgroundRunnable = new Runnable() {
+        mBackgroundLoadTask = new Runnable() {
             @Override
             public void run() {
                 Bundle args = new Bundle();
                 args.putString(LOADING_TYPE, LOAD_IN_BACKGROUND);
                 int result = RESULT_OK;
-                while (!Thread.interrupted() && mPageLoadedInBackground < getAvailablePageCount() && result == RESULT_OK) {
+                while (!Thread.interrupted() && mLoadedInBackgroundPage < getAvailablePageCount() && result == RESULT_OK) {
                     result = performLoad(context, args);
-                    VTAG.call("Background: " + mPageLoadedInBackground + " : " + getAvailablePageCount() + " : " + result);
+                    VTAG.call("Background Load Task: " + mLoadedInBackgroundPage + " : " + getAvailablePageCount() + " : " + result);
                 }
             }
         };
@@ -295,10 +296,10 @@ public class EventItemsModel {
         return eventItems;
     }
 
-    private void setEventsFromLocalDataSource(ArrayList<EventItem> allEvewnts) {
+    private void setEventsFromLocalDataSource(ArrayList<EventItem> allEvents) {
         mDataIsActual = false;
-        VTAG.call("setEventsFromLocalDataSource: " + allEvewnts.size());
-        setEvents(sortByStartTime(allEvewnts));
+        VTAG.call("set Events From Data Source: " + allEvents.size());
+        setEvents(sortByStartTime(allEvents));
     }
 
     private void insertEventToLocalDataSource(EventItem eventItem) {
@@ -318,7 +319,7 @@ public class EventItemsModel {
             if (mBackgroundThread != null && mBackgroundThread.isAlive()) {
                 mBackgroundThread.interrupt();
             }
-            mBackgroundThread = new Thread(mBackgroundRunnable);
+            mBackgroundThread = new Thread(mBackgroundLoadTask);
             mBackgroundThread.start();
         }
     }
@@ -349,7 +350,7 @@ public class EventItemsModel {
         String[] splitQuery = query.toLowerCase().split(" ");
         String queryResult = "";
         for (String item : splitQuery) {
-            queryResult += "^" + item + "*";
+            queryResult += item + "* ";
         }
         return sortByStartTime(mEventLocalDataSource.getByEventIDs(mEventLocalDataSource.fullTextSearchByField(null, queryResult)));
     }
@@ -368,9 +369,9 @@ public class EventItemsModel {
 
         if (FEATURE_LOAD_IN_BACKGROUND) {
             if (requestNewEvents) {
-                if (mCurrentPage < mPageLoadedInBackground) {
+                if (mCurrentPage < mLoadedInBackgroundPage) {
                     if (mCurrentPage <= getAvailablePageCount()) {
-                        mCurrentPage = mPageLoadedInBackground;
+                        mCurrentPage = mLoadedInBackgroundPage;
                         setEvents(sortByStartTime(mEventLocalDataSource.getAllEvents()));
                         return result;
                     }
@@ -480,16 +481,16 @@ public class EventItemsModel {
                     setEvents(eventList);
                     mReachEndOfDataList = false;
                     mCurrentPage = 1;
-                    mPageLoadedInBackground = 1;
+                    mLoadedInBackgroundPage = 1;
                 } else if (loadInBackground) {
-                    mPageLoadedInBackground++;
+                    mLoadedInBackgroundPage++;
                 }
                 if (refreshEvents || loadInBackground) {
                     mLastAddedInBackgroundEventItem = eventList.get(eventList.size() - 1);
                     if (refreshEvents && mEventsCountPerPage == 0) {
                         mEventsCountPerPage = eventList.size();
                     }
-                    if (mPageLoadedInBackground == 1) {
+                    if (mLoadedInBackgroundPage == 1) {
                         mEventLocalDataSource.clear();
                         loadInBackground();
                     }

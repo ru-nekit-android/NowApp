@@ -24,8 +24,8 @@ public class EventToCalendarDataSource {
                     EventToCalendarSQLiteHelper.CALENDAR_EVENT_ID
             };
 
-    public EventToCalendarDataSource(Context context, String dataBaseName) {
-        dbHelper = EventToCalendarSQLiteHelper.getInstance(context, dataBaseName);
+    public EventToCalendarDataSource(Context context, String dataBaseName, int databaseVersion) {
+        dbHelper = EventToCalendarSQLiteHelper.getInstance(context, dataBaseName, databaseVersion);
     }
 
     public void openForWrite() throws SQLException {
@@ -41,7 +41,7 @@ public class EventToCalendarDataSource {
         values.put(EventToCalendarSQLiteHelper.EVENT_ID, eventID);
         values.put(EventToCalendarSQLiteHelper.CALENDAR_EVENT_ID, calendarID);
         long result = database.insert(EventToCalendarSQLiteHelper.TABLE_NAME, null, values);
-        if(result != -1){
+        if (result != -1) {
             return new EventToCalendarLink(eventID, calendarID);
         }
         return null;
