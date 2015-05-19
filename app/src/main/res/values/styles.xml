@@ -1,19 +1,34 @@
 <resources>
 
-    <style name="NowTheme" parent="Theme.AppCompat.NoActionBar">
+    <style name="NowThemeBase" parent="Theme.AppCompat.NoActionBar">
         <item name="colorPrimary">@color/primary_color</item>
         <item name="typeface">roboto_light</item>
         <item name="android:windowBackground">@color/background</item>
+        <item name="android:autoCompleteTextViewStyle">@style/AutoCompleteTextViewStyle</item>
     </style>
 
-    <style name="SplashScreenTheme" parent="Theme.AppCompat.NoActionBar">
+    <style name="SplashScreenThemeBase" parent="Theme.AppCompat.NoActionBar">
         <item name="android:windowBackground">@color/primary_color</item>
         <item name="typeface">roboto_light</item>
         <item name="android:alertDialogStyle">@style/Theme.AppCompat.Light.Dialog</item>
     </style>
 
-    <style name="DialogTheme" parent="Theme.AppCompat.Light.Dialog.Alert">
+    <style name="DialogThemeBase" parent="Theme.AppCompat.Light.Dialog.Alert">
         <item name="android:background">@android:color/white</item>
+    </style>
+
+    <style name="NowTheme" parent="NowThemeBase" />
+
+    <style name="SplashScreenTheme" parent="SplashScreenThemeBase" />
+
+    <style name="DialogTheme" parent="DialogThemeBase" />
+
+    <style name="AppTheme.SearchView" parent="Widget.AppCompat.SearchView">
+        <item name="closeIcon">@drawable/ic_close</item>
+    </style>
+
+    <style name="AutoCompleteTextViewStyle" parent="Widget.AppCompat.AutoCompleteTextView">
+        <item name="android:textCursorDrawable">@drawable/edit_text_cursor</item>
     </style>
 
     <style name="EventName">
@@ -194,9 +209,9 @@
     </style>
 
     <style name="NothingFound">
-        <item name="android:textSize">16sp</item>
-        <item name="android:textColor">@android:color/black</item>
-        <item name="typeface">roboto_regular</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:textColor">#FF333333</item>
+        <item name="typeface">roboto_light</item>
     </style>
 
 </resources>

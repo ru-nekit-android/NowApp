@@ -1,23 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="NowTheme" parent="Theme.AppCompat.NoActionBar">
-        <item name="colorPrimary">@color/primary_color</item>
-        <item name="typeface">roboto_light</item>
-    </style>
+    <style name="NowTheme" parent="NowThemeBase" />
 
-    <style name="SplashScreenTheme" parent="Theme.AppCompat.NoActionBar">
-        <item name="android:windowBackground">@color/primary_color</item>
-        <item name="typeface">roboto_light</item>
-        <item name="android:alertDialogStyle">@style/Theme.AppCompat.Light.Dialog</item>
-    </style>
+    <style name="SplashScreenTheme" parent="SplashScreenThemeBase" />
 
-    <style name="DialogTheme" parent="Theme.AppCompat.Light.Dialog.Alert">
-        <item name="android:background">@android:color/white</item>
-    </style>
+    <style name="DialogTheme" parent="DialogThemeBase" />
 
     <style name="EventName">
-        <item name="maxTextSize">32sp</item>
+        <item name="maxTextSize">48sp</item>
         <item name="minTextSize">10sp</item>
         <item name="android:paddingBottom">4dp</item>
         <item name="android:paddingRight">4dp</item>
@@ -144,10 +135,9 @@
         <item name="android:background">@drawable/action_button_background</item>
     </style>
 
-
     <style name="NowLogoOnSplashScreen">
-        <item name="android:layout_marginRight">@dimen/large_space</item>
-        <item name="android:layout_marginLeft">@dimen/large_space</item>
+        <item name="android:layout_marginRight">100dp</item>
+        <item name="android:layout_marginLeft">100dp</item>
         <item name="android:layout_marginBottom">@dimen/large_space</item>
     </style>
 

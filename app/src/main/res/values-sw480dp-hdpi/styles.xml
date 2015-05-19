@@ -1,20 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="NowTheme" parent="Theme.AppCompat.NoActionBar">
-        <item name="colorPrimary">@color/primary_color</item>
-        <item name="typeface">roboto_light</item>
-    </style>
+    <style name="NowTheme" parent="NowThemeBase" />
 
-    <style name="SplashScreenTheme" parent="Theme.AppCompat.NoActionBar">
-        <item name="android:windowBackground">@color/primary_color</item>
-        <item name="typeface">roboto_light</item>
-        <item name="android:alertDialogStyle">@style/Theme.AppCompat.Light.Dialog</item>
-    </style>
+    <style name="SplashScreenTheme" parent="SplashScreenThemeBase" />
 
-    <style name="DialogTheme" parent="Theme.AppCompat.Light.Dialog.Alert">
-        <item name="android:background">@android:color/white</item>
-    </style>
+    <style name="DialogTheme" parent="DialogThemeBase" />
 
     <style name="EventStartTime">
         <item name="android:textSize">16sp</item>

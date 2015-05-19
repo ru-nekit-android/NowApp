@@ -29,6 +29,7 @@
     <string name="dialog_text_add_to_calendar">Добавить событие в ваш календарь?\nВ дальнейшем данное событие можно всегда посмотреть в календаре.</string>
     <string name="search">Поиск</string>
     <string name="nothing_found">Ничего не найдено</string>
+    <string name="search_hint">Поиск</string>
 
     <string-array name="day_of_week">
         <item>ВС</item>
