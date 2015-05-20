@@ -3,11 +3,9 @@ package ru.nekit.android.nowapp.model.db;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
 import java.util.ArrayList;
@@ -27,7 +25,7 @@ public class EventLocalDataSource {
 
     private static final String[] ALL_COLUMNS =
             {
-                    EventFieldNameDictionary.ID,
+                    EventSQLiteHelper._ID,
                     EventFieldNameDictionary.ADDRESS,
                     EventFieldNameDictionary.ALL_NIGHT_PARTY,
                     EventFieldNameDictionary.DATE,
@@ -51,6 +49,15 @@ public class EventLocalDataSource {
                     EventFieldNameDictionary.POSTER_THUMB
             };
 
+    private static String[] FTS_SEARCH_ORDER = {
+            EventSQLiteHelper.FTS_EVENT_CATEGORY_KEYWORD,
+            EventSQLiteHelper.FTS_EVENT_START_TIME_ALIAS,
+            EventFieldNameDictionary.NAME,
+            EventFieldNameDictionary.EVENT_DESCRIPTION,
+            EventFieldNameDictionary.PLACE_NAME,
+            EventFieldNameDictionary.ADDRESS
+    };
+
     public EventLocalDataSource(Context context, String dataBaseName, int databaseVersion) {
         eventSQLHelper = EventSQLiteHelper.getInstance(context, dataBaseName, databaseVersion);
         mContext = context;
@@ -66,7 +73,7 @@ public class EventLocalDataSource {
 
     public void createOrUpdateEvent(EventItem eventItem) {
         ContentValues contentValues = new ContentValues();
-        contentValues.put(EventFieldNameDictionary.ID, eventItem.id);
+        contentValues.put(EventSQLiteHelper._ID, eventItem.id);
         contentValues.put(EventFieldNameDictionary.ADDRESS, eventItem.address);
         contentValues.put(EventFieldNameDictionary.ALL_NIGHT_PARTY, eventItem.allNightParty);
         contentValues.put(EventFieldNameDictionary.DATE, eventItem.date);
@@ -88,15 +95,16 @@ public class EventLocalDataSource {
         contentValues.put(EventFieldNameDictionary.POSTER_BLUR, eventItem.posterBlur);
         contentValues.put(EventFieldNameDictionary.POSTER_ORIGINAL, eventItem.posterOriginal);
         contentValues.put(EventFieldNameDictionary.POSTER_THUMB, eventItem.posterThumb);
-        database.insertWithOnConflict(EventSQLiteHelper.TABLE_NAME, EventFieldNameDictionary.ID, contentValues, SQLiteDatabase.CONFLICT_REPLACE);
+        database.insertWithOnConflict(EventSQLiteHelper.TABLE_NAME, EventSQLiteHelper._ID, contentValues, SQLiteDatabase.CONFLICT_REPLACE);
         ContentValues contentValuesFTS = new ContentValues();
-        contentValuesFTS.put(EventFieldNameDictionary.ID, eventItem.id);
+        contentValuesFTS.put(EventSQLiteHelper._ID, eventItem.id);
         contentValuesFTS.put(EventFieldNameDictionary.NAME, normalizeForSearch(eventItem.name));
         contentValuesFTS.put(EventFieldNameDictionary.EVENT_DESCRIPTION, normalizeForSearch(eventItem.eventDescription));
         contentValuesFTS.put(EventFieldNameDictionary.PLACE_NAME, normalizeForSearch(eventItem.placeName));
         contentValuesFTS.put(EventFieldNameDictionary.ADDRESS, normalizeForSearch(eventItem.address));
         contentValuesFTS.put(EventSQLiteHelper.FTS_EVENT_START_TIME_ALIAS, EventItemsModel.getStartTimeAlias(mContext, eventItem));
         contentValuesFTS.put(EventSQLiteHelper.FTS_EVENT_CATEGORY_KEYWORD, EventItemsModel.getCategoryBKeywords(eventItem.category));
+        contentValuesFTS.put(EventSQLiteHelper.FTS_EVENT_START_TIME, eventItem.startAt + eventItem.date);
         database.insert(EventSQLiteHelper.FTS_TABLE_NAME, null, contentValuesFTS);
     }
 
@@ -122,7 +130,7 @@ public class EventLocalDataSource {
         ArrayList<EventItem> eventItems = new ArrayList<>();
         if (ids.size() > 0) {
             Cursor cursor = database.query(EventSQLiteHelper.TABLE_NAME,
-                    ALL_COLUMNS, EventFieldNameDictionary.ID + " IN (" + TextUtils.join(",", ids) + ")", null, null, null, null);
+                    ALL_COLUMNS, EventSQLiteHelper._ID + " IN (" + TextUtils.join(",", ids) + ")", null, null, null, null);
             cursor.moveToFirst();
             while (!cursor.isAfterLast()) {
                 EventItem eventitem = cursorToEventItem(cursor);
@@ -136,7 +144,7 @@ public class EventLocalDataSource {
 
     private EventItem cursorToEventItem(Cursor cursor) {
         EventItem eventItem = new EventItem();
-        eventItem.id = cursor.getInt(cursor.getColumnIndex(EventFieldNameDictionary.ID));
+        eventItem.id = cursor.getInt(cursor.getColumnIndex(EventSQLiteHelper._ID));
         eventItem.address = cursor.getString(cursor.getColumnIndex(EventFieldNameDictionary.ADDRESS));
         eventItem.allNightParty = cursor.getInt(cursor.getColumnIndex(EventFieldNameDictionary.ALL_NIGHT_PARTY));
         eventItem.date = cursor.getLong(cursor.getColumnIndex(EventFieldNameDictionary.DATE));
@@ -174,16 +182,25 @@ public class EventLocalDataSource {
         return eventList;
     }
 
-    public ArrayList<Integer> fullTextSearchByField(@Nullable String field, @NonNull String query) {
-        ArrayList<Integer> eventIDList = new ArrayList<>();
-        Cursor cursor = database.query(EventSQLiteHelper.FTS_TABLE_NAME, new String[]{EventFieldNameDictionary.ID}, EventSQLiteHelper.FTS_TABLE_NAME + " MATCH " + (field == null ? "" : field + ":") + DatabaseUtils.sqlEscapeString(query) + ";", null, null, null, null);
-        cursor.moveToFirst();
-        while (!cursor.isAfterLast()) {
-            eventIDList.add(cursor.getInt(cursor.getColumnIndex(EventFieldNameDictionary.ID)));
-            cursor.moveToNext();
+    public ArrayList<EventItem> fullTextSearch(@NonNull String query) {
+        ArrayList<EventItem> eventList = new ArrayList<>();
+        ArrayList<String> queryList = new ArrayList<>();
+        for (int i = 0; i < FTS_SEARCH_ORDER.length; i++) {
+            String field = FTS_SEARCH_ORDER[i];
+            queryList.add(EventSQLiteHelper._ID + " IN (" +
+                    "SELECT " + EventSQLiteHelper._ID + " FROM " + EventSQLiteHelper.FTS_TABLE_NAME + " WHERE " + field + " MATCH '" + query + "' ORDER BY " + EventSQLiteHelper.FTS_EVENT_START_TIME
+                    + ")");
         }
-        cursor.close();
-        return eventIDList;
+        Cursor cursor = database.rawQuery("SELECT * FROM " + EventSQLiteHelper.TABLE_NAME + " WHERE " + TextUtils.join(" OR ", queryList) + ";", null);
+        if (cursor != null) {
+            cursor.moveToFirst();
+            while (!cursor.isAfterLast()) {
+                eventList.add(cursorToEventItem(cursor));
+                cursor.moveToNext();
+            }
+            cursor.close();
+        }
+        return eventList;
     }
 
     public void close() {
@@ -191,8 +208,8 @@ public class EventLocalDataSource {
     }
 
     public void removeEventByID(int id) {
-        database.delete(EventSQLiteHelper.TABLE_NAME, String.format("%s = %s", EventFieldNameDictionary.ID, id), null);
-        database.delete(EventSQLiteHelper.FTS_TABLE_NAME, String.format("%s = %s", EventFieldNameDictionary.ID, id), null);
+        database.delete(EventSQLiteHelper.TABLE_NAME, String.format("%s = %s", EventSQLiteHelper._ID, id), null);
+        database.delete(EventSQLiteHelper.FTS_TABLE_NAME, String.format("%s = %s", EventSQLiteHelper._ID, id), null);
     }
 
     public void clear() {

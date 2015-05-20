@@ -63,7 +63,7 @@ public class EventItemsModel {
     private static final String SITE_NAME = "nowapp.ru";
     private static final String API_ROOT = "api/events.get";
     private static final String DATABASE_NAME = "nowapp.db";
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 2;
 
     public static final String LOAD_IN_BACKGROUND_NOTIFICATION = "ru.nekit.abdroid.nowapp.load_in_bavkgroun_result";
     public static final String LOADING_TYPE = "loading_type";
@@ -375,10 +375,10 @@ public class EventItemsModel {
         String[] splitQuery = mEventLocalDataSource.normalizeForSearch(query).split(" ");
         ArrayList<String> queryList = new ArrayList<>();
         for (String item : splitQuery) {
-            queryList.add("'" + item + "*'");
+            queryList.add(item + "*");
         }
         String queryResult = TextUtils.join(" ", queryList);
-        return sortByStartTime(mEventLocalDataSource.getByEventIDs(mEventLocalDataSource.fullTextSearchByField(null, queryResult)));
+        return mEventLocalDataSource.fullTextSearch(queryResult);
     }
 
     int performLoad(Context context, Bundle args) {

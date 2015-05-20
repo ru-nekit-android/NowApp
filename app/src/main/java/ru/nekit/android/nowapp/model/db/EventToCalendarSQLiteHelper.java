@@ -5,8 +5,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
 
-import ru.nekit.android.nowapp.model.EventFieldNameDictionary;
-
 /**
  * Created by chuvac on 21.04.15.
  */
@@ -16,8 +14,8 @@ public class EventToCalendarSQLiteHelper extends SQLiteOpenHelper implements Bas
     public static final String TABLE_NAME = "event_to_calendar";
     private static EventToCalendarSQLiteHelper sInstance;
 
-    public static final String EVENT_ID = "event_" + EventFieldNameDictionary.ID;
-    public static final String CALENDAR_EVENT_ID = "calendar_event_" + EventFieldNameDictionary.ID;
+    public static final String EVENT_ID = EventSQLiteHelper._ID;
+    public static final String CALENDAR_EVENT_ID = "calendar_event" + EventSQLiteHelper._ID;
 
     private static final String DATABASE_CREATE = "CREATE TABLE "
             + TABLE_NAME + " ("

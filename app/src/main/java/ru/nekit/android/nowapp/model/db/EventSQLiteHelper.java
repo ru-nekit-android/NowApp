@@ -3,13 +3,14 @@ package ru.nekit.android.nowapp.model.db;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.provider.BaseColumns;
 
 import ru.nekit.android.nowapp.model.EventFieldNameDictionary;
 
 /**
  * Created by chuvac on 21.04.15.
  */
-public class EventSQLiteHelper extends SQLiteOpenHelper {
+public class EventSQLiteHelper extends SQLiteOpenHelper implements BaseColumns {
 
 
     public static final String TABLE_NAME = "events";
@@ -18,12 +19,13 @@ public class EventSQLiteHelper extends SQLiteOpenHelper {
 
     static final String FTS_EVENT_START_TIME_ALIAS = "event_start_time_alias";
     static final String FTS_EVENT_CATEGORY_KEYWORD = "event_category_keyword";
+    static final String FTS_EVENT_START_TIME = "event_start_time";
 
     private static EventSQLiteHelper sInstance;
 
     private static final String DATABASE_CREATE = "CREATE TABLE "
             + TABLE_NAME + " ("
-            + EventFieldNameDictionary.ID + " INTEGER PRIMARY KEY, "
+            + _ID + " INTEGER PRIMARY KEY, "
             + EventFieldNameDictionary.ADDRESS + " TEXT NOT NULL, "
             + EventFieldNameDictionary.ALL_NIGHT_PARTY + " INTEGER DEFAULT 0, "
             + EventFieldNameDictionary.DATE + " INTEGER NOT NULL, "
@@ -48,13 +50,14 @@ public class EventSQLiteHelper extends SQLiteOpenHelper {
             + ");";
 
     private static final String DATABASE_CREATE_FTS = "CREATE VIRTUAL TABLE " + FTS_TABLE_NAME +
-            " USING " + FTS_ENGINE + "(" + EventFieldNameDictionary.ID + " integer unique, "
+            " USING " + FTS_ENGINE + "(" + _ID + " integer unique, "
             + EventFieldNameDictionary.NAME + ", "
             + EventFieldNameDictionary.EVENT_DESCRIPTION + " TEXT, "
             + EventFieldNameDictionary.PLACE_NAME + " TEXT, "
             + EventFieldNameDictionary.ADDRESS + " TEXT, "
             + FTS_EVENT_START_TIME_ALIAS + " TEXT, "
-            + FTS_EVENT_CATEGORY_KEYWORD + " TEXT);";
+            + FTS_EVENT_CATEGORY_KEYWORD + " TEXT, "
+            + FTS_EVENT_START_TIME + " INTEGER);";
 
     private EventSQLiteHelper(Context context, String dataBaseName, int databaseVersion) {
         super(context, dataBaseName, null, databaseVersion);
