@@ -4,6 +4,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.util.Pair;
+import android.text.TextUtils;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -68,6 +69,7 @@ public class EventItemsModel {
 
     private static final boolean FEATURE_LOAD_IN_BACKGROUND = true;
 
+    private static final HashMap<String, String> CATEGORY_TYPE_KEYWORDS = new HashMap<>();
     private static final HashMap<String, Integer> CATEGORY_TYPE = new HashMap<>();
     private static final HashMap<String, Integer> CATEGORY_TYPE_COLOR = new HashMap<>();
     private static final HashMap<String, Integer> CATEGORY_TYPE_BIG = new HashMap<>();
@@ -102,6 +104,12 @@ public class EventItemsModel {
         CATEGORY_TYPE.put("category_entertainment", R.drawable.category_entertainment);
         CATEGORY_TYPE.put("category_other", R.drawable.category_other);
         CATEGORY_TYPE.put("category_education", R.drawable.category_education);
+
+        CATEGORY_TYPE_KEYWORDS.put("category_sport", context.getResources().getString(R.string.event_category_sport_keywords));
+        CATEGORY_TYPE_KEYWORDS.put("category_entertainment", context.getResources().getString(R.string.event_category_entertainment_keywords));
+        CATEGORY_TYPE_KEYWORDS.put("category_other", context.getResources().getString(R.string.event_category_other_keywords));
+        CATEGORY_TYPE_KEYWORDS.put("category_education", context.getResources().getString(R.string.event_category_education_keywords));
+
         CATEGORY_TYPE_BIG.put("category_sport", R.drawable.event_category_sport_big);
         CATEGORY_TYPE_BIG.put("category_entertainment", R.drawable.event_category_entertainment_big);
         CATEGORY_TYPE_BIG.put("category_other", R.drawable.event_category_other_big);
@@ -222,6 +230,10 @@ public class EventItemsModel {
 
     public static int getCategoryBigDrawable(String category) {
         return CATEGORY_TYPE_BIG.get(category);
+    }
+
+    public static String getCategoryBKeywords(String category) {
+        return CATEGORY_TYPE_KEYWORDS.get(category);
     }
 
     public static synchronized EventItemsModel getInstance(Context context) {
@@ -347,11 +359,12 @@ public class EventItemsModel {
     }
 
     ArrayList<EventItem> performSearch(String query) {
-        String[] splitQuery = query.toLowerCase().split(" ");
-        String queryResult = "";
+        String[] splitQuery = mEventLocalDataSource.normalizeForSearch(query).split(" ");
+        ArrayList<String> queryList = new ArrayList<>();
         for (String item : splitQuery) {
-            queryResult += item + "* ";
+            queryList.add("'" + item + "*'");
         }
+        String queryResult = TextUtils.join(" ", queryList);
         return sortByStartTime(mEventLocalDataSource.getByEventIDs(mEventLocalDataSource.fullTextSearchByField(null, queryResult)));
     }
 

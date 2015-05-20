@@ -16,6 +16,9 @@ public class EventSQLiteHelper extends SQLiteOpenHelper {
     public static final String FTS_TABLE_NAME = "events_fts";
     public static final String FTS_ENGINE = "fts4";
 
+    static final String FTS_EVENT_START_TIME_ALIAS = "event_start_time_alias";
+    static final String FTS_EVENT_CATEGORY_KEYWORD = "event_category_keyword";
+
     private static EventSQLiteHelper sInstance;
 
     private static final String DATABASE_CREATE = "CREATE TABLE "
@@ -47,9 +50,11 @@ public class EventSQLiteHelper extends SQLiteOpenHelper {
     private static final String DATABASE_CREATE_FTS = "CREATE VIRTUAL TABLE " + FTS_TABLE_NAME +
             " USING " + FTS_ENGINE + "(" + EventFieldNameDictionary.ID + " integer unique, "
             + EventFieldNameDictionary.NAME + ", "
-            + EventFieldNameDictionary.EVENT_DESCRIPTION + ", "
-            + EventFieldNameDictionary.PLACE_NAME + ", "
-            + EventFieldNameDictionary.ADDRESS + ");";
+            + EventFieldNameDictionary.EVENT_DESCRIPTION + " TEXT, "
+            + EventFieldNameDictionary.PLACE_NAME + " TEXT, "
+            + EventFieldNameDictionary.ADDRESS + " TEXT, "
+            + FTS_EVENT_START_TIME_ALIAS + " TEXT, "
+            + FTS_EVENT_CATEGORY_KEYWORD + " TEXT);";
 
     private EventSQLiteHelper(Context context, String dataBaseName, int databaseVersion) {
         super(context, dataBaseName, null, databaseVersion);

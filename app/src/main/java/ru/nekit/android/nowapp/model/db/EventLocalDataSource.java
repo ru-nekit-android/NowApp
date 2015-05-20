@@ -3,6 +3,7 @@ package ru.nekit.android.nowapp.model.db;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.NonNull;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 
 import ru.nekit.android.nowapp.model.EventFieldNameDictionary;
 import ru.nekit.android.nowapp.model.EventItem;
+import ru.nekit.android.nowapp.model.EventItemsModel;
 
 /**
  * Created by chuvac on 21.04.15.
@@ -21,6 +23,7 @@ public class EventLocalDataSource {
 
     private SQLiteDatabase database;
     private EventSQLiteHelper eventSQLHelper;
+    private Context mContext;
 
     private static final String[] ALL_COLUMNS =
             {
@@ -50,6 +53,7 @@ public class EventLocalDataSource {
 
     public EventLocalDataSource(Context context, String dataBaseName, int databaseVersion) {
         eventSQLHelper = EventSQLiteHelper.getInstance(context, dataBaseName, databaseVersion);
+        mContext = context;
     }
 
     public void openForWrite() throws SQLException {
@@ -87,11 +91,17 @@ public class EventLocalDataSource {
         database.insertWithOnConflict(EventSQLiteHelper.TABLE_NAME, EventFieldNameDictionary.ID, contentValues, SQLiteDatabase.CONFLICT_REPLACE);
         ContentValues contentValuesFTS = new ContentValues();
         contentValuesFTS.put(EventFieldNameDictionary.ID, eventItem.id);
-        contentValuesFTS.put(EventFieldNameDictionary.NAME, eventItem.name.toLowerCase());
-        contentValuesFTS.put(EventFieldNameDictionary.EVENT_DESCRIPTION, eventItem.eventDescription.toLowerCase());
-        contentValuesFTS.put(EventFieldNameDictionary.PLACE_NAME, eventItem.placeName.toLowerCase());
-        contentValuesFTS.put(EventFieldNameDictionary.ADDRESS, eventItem.address.toLowerCase());
-        long id = database.insert(EventSQLiteHelper.FTS_TABLE_NAME, null, contentValuesFTS);
+        contentValuesFTS.put(EventFieldNameDictionary.NAME, normalizeForSearch(eventItem.name));
+        contentValuesFTS.put(EventFieldNameDictionary.EVENT_DESCRIPTION, normalizeForSearch(eventItem.eventDescription));
+        contentValuesFTS.put(EventFieldNameDictionary.PLACE_NAME, normalizeForSearch(eventItem.placeName));
+        contentValuesFTS.put(EventFieldNameDictionary.ADDRESS, normalizeForSearch(eventItem.address));
+        contentValuesFTS.put(EventSQLiteHelper.FTS_EVENT_START_TIME_ALIAS, EventItemsModel.getStartTimeAlias(mContext, eventItem));
+        contentValuesFTS.put(EventSQLiteHelper.FTS_EVENT_CATEGORY_KEYWORD, EventItemsModel.getCategoryBKeywords(eventItem.category));
+        database.insert(EventSQLiteHelper.FTS_TABLE_NAME, null, contentValuesFTS);
+    }
+
+    public String normalizeForSearch(String value) {
+        return value.toLowerCase().replace("\"", "");
     }
 
     public ArrayList<EventItem> getAllEvents() {
@@ -166,7 +176,7 @@ public class EventLocalDataSource {
 
     public ArrayList<Integer> fullTextSearchByField(@Nullable String field, @NonNull String query) {
         ArrayList<Integer> eventIDList = new ArrayList<>();
-        Cursor cursor = database.query(EventSQLiteHelper.FTS_TABLE_NAME, new String[]{EventFieldNameDictionary.ID}, EventSQLiteHelper.FTS_TABLE_NAME + " MATCH '" + (field == null ? "" : field + ":") + query + "';", null, null, null, null);
+        Cursor cursor = database.query(EventSQLiteHelper.FTS_TABLE_NAME, new String[]{EventFieldNameDictionary.ID}, EventSQLiteHelper.FTS_TABLE_NAME + " MATCH " + (field == null ? "" : field + ":") + DatabaseUtils.sqlEscapeString(query) + ";", null, null, null, null);
         cursor.moveToFirst();
         while (!cursor.isAfterLast()) {
             eventIDList.add(cursor.getInt(cursor.getColumnIndex(EventFieldNameDictionary.ID)));
