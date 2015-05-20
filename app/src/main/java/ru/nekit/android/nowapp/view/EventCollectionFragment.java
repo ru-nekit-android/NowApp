@@ -43,6 +43,7 @@ import ru.nekit.android.nowapp.model.EventItemsSearcher;
 import ru.nekit.android.nowapp.modelView.EventCollectionAdapter;
 import ru.nekit.android.nowapp.modelView.listeners.IBackPressedListener;
 import ru.nekit.android.nowapp.modelView.listeners.IEventItemSelectListener;
+import ru.nekit.android.nowapp.widget.FloatingActionButtonForRecyclerViewScrollAnimator;
 import ru.nekit.android.nowapp.widget.ScrollingGridLayoutManager;
 
 import static ru.nekit.android.nowapp.NowApplication.APP_STATE.ONLINE;
@@ -72,6 +73,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
 
     private EventCollectionAdapter mEventCollectionAdapter;
     private IEventItemSelectListener mEventItemSelectListener;
+    private FloatingActionButtonForRecyclerViewScrollAnimator mFloatingActionButtonForRecyclerViewScrollAnimator;
 
     private RecyclerView mEventItemsView;
     private SwipeRefreshLayout mSwipeRefreshLayout;
@@ -221,6 +223,8 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         }
 
         mEventCollectionAdapter.registerRecyclerView(mEventItemsView);
+        mFloatingActionButtonForRecyclerViewScrollAnimator.attachToRecyclerView();
+
         applyApplicationState();
         LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mChangeApplicationStateReceiver, new IntentFilter(NowApplication.CHANGE_APPLICATION_STATE));
     }
@@ -310,6 +314,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         mFloatingActionButton.setOnClickListener(this);
 
         mSearchStatus = (TextView) view.findViewById(R.id.search_status);
+        mFloatingActionButtonForRecyclerViewScrollAnimator = new FloatingActionButtonForRecyclerViewScrollAnimator(context, mFloatingActionButton, mEventItemsView);
         return view;
     }
 
@@ -390,6 +395,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         setLoadingState(LOADING_STATE.LOADED);
         LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mChangeApplicationStateReceiver);
         mEventCollectionAdapter.unregisterRecyclerView(mEventItemsView);
+        mFloatingActionButtonForRecyclerViewScrollAnimator.dettachFromRecyclerView();
         super.onPause();
     }
 
