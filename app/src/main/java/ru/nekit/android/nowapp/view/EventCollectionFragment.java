@@ -326,6 +326,15 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     private void setLoadingState(LOADING_STATE state) {
         if (mLoadingState == state) return;
         mLoadingState = state;
+        boolean hideFAB = state == LOADING_STATE.LOADING && EventItemsModel.REFRESH_EVENTS.equals(mLoadingType);
+        if (hideFAB) {
+            mFloatingActionButtonForRecyclerViewScrollAnimator.hide();
+        } else {
+            mFloatingActionButtonForRecyclerViewScrollAnimator.show();
+        }
+        //another types of deactivate FAB
+        //mFloatingActionButton.setClickable(!hideFAB);
+        //mFloatingActionButton.setVisibility(hideFAB ? View.INVISIBLE : View.VISIBLE);
         if (EventItemsModel.REQUEST_NEW_EVENTS.equals(mLoadingType)) {
             switch (mLoadingState) {
                 case LOADING:
@@ -333,6 +342,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                         mEventCollectionAdapter.addLoading();
                     }
                     performLoad();
+
                     break;
                 case LOADED:
                     if (mEventCollectionAdapter.isLoading()) {
@@ -427,6 +437,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         if (isResumed()) {
             switch (loader.getId()) {
                 case LOADER_ID:
+
                     int resultForLoad = (int) result;
                     mLoadingType = EventItemsModel.REFRESH_EVENTS;
                     mSwipeRefreshLayout.setRefreshing(false);
