@@ -95,6 +95,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     @Override
     public void onEventItemSelect(final EventItem eventItem) {
         if (mLoadingState == LOADING_STATE.LOADED) {
+            //TODO: avoid this magic
             int wait = mMode == MODE.SEARCH ? 200 : 50;
             mRestoreSearchMode = mMode == MODE.SEARCH && searchQueryIsValid();
             if (searchViewVisible()) {
