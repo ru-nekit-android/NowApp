@@ -280,7 +280,7 @@
                 android:layout_alignParentRight="true"
                 android:layout_alignParentTop="true"
                 android:scaleType="fitXY"
-                android:src="@drawable/category_education_big" />
+                android:src="@drawable/event_category_education_big" />
 
         </RelativeLayout>
 

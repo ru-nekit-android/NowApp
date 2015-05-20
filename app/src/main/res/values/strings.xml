@@ -30,6 +30,10 @@
     <string name="search">Поиск</string>
     <string name="nothing_found">Ничего не найдено</string>
     <string name="search_hint">Поиск</string>
+    <string name="event_category_sport_keywords">спорт</string>
+    <string name="event_category_other_keywords">другое</string>
+    <string name="event_category_entertainment_keywords">развлечения</string>
+    <string name="event_category_education_keywords">обучение книги</string>
 
     <string-array name="day_of_week">
         <item>ВС</item>

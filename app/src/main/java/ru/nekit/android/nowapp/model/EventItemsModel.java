@@ -102,14 +102,14 @@ public class EventItemsModel {
         CATEGORY_TYPE.put("category_entertainment", R.drawable.category_entertainment);
         CATEGORY_TYPE.put("category_other", R.drawable.category_other);
         CATEGORY_TYPE.put("category_education", R.drawable.category_education);
-        CATEGORY_TYPE_BIG.put("category_sport", R.drawable.category_sport_big);
-        CATEGORY_TYPE_BIG.put("category_entertainment", R.drawable.category_entertainment_big);
-        CATEGORY_TYPE_BIG.put("category_other", R.drawable.category_other_big);
-        CATEGORY_TYPE_BIG.put("category_education", R.drawable.category_education_big);
-        CATEGORY_TYPE_COLOR.put("category_sport", context.getResources().getColor(R.color.category_sport));
-        CATEGORY_TYPE_COLOR.put("category_entertainment", context.getResources().getColor(R.color.category_entertainment));
-        CATEGORY_TYPE_COLOR.put("category_other", context.getResources().getColor(R.color.category_other));
-        CATEGORY_TYPE_COLOR.put("category_education", context.getResources().getColor(R.color.category_education));
+        CATEGORY_TYPE_BIG.put("category_sport", R.drawable.event_category_sport_big);
+        CATEGORY_TYPE_BIG.put("category_entertainment", R.drawable.event_category_entertainment_big);
+        CATEGORY_TYPE_BIG.put("category_other", R.drawable.event_category_other_big);
+        CATEGORY_TYPE_BIG.put("category_education", R.drawable.event_category_education_big);
+        CATEGORY_TYPE_COLOR.put("category_sport", context.getResources().getColor(R.color.event_category_sport));
+        CATEGORY_TYPE_COLOR.put("category_entertainment", context.getResources().getColor(R.color.event_category_entertainment));
+        CATEGORY_TYPE_COLOR.put("category_other", context.getResources().getColor(R.color.event_category_other));
+        CATEGORY_TYPE_COLOR.put("category_education", context.getResources().getColor(R.color.event_category_education));
 
         mEventLocalDataSource = new EventLocalDataSource(context, DATABASE_NAME, DATABASE_VERSION);
         mEventToCalendarDataSource = new EventToCalendarDataSource(context, DATABASE_NAME, DATABASE_VERSION);
