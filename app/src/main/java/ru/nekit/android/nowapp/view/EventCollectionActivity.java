@@ -3,11 +3,9 @@ package ru.nekit.android.nowapp.view;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.AppCompatDialog;
@@ -31,6 +29,7 @@ public class EventCollectionActivity extends AppCompatActivity implements IEvent
 
     private EventDetailFragment mEventDetailFragment;
     private EventPosterViewFragment mEventPosterViewFragment;
+    private BroadcastReceiver mChangeApplicationStateReceiver;
     private View mOfflineView;
 
     @Override
@@ -48,13 +47,12 @@ public class EventCollectionActivity extends AppCompatActivity implements IEvent
         }
 
         mOfflineView = findViewById(R.id.offline_view);
-        BroadcastReceiver mChangeApplicationStateReceiver = new BroadcastReceiver() {
+        mChangeApplicationStateReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 updateOfflineView();
             }
         };
-        LocalBroadcastManager.getInstance(this).registerReceiver(mChangeApplicationStateReceiver, new IntentFilter(NowApplication.CHANGE_APPLICATION_STATE));
         updateOfflineView();
 
     }
@@ -72,7 +70,7 @@ public class EventCollectionActivity extends AppCompatActivity implements IEvent
         getMenuInflater().inflate(R.menu.menu_event_collection, menu);
         return super.onCreateOptionsMenu(menu);
     }
-    
+
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
@@ -160,12 +158,14 @@ public class EventCollectionActivity extends AppCompatActivity implements IEvent
     @Override
     protected void onResume() {
         super.onResume();
+        NowApplication.registerForAppChangeStateNotification(mChangeApplicationStateReceiver);
         NowApplication.setConnectionReceiverActive(true);
     }
 
     @Override
     public void onPause() {
         super.onPause();
+        NowApplication.unregisterForAppChangeStateNotification(mChangeApplicationStateReceiver);
         NowApplication.setConnectionReceiverActive(false);
     }
 

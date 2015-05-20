@@ -1,8 +1,10 @@
 package ru.nekit.android.nowapp;
 
 import android.app.Application;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.DisplayMetrics;
@@ -23,7 +25,7 @@ import static ru.nekit.android.nowapp.NowApplication.APP_STATE.ONLINE;
 public class NowApplication extends Application implements ConnectivityReceiver.OnNetworkAvailableListener {
 
 
-    public static final String CHANGE_APPLICATION_STATE = "ru.nekit.android.change_application_state";
+    public static final String CHANGE_APPLICATION_STATE_NOTIFICATION = "ru.nekit.android.change_application_state";
     public static final int VALID_DATA_PERIOD_HOURS = 24;
 
     private static final String LAST_UPDATE_TIME_KEY = "last_update_time_key";
@@ -85,8 +87,16 @@ public class NowApplication extends Application implements ConnectivityReceiver.
     public static void setState(APP_STATE state) {
         if (mState != state) {
             mState = state;
-            LocalBroadcastManager.getInstance(instance).sendBroadcast(new Intent(CHANGE_APPLICATION_STATE));
+            LocalBroadcastManager.getInstance(instance).sendBroadcast(new Intent(CHANGE_APPLICATION_STATE_NOTIFICATION));
         }
+    }
+
+    public static void registerForAppChangeStateNotification(BroadcastReceiver changeApplicationStateReceiver) {
+        LocalBroadcastManager.getInstance(instance).registerReceiver(changeApplicationStateReceiver, new IntentFilter(NowApplication.CHANGE_APPLICATION_STATE_NOTIFICATION));
+    }
+
+    public static void unregisterForAppChangeStateNotification(BroadcastReceiver changeApplicationStateReceiver) {
+        LocalBroadcastManager.getInstance(instance).unregisterReceiver(changeApplicationStateReceiver);
     }
 
     @Override

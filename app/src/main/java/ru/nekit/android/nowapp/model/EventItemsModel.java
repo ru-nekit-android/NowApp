@@ -1,8 +1,12 @@
 package ru.nekit.android.nowapp.model;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.util.Pair;
 import android.text.TextUtils;
 
@@ -38,7 +42,6 @@ import ru.nekit.android.nowapp.model.vo.EventToCalendarLink;
  */
 public class EventItemsModel {
 
-
     private static final long MAXIMUM_TIME_PERIOD_FOR_DATE_ALIAS_SUPPORT = TimeUnit.HOURS.toSeconds(4);
 
     private static final long[] NIGHT_PERIOD = {TimeUnit.HOURS.toSeconds(23), TimeUnit.HOURS.toSeconds(5) - 1};
@@ -62,6 +65,7 @@ public class EventItemsModel {
     private static final String DATABASE_NAME = "nowapp.db";
     private static final int DATABASE_VERSION = 3;
 
+    public static final String LOAD_IN_BACKGROUND_NOTIFICATION = "ru.nekit.abdroid.nowapp.load_in_bavkgroun_result";
     public static final String LOADING_TYPE = "loading_type";
     public static final String REQUEST_NEW_EVENTS = "request_new_event_items";
     public static final String REFRESH_EVENTS = "refresh_event_items";
@@ -130,6 +134,7 @@ public class EventItemsModel {
                 int result = RESULT_OK;
                 while (!Thread.interrupted() && mLoadedInBackgroundPage < getAvailablePageCount() && result == RESULT_OK) {
                     result = performLoad(context, args);
+                    LocalBroadcastManager.getInstance(mContext).sendBroadcast(new Intent(LOAD_IN_BACKGROUND_NOTIFICATION));
                     VTAG.call("Background Load Task: " + mLoadedInBackgroundPage + " : " + getAvailablePageCount() + " : " + result);
                 }
             }
@@ -147,6 +152,14 @@ public class EventItemsModel {
         }
 
         setEventsFromLocalDataSource(allEvents);
+    }
+
+    public void registerForLoadInBackgroundResultNotification(BroadcastReceiver receiver) {
+        LocalBroadcastManager.getInstance(mContext).registerReceiver(receiver, new IntentFilter(LOAD_IN_BACKGROUND_NOTIFICATION));
+    }
+
+    public void unregisterForLoadInBackgroundResultNotification(BroadcastReceiver receiver) {
+        LocalBroadcastManager.getInstance(mContext).unregisterReceiver(receiver);
     }
 
     private boolean eventIsActual(EventItem eventItem) {

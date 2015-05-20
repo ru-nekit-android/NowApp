@@ -4,14 +4,12 @@ import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -36,6 +34,7 @@ import java.util.ArrayList;
 
 import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
+import ru.nekit.android.nowapp.VTAG;
 import ru.nekit.android.nowapp.model.EventItem;
 import ru.nekit.android.nowapp.model.EventItemsLoader;
 import ru.nekit.android.nowapp.model.EventItemsModel;
@@ -77,7 +76,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
 
     private RecyclerView mEventItemsView;
     private SwipeRefreshLayout mSwipeRefreshLayout;
-    private BroadcastReceiver mChangeApplicationStateReceiver;
+    private BroadcastReceiver mLocalBroadcastReceiver;
     private SearchView mSearchView;
     private FloatingActionButton mFloatingActionButton;
     private TextView mSearchStatus;
@@ -123,22 +122,30 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         setHasOptionsMenu(true);
         mEventModel = NowApplication.getEventModel();
         mCurrentPage = mEventModel.getCurrentPage();
-        mChangeApplicationStateReceiver = new BroadcastReceiver() {
+        mLocalBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                applyApplicationState();
-                if (NowApplication.getState() == ONLINE) {
-                    mLoadingType = EventItemsModel.REFRESH_EVENTS;
-                    mEventItemsView.smoothScrollToPosition(0);
-                    mSwipeRefreshLayout.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            mSwipeRefreshLayout.setRefreshing(true);
-                            performLoad();
-                        }
-                    }, SMOOTH_SCROLL_DURATION);
-                } else {
-                    performLoad();
+                String action = intent.getAction();
+                if (action.equals(NowApplication.CHANGE_APPLICATION_STATE_NOTIFICATION)) {
+                    applyApplicationState();
+                    if (NowApplication.getState() == ONLINE) {
+                        mLoadingType = EventItemsModel.REFRESH_EVENTS;
+                        mEventItemsView.smoothScrollToPosition(0);
+                        mSwipeRefreshLayout.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                mSwipeRefreshLayout.setRefreshing(true);
+                                performLoad();
+                            }
+                        }, SMOOTH_SCROLL_DURATION);
+                    } else {
+                        performLoad();
+                    }
+                } else if (action.equals(EventItemsModel.LOAD_IN_BACKGROUND_NOTIFICATION)) {
+                    VTAG.call("LOAD_IN_BACKGROUND_NOTIFICATION");
+                    if (mMode == MODE.SEARCH && mHasResultOfSearch) {
+                        performSearch(mQuery);
+                    }
                 }
             }
         };
@@ -227,7 +234,8 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         mFloatingActionButtonForRecyclerViewScrollAnimator.attachToRecyclerView();
 
         applyApplicationState();
-        LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mChangeApplicationStateReceiver, new IntentFilter(NowApplication.CHANGE_APPLICATION_STATE));
+        NowApplication.registerForAppChangeStateNotification(mLocalBroadcastReceiver);
+        mEventModel.registerForLoadInBackgroundResultNotification(mLocalBroadcastReceiver);
     }
 
     private void restoreMode() {
@@ -360,7 +368,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         LoaderManager loaderManager = getLoaderManager();
         Bundle searchArgs = new Bundle();
         searchArgs.putString(EventItemsSearcher.EVENT_ITEMS_SEARCH_KEY, query);
-        final Loader<ArrayList<EventItem>> loader = loaderManager.getLoader(SEARCHER_ID);
+        final Loader loader = loaderManager.getLoader(SEARCHER_ID);
         if (loader != null) {
             loaderManager.restartLoader(SEARCHER_ID, searchArgs, EventCollectionFragment.this);
         } else {
@@ -372,7 +380,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         LoaderManager loaderManager = getLoaderManager();
         Bundle loaderArgs = new Bundle();
         loaderArgs.putString(EventItemsModel.LOADING_TYPE, mLoadingType);
-        final Loader<Integer> loader = loaderManager.getLoader(LOADER_ID);
+        final Loader loader = loaderManager.getLoader(LOADER_ID);
         if (loader != null) {
             loaderManager.restartLoader(LOADER_ID, loaderArgs, EventCollectionFragment.this);
         } else {
@@ -404,9 +412,10 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         loaderManager.destroyLoader(LOADER_ID);
         loaderManager.destroyLoader(SEARCHER_ID);
         setLoadingState(LOADING_STATE.LOADED);
-        LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mChangeApplicationStateReceiver);
         mEventCollectionAdapter.unregisterRecyclerView(mEventItemsView);
         mFloatingActionButtonForRecyclerViewScrollAnimator.dettachFromRecyclerView();
+        NowApplication.unregisterForAppChangeStateNotification(mLocalBroadcastReceiver);
+        mEventModel.unregisterForLoadInBackgroundResultNotification(mLocalBroadcastReceiver);
         super.onPause();
     }
 

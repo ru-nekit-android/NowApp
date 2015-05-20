@@ -6,7 +6,6 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
@@ -20,7 +19,6 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.AppCompatDialog;
@@ -172,7 +170,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         FragmentActivity activity = getActivity();
         ((AppCompatActivity) activity).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         applyApplicationState();
-        LocalBroadcastManager.getInstance(activity).registerReceiver(mChangeApplicationStateReceiver, new IntentFilter(NowApplication.CHANGE_APPLICATION_STATE));
+        NowApplication.registerForAppChangeStateNotification(mChangeApplicationStateReceiver);
 
         GpsMyLocationProvider gpsLocationProvider = new GpsMyLocationProvider(activity);
         gpsLocationProvider.setLocationUpdateMinTime(LOCATION_MIN_UPDATE_TIME);
@@ -187,7 +185,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     @Override
     public void onPause() {
         super.onPause();
-        LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mChangeApplicationStateReceiver);
+        NowApplication.unregisterForAppChangeStateNotification(mChangeApplicationStateReceiver);
         //mScrollView.getViewTreeObserver().removeOnScrollChangedListener(scrollListener);
         //mFloatingActionButton.getViewTreeObserver().removeGlobalOnLayoutListener(floatingActionButtonLayoutListener);
         myLocationOverLay.disableMyLocation();
