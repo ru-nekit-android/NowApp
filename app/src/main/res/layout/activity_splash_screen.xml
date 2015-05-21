@@ -28,7 +28,7 @@
         android:paddingBottom="@dimen/progress_wheel_size">
 
         <com.pnikosis.materialishprogress.ProgressWheel
-            wheel:matProg_barWidth="1dp"
+            style="@style/ProgressWheel"
             android:id="@+id/progress_wheel"
             android:layout_gravity="center"
             android:layout_width="@dimen/progress_wheel_size"

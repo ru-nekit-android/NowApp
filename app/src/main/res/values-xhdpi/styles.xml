@@ -107,7 +107,8 @@
     </style>
 
     <style name="Place.Detail">
-        <item name="android:textSize">18sp</item>
+        <item name="maxTextSize">18sp</item>
+        <item name="minTextSize">8sp</item>
         <item name="typeface">roboto_medium</item>
         <item name="android:singleLine">true</item>
         <item name="android:maxLines">1</item>
@@ -115,7 +116,9 @@
     </style>
 
     <style name="Place.Address">
-        <item name="android:textSize">18sp</item>
+        <item name="maxTextSize">18sp</item>
+        <item name="minTextSize">8sp</item>
+        <item name="android:gravity">bottom</item>
         <item name="typeface">roboto_light</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
