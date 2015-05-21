@@ -28,7 +28,6 @@ public class FloatingActionButtonForRecyclerViewScrollAnimator {
     private FloatingActionButton mButton;
     private RecyclerViewScrollDetectorImpl mScrollDetector;
     private RecyclerView mRecyclerView;
-    private Context mContext;
     private int mScrollThreshold;
 
 
@@ -36,8 +35,8 @@ public class FloatingActionButtonForRecyclerViewScrollAnimator {
 
     public FloatingActionButtonForRecyclerViewScrollAnimator(@NonNull Context context, @NonNull FloatingActionButton button, @NonNull RecyclerView recyclerView) {
         mButton = button;
-        mContext = context;
-        mScrollThreshold = mContext.getResources().getDimensionPixelOffset(R.dimen.fab_scroll_threshold);
+        mVisible = true;
+        mScrollThreshold = context.getResources().getDimensionPixelOffset(R.dimen.fab_scroll_threshold);
         mRecyclerView = recyclerView;
     }
 
