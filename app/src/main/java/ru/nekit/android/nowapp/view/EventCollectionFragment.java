@@ -34,7 +34,6 @@ import java.util.ArrayList;
 
 import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
-import ru.nekit.android.nowapp.VTAG;
 import ru.nekit.android.nowapp.model.EventItem;
 import ru.nekit.android.nowapp.model.EventItemsLoader;
 import ru.nekit.android.nowapp.model.EventItemsModel;
@@ -66,6 +65,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
 
     private EventItemsModel mEventModel;
     private boolean mRestoreSearchMode;
+    private String mQueryWithResult;
     private String mQuery;
     private boolean mHasResultOfSearch;
     private int mCurrentPage;
@@ -142,9 +142,8 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                         performLoad();
                     }
                 } else if (action.equals(EventItemsModel.LOAD_IN_BACKGROUND_NOTIFICATION)) {
-                    VTAG.call("LOAD_IN_BACKGROUND_NOTIFICATION");
                     if (mMode == MODE.SEARCH && mHasResultOfSearch) {
-                        performSearch(mQuery);
+                        performSearch(mQueryWithResult);
                     }
                 }
             }
@@ -155,7 +154,6 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     public boolean onQueryTextSubmit(String query) {
         if (mMode == MODE.SEARCH) {
             if (searchQueryIsValid()) {
-                mQuery = query;
                 performSearch(query);
             } else {
                 mHasResultOfSearch = false;
@@ -174,7 +172,6 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         if (mMode == MODE.SEARCH) {
             if (FEATURE_LIVE_SEARCH) {
                 if (searchQueryIsValid()) {
-                    mQuery = query;
                     performSearch(query);
                 } else {
                     mHasResultOfSearch = false;
@@ -240,7 +237,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
 
     private void restoreMode() {
         applyMode(MODE.SEARCH);
-        mSearchView.setQuery(mQuery, true);
+        mSearchView.setQuery(mQueryWithResult, true);
     }
 
     @Override
@@ -332,9 +329,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     }
 
     private void setLoadingState(LOADING_STATE state) {
-        if (mLoadingState == state) return;
-        mLoadingState = state;
-        boolean hideFAB = state == LOADING_STATE.LOADING && EventItemsModel.REFRESH_EVENTS.equals(mLoadingType);
+        boolean hideFAB = state == LOADING_STATE.LOADING && EventItemsModel.REFRESH_EVENTS.equals(state);
         if (hideFAB) {
             mFloatingActionButtonForRecyclerViewScrollAnimator.hide();
         } else {
@@ -343,6 +338,8 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         //another types of deactivate FAB
         //mFloatingActionButton.setClickable(!hideFAB);
         //mFloatingActionButton.setVisibility(hideFAB ? View.INVISIBLE : View.VISIBLE);
+        if (mLoadingState == state) return;
+        mLoadingState = state;
         if (EventItemsModel.REQUEST_NEW_EVENTS.equals(mLoadingType)) {
             switch (mLoadingState) {
                 case LOADING:
@@ -365,6 +362,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     }
 
     private void performSearch(String query) {
+        mQuery = query;
         LoaderManager loaderManager = getLoaderManager();
         Bundle searchArgs = new Bundle();
         searchArgs.putString(EventItemsSearcher.EVENT_ITEMS_SEARCH_KEY, query);
@@ -466,6 +464,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
 
                     ArrayList<EventItem> resultForSearch = (ArrayList<EventItem>) result;
                     mHasResultOfSearch = resultForSearch.size() > 0;
+                    mQueryWithResult = mHasResultOfSearch ? mQuery : null;
                     mEventCollectionAdapter.setItems(resultForSearch);
                     setSearchStatus(resultForSearch.size() == 0 ? getActivity().getString(R.string.nothing_found) : null);
 
