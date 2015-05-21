@@ -179,7 +179,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         myLocationOverLay.setDrawAccuracyEnabled(true);
         //mFloatingActionButton.getViewTreeObserver().addOnGlobalLayoutListener(floatingActionButtonLayoutListener);
         //mScrollView.getViewTreeObserver().addOnScrollChangedListener(scrollListener);
-        initEventToCalendarLoader(EventToCalendarLoader.CHECK);
+        //initEventToCalendarLoader(EventToCalendarLoader.CHECK);
     }
 
     @Override
