@@ -21,16 +21,18 @@ public class ScrollingGridLayoutManager extends GridLayoutManager {
     @Override
     public void smoothScrollToPosition(RecyclerView recyclerView, RecyclerView.State state,
                                        int position) {
-        View firstVisibleChild = recyclerView.getChildAt(0);
-        int itemHeight = firstVisibleChild.getHeight();
-        int currentPosition = recyclerView.getChildAdapterPosition(firstVisibleChild);
-        int distanceInPixels = Math.abs((currentPosition - position) * itemHeight);
-        if (distanceInPixels == 0) {
-            distanceInPixels = (int) Math.abs(firstVisibleChild.getY());
+        if (getChildCount() > 0) {
+            View firstVisibleChild = recyclerView.getChildAt(0);
+            int itemHeight = firstVisibleChild.getHeight();
+            int currentPosition = recyclerView.getChildAdapterPosition(firstVisibleChild);
+            int distanceInPixels = Math.abs((currentPosition - position) * itemHeight);
+            if (distanceInPixels == 0) {
+                distanceInPixels = (int) Math.abs(firstVisibleChild.getY());
+            }
+            SmoothScroller smoothScroller = new SmoothScroller(recyclerView.getContext(), distanceInPixels, duration);
+            smoothScroller.setTargetPosition(position);
+            startSmoothScroll(smoothScroller);
         }
-        SmoothScroller smoothScroller = new SmoothScroller(recyclerView.getContext(), distanceInPixels, duration);
-        smoothScroller.setTargetPosition(position);
-        startSmoothScroll(smoothScroller);
     }
 
     private class SmoothScroller extends LinearSmoothScroller {
