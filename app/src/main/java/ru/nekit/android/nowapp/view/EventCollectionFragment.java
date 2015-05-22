@@ -150,6 +150,10 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         };
     }
 
+    private void setEventsFromModel() {
+        mEventCollectionAdapter.setItems(mEventModel.getEventItems());
+    }
+
     @Override
     public boolean onQueryTextSubmit(String query) {
         if (mMode == MODE.SEARCH) {
@@ -161,10 +165,6 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
             }
         }
         return false;
-    }
-
-    private void setEventsFromModel() {
-        mEventCollectionAdapter.setItems(mEventModel.getEventItems());
     }
 
     @Override
@@ -222,6 +222,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                         }
                     });
                     mLoadingType = EventItemsModel.REFRESH_EVENTS;
+                    setLoadingState(LOADING_STATE.LOADING);
                     performLoad();
                 }
             }
@@ -329,7 +330,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     }
 
     private void setLoadingState(LOADING_STATE state) {
-        boolean hideFAB = state == LOADING_STATE.LOADING && EventItemsModel.REFRESH_EVENTS.equals(state);
+        boolean hideFAB = state == LOADING_STATE.LOADING && EventItemsModel.REFRESH_EVENTS.equals(mLoadingType);
         if (hideFAB) {
             mFloatingActionButtonForRecyclerViewScrollAnimator.hide();
         } else {
@@ -466,7 +467,11 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                     mHasResultOfSearch = resultForSearch.size() > 0;
                     mQueryWithResult = mHasResultOfSearch ? mQuery : null;
                     mEventCollectionAdapter.setItems(resultForSearch);
-                    setSearchStatus(resultForSearch.size() == 0 ? getActivity().getString(R.string.nothing_found) : null);
+                    boolean isEmpty = resultForSearch.size() == 0;
+                    setSearchStatus(isEmpty ? getActivity().getString(R.string.nothing_found) : null);
+                    if (isEmpty) {
+                        mFloatingActionButtonForRecyclerViewScrollAnimator.show();
+                    }
 
                     break;
                 default:
@@ -543,20 +548,24 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
 
             case R.id.fab_events:
 
-                applyMode(searchViewVisible() ? MODE.NORMAL : MODE.SEARCH);
-                if (!searchViewVisible()) {
-                    setEventsFromModel();
+                mEventItemsView.smoothScrollToPosition(0);
+                if (searchViewVisible()) {
+                    mSearchView.setQuery("", true);
+                    applyMode(MODE.NORMAL);
+                } else {
+                    applyMode(MODE.SEARCH);
                 }
 
                 break;
 
             case android.support.v7.appcompat.R.id.search_close_btn:
 
-                if (!searchQueryIsValid()) {
+                if (searchQueryIsValid()) {
+                    mSearchView.setQuery("", true);
+                    mFloatingActionButtonForRecyclerViewScrollAnimator.show();
+                } else {
                     applyMode(MODE.NORMAL);
                     setEventsFromModel();
-                } else {
-                    mSearchView.setQuery("", true);
                 }
 
                 break;
