@@ -2,7 +2,6 @@ package ru.nekit.android.nowapp.view;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
-import android.content.ContentUris;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -13,12 +12,9 @@ import android.graphics.PorterDuffColorFilter;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.CalendarContract;
 import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.Loader;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.AppCompatDialog;
@@ -67,7 +63,6 @@ import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.EventItem;
 import ru.nekit.android.nowapp.model.EventItemsModel;
-import ru.nekit.android.nowapp.model.EventToCalendarLoader;
 import ru.nekit.android.nowapp.model.vo.EventToCalendarLink;
 import ru.nekit.android.nowapp.modelView.listeners.IEventItemPosterSelectListener;
 import ru.nekit.android.nowapp.utils.RobotoTextAppearanceSpan;
@@ -77,7 +72,7 @@ import ru.nekit.android.nowapp.widget.OnSwipeTouchListener;
 import static ru.nekit.android.nowapp.NowApplication.APP_STATE.ONLINE;
 
 @SuppressWarnings("ResourceType")
-public class EventDetailFragment extends Fragment implements View.OnClickListener, LoaderManager.LoaderCallbacks<EventToCalendarLink> {
+public class EventDetailFragment extends Fragment implements View.OnClickListener {
 
     public static final String TAG = "ru.nekit.android.event_detail_fragment";
 
@@ -98,7 +93,6 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     private BroadcastReceiver mChangeApplicationStateReceiver;
     private MyLocationNewOverlay myLocationOverLay;
     private LocationManager mLocationManager;
-    //private FloatingActionButton mFloatingActionButton;
     private ScrollView mScrollView;
     private TextView mDescriptionView;
     private Button mPhoneButton;
@@ -119,24 +113,6 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
             return false;
         }
     };
-
-
-    /*private ViewTreeObserver.OnScrollChangedListener scrollListener = new ViewTreeObserver.OnScrollChangedListener() {
-
-        @Override
-        public void onScrollChanged() {
-            updateFloatingActionButtonPosition();
-        }
-    };
-
-    private final ViewTreeObserver.OnGlobalLayoutListener floatingActionButtonLayoutListener = new ViewTreeObserver.OnGlobalLayoutListener() {
-
-        @Override
-        public void onGlobalLayout() {
-            updateFloatingActionButtonPosition();
-        }
-
-    };*/
 
     public EventDetailFragment() {
     }
@@ -177,39 +153,14 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         gpsLocationProvider.setLocationUpdateMinDistance(LOCATION_MIN_UPDATE_DISTANCE);
         myLocationOverLay.enableMyLocation(gpsLocationProvider);
         myLocationOverLay.setDrawAccuracyEnabled(true);
-        //mFloatingActionButton.getViewTreeObserver().addOnGlobalLayoutListener(floatingActionButtonLayoutListener);
-        //mScrollView.getViewTreeObserver().addOnScrollChangedListener(scrollListener);
-        //initEventToCalendarLoader(EventToCalendarLoader.CHECK);
     }
 
     @Override
     public void onPause() {
         super.onPause();
         NowApplication.unregisterForAppChangeStateNotification(mChangeApplicationStateReceiver);
-        //mScrollView.getViewTreeObserver().removeOnScrollChangedListener(scrollListener);
-        //mFloatingActionButton.getViewTreeObserver().removeGlobalOnLayoutListener(floatingActionButtonLayoutListener);
         myLocationOverLay.disableMyLocation();
     }
-
-    /*private void updateFloatingActionButtonPosition() {
-        View bottomView = mMapViewContainer;
-        if (mPhoneButton.getVisibility() == View.VISIBLE) {
-            bottomView = mPhoneButton;
-        } else if (mSiteButton.getVisibility() == View.VISIBLE) {
-            bottomView = mSiteButton;
-        }
-        int scrollY = mScrollView.getScrollY();
-        int fabHeight = mFloatingActionButton.getHeight();
-        float screenBottom = mScrollView.getHeight();
-        float bottomViewBottom = bottomView.getY() - scrollY;
-        int space = ((ViewGroup.MarginLayoutParams) mFloatingActionButton.getLayoutParams()).rightMargin;
-        if (screenBottom < bottomViewBottom) {
-            mFloatingActionButton.setY(screenBottom - fabHeight - space);
-        } else {
-            mFloatingActionButton.setY(bottomViewBottom - fabHeight - space);
-        }
-        mDescriptionView.setPadding(0, 0, 0, fabHeight - space);
-    }*/
 
     private void createMap() {
 
@@ -426,10 +377,6 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         placeAddressView.setText(mEventItem.address);
 
         mMapViewContainer = (RelativeLayout) view.findViewById(R.id.map_view_container);
-        //mFloatingActionButton = (FloatingActionButton) view.findViewById(R.id.fab);
-        //mFloatingActionButton.setColorNormal(EventItemsModel.getCategoryColor(mEventItem.category));
-
-        //mFloatingActionButton.setOnClickListener(this);
 
         mScrollView.scrollTo(0, 0);
 
@@ -566,66 +513,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
                 break;
 
-            /*case R.id.fab:
-
-
-                if (mEventToCalendarLink != null) {
-                    openCalendarApplication();
-                } else {
-
-                    AlertDialog.Builder builder;
-                    AppCompatDialog dialog;
-                    final View dialogContentView = mInflater.inflate(R.layout.dialog_content_calendar, null, false);
-                    View dialogTitleView = mInflater.inflate(R.layout.dialog_title, null, false);
-                    TextView dialogTextView = (TextView) dialogContentView.findViewById(R.id.text_view);
-                    dialogTextView.setTextAppearance(context, R.style.DialogContent);
-                    TextView dialogTitleTextView = (TextView) dialogTitleView.findViewById(R.id.text_view);
-                    dialogTitleTextView.setTextAppearance(context, R.style.DialogTitle);
-                    builder = new AlertDialog.Builder(context, R.style.Alert_Theme);
-                    Drawable icon = context.getResources().getDrawable(R.drawable.ic_action_calendar).mutate();
-                    icon.setColorFilter(0xFF000000, PorterDuff.Mode.MULTIPLY);
-                    builder.setCancelable(true)
-                            .setIcon(icon)
-                            .setView(dialogContentView)
-                            .setPositiveButton(R.string.add, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    initEventToCalendarLoader(EventToCalendarLoader.ADD);
-                                    //mOpenCalendarAfterAdd = ((CheckBox) dialogContentView.findViewById(R.id.open_calendar)).isChecked();
-                                }
-                            }).setNegativeButton(R.string.no, null)
-                            .setTitle(R.string.dialog_title_add_to_calendar);
-                    builder.setInverseBackgroundForced(true);
-                    dialogTitleTextView.setText(R.string.dialog_title_add_to_calendar);
-                    dialogTextView.setText(R.string.dialog_text_add_to_calendar);
-                    dialog = builder.create();
-                    dialog.show();
-
-                }
-
-                break;*/
-
             default:
-        }
-    }
-
-    private void openCalendarApplication() {
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setData(ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, mEventToCalendarLink.getCalendarEventID()));
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
-    }
-
-    private void initEventToCalendarLoader(int method) {
-        Bundle loaderArgs = new Bundle();
-        loaderArgs.putInt(EventToCalendarLoader.METHOD_KEY, method);
-        loaderArgs.putInt(EventToCalendarLoader.EVENT_ITEM_ID_KEY, mEventItem.id);
-        LoaderManager loaderManager = getActivity().getSupportLoaderManager();
-        final Loader<EventToCalendarLink> loader = loaderManager.getLoader(LOADER_ID);
-        if (loader != null) {
-            loaderManager.restartLoader(LOADER_ID, loaderArgs, this);
-        } else {
-            loaderManager.initLoader(LOADER_ID, loaderArgs, this);
         }
     }
 
@@ -664,33 +552,5 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         EventDetailFragment fragment = new EventDetailFragment();
         fragment.setEventItem(eventItem);
         return fragment;
-    }
-
-    @Override
-    public Loader<EventToCalendarLink> onCreateLoader(int id, Bundle args) {
-        //mFloatingActionButton.setEnabled(false);
-        mEventToCalendarLink = null;
-        EventToCalendarLoader loader = new EventToCalendarLoader(getActivity(), args);
-        loader.forceLoad();
-        return loader;
-    }
-
-    @Override
-    public void onLoadFinished(Loader<EventToCalendarLink> loader, EventToCalendarLink result) {
-        mEventToCalendarLink = result;
-        //mFloatingActionButton.setEnabled(true);
-        if (result == null) {
-            //mFloatingActionButton.setIcon(R.drawable.ic_action_calendar);
-        } else {
-            //mFloatingActionButton.setIcon(R.drawable.ic_action_calendar_added);
-        }
-        if (mOpenCalendarAfterAdd) {
-            mOpenCalendarAfterAdd = false;
-            openCalendarApplication();
-        }
-    }
-
-    @Override
-    public void onLoaderReset(Loader<EventToCalendarLink> loader) {
     }
 }

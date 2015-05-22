@@ -34,8 +34,6 @@ import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.VTAG;
 import ru.nekit.android.nowapp.model.db.EventLocalDataSource;
-import ru.nekit.android.nowapp.model.db.EventToCalendarDataSource;
-import ru.nekit.android.nowapp.model.vo.EventToCalendarLink;
 
 /**
  * Created by chuvac on 15.03.15.
@@ -63,7 +61,7 @@ public class EventItemsModel {
     private static final String SITE_NAME = "nowapp.ru";
     private static final String API_ROOT = "api/events.get";
     private static final String DATABASE_NAME = "nowapp.db";
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3;
 
     public static final String LOAD_IN_BACKGROUND_NOTIFICATION = "ru.nekit.abdroid.nowapp.load_in_bavkgroun_result";
     public static final String LOADING_TYPE = "loading_type";
@@ -82,7 +80,6 @@ public class EventItemsModel {
 
     private final Context mContext;
     private final ArrayList<EventItem> mEventItems;
-    private final EventToCalendarDataSource mEventToCalendarDataSource;
     private final EventLocalDataSource mEventLocalDataSource;
     private final Runnable mBackgroundLoadTask;
 
@@ -124,7 +121,6 @@ public class EventItemsModel {
         CATEGORY_TYPE_COLOR.put("category_education", context.getResources().getColor(R.color.event_category_education));
 
         mEventLocalDataSource = new EventLocalDataSource(context, DATABASE_NAME, DATABASE_VERSION);
-        mEventToCalendarDataSource = new EventToCalendarDataSource(context, DATABASE_NAME, DATABASE_VERSION);
 
         mBackgroundLoadTask = new Runnable() {
             @Override
@@ -141,13 +137,12 @@ public class EventItemsModel {
         };
 
         mEventLocalDataSource.openForWrite();
-        mEventToCalendarDataSource.openForWrite();
+
 
         ArrayList<EventItem> allEvents = mEventLocalDataSource.getAllEvents();
         for (EventItem event : allEvents) {
             if (!eventIsActual(event)) {
                 mEventLocalDataSource.removeEventByID(event.id);
-                mEventToCalendarDataSource.removeLinkByEventID(event.id);
             }
         }
 
@@ -245,7 +240,7 @@ public class EventItemsModel {
         return CATEGORY_TYPE_BIG.get(category);
     }
 
-    public static String getCategoryBKeywords(String category) {
+    public static String getCategoryKeywords(String category) {
         return CATEGORY_TYPE_KEYWORDS.get(category);
     }
 
@@ -331,13 +326,6 @@ public class EventItemsModel {
         mEventLocalDataSource.createOrUpdateEvent(eventItem);
     }
 
-    public void openEventToCalendarLinker(boolean forWrite) {
-        if (forWrite) {
-            mEventToCalendarDataSource.openForWrite();
-        } else {
-            mEventToCalendarDataSource.openForRead();
-        }
-    }
 
     private void loadInBackground() {
         if (FEATURE_LOAD_IN_BACKGROUND) {
@@ -357,18 +345,6 @@ public class EventItemsModel {
         public int compare(EventItem left, EventItem right) {
             return Long.valueOf(left.date + left.startAt).compareTo(right.date + right.startAt);
         }
-    }
-
-    public EventToCalendarLink addEventToCalendarLink(EventItem eventItem, long calendarEventID) {
-        return mEventToCalendarDataSource.addLink(eventItem.id, calendarEventID);
-    }
-
-    public void removeEventToCalendarLinkByEventId(long eventItemId) {
-        mEventToCalendarDataSource.removeLinkByEventID(eventItemId);
-    }
-
-    public EventToCalendarLink getEventToCalendarLinkByEventId(long eventItemId) {
-        return mEventToCalendarDataSource.getLinkByEventID(eventItemId);
     }
 
     ArrayList<EventItem> performSearch(String query) {
