@@ -23,6 +23,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -43,10 +44,11 @@ import ru.nekit.android.nowapp.modelView.listeners.IBackPressedListener;
 import ru.nekit.android.nowapp.modelView.listeners.IEventItemSelectListener;
 import ru.nekit.android.nowapp.widget.FloatingActionButtonForRecyclerViewScrollAnimator;
 import ru.nekit.android.nowapp.widget.ScrollingGridLayoutManager;
+import ru.nekit.android.nowapp.widget.SoftKeyboardListenerLayout;
 
 import static ru.nekit.android.nowapp.NowApplication.APP_STATE.ONLINE;
 
-public class EventCollectionFragment extends Fragment implements LoaderManager.LoaderCallbacks, IEventItemSelectListener, View.OnClickListener, SearchView.OnQueryTextListener, IBackPressedListener, TextView.OnEditorActionListener {
+public class EventCollectionFragment extends Fragment implements LoaderManager.LoaderCallbacks, IEventItemSelectListener, View.OnClickListener, SearchView.OnQueryTextListener, IBackPressedListener, TextView.OnEditorActionListener, SoftKeyboardListenerLayout.OnSoftKeyboardListener {
 
     public static final String TAG = "ru.nekit.android.event_collection_fragment";
 
@@ -69,6 +71,11 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     private String mQuery;
     private boolean mHasResultOfSearch;
     private int mCurrentPage;
+    private LOADING_STATE mLoadingState;
+    private MODE mMode;
+    private String mLoadingType;
+    private EventItem mWaitingForSelectItem;
+    private boolean mKeyboadVisible;
 
     private EventCollectionAdapter mEventCollectionAdapter;
     private IEventItemSelectListener mEventItemSelectListener;
@@ -80,10 +87,8 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     private SearchView mSearchView;
     private FloatingActionButton mFloatingActionButton;
     private TextView mSearchStatus;
+    private EditText mSearchViewEditText;
 
-    private LOADING_STATE mLoadingState;
-    private MODE mMode;
-    private String mLoadingType;
 
     public EventCollectionFragment() {
         mLoadingState = LOADING_STATE.LOADED;
@@ -94,18 +99,13 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     @Override
     public void onEventItemSelect(final EventItem eventItem) {
         if (mLoadingState == LOADING_STATE.LOADED) {
-            //TODO: avoid this magic
-            int wait = mMode == MODE.SEARCH ? 200 : 50;
             mRestoreSearchMode = mMode == MODE.SEARCH && searchQueryIsValid();
             if (searchViewVisible()) {
                 applyMode(MODE.NORMAL);
+                mWaitingForSelectItem = eventItem;
+            } else {
+                mEventItemSelectListener.onEventItemSelect(eventItem);
             }
-            new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    mEventItemSelectListener.onEventItemSelect(eventItem);
-                }
-            }, wait);
         } else {
             //strange behavior on usual user-case
         }
@@ -239,6 +239,8 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     private void restoreMode() {
         applyMode(MODE.SEARCH);
         mSearchView.setQuery(mQueryWithResult, true);
+        mSearchViewEditText.requestFocus();
+        ((InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE)).showSoftInput(mSearchViewEditText, 0);
     }
 
     @Override
@@ -253,8 +255,9 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         mSearchView = (SearchView) getViewFromRoot(R.id.search_view);
         mSearchView.setOnQueryTextListener(this);
         mSearchView.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
-        ((SearchView.SearchAutoComplete) mSearchView.findViewById(android.support.v7.appcompat.R.id.search_src_text)).setHint(" " + getActivity().getString(R.string.search_hint));
-        ((EditText) mSearchView.findViewById(android.support.v7.appcompat.R.id.search_src_text)).setOnEditorActionListener(this);
+        mSearchViewEditText = (EditText) mSearchView.findViewById(android.support.v7.appcompat.R.id.search_src_text);
+        mSearchViewEditText.setOnEditorActionListener(this);
+        mSearchViewEditText.setHint(" " + getActivity().getString(R.string.search_hint));
         ImageView searchCloseButton = (ImageView) mSearchView.findViewById(android.support.v7.appcompat.R.id.search_close_btn);
         searchCloseButton.setAlpha(192);
         searchCloseButton.setOnClickListener(this);
@@ -322,7 +325,25 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
 
         mSearchStatus = (TextView) view.findViewById(R.id.search_status);
         mFloatingActionButtonForRecyclerViewScrollAnimator = new FloatingActionButtonForRecyclerViewScrollAnimator(context, mFloatingActionButton, mEventItemsView);
+
+        SoftKeyboardListenerLayout scrollView = (SoftKeyboardListenerLayout) view.findViewById(R.id.root_layout);
+        scrollView.setOnSoftKeyboardListener(this);
+
         return view;
+    }
+
+    @Override
+    public void onSoftKeyboardShown() {
+        mKeyboadVisible = true;
+    }
+
+    @Override
+    public void onSoftKeyboardHidden() {
+        if (mWaitingForSelectItem != null) {
+            mEventItemSelectListener.onEventItemSelect(mWaitingForSelectItem);
+            mWaitingForSelectItem = null;
+        }
+        mKeyboadVisible = false;
     }
 
     private void applyApplicationState() {
@@ -494,7 +515,6 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
 
             case SEARCHER_ID:
 
-
                 break;
             default:
 
@@ -511,14 +531,14 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     private void applyMode(MODE mode) {
         mMode = mode;
         boolean searchVisible = mode == MODE.SEARCH;
-        if (!searchVisible) {
-            setSearchStatus(null);
-        }
         //mFloatingActionButton.setVisibility(searchVisible ? View.INVISIBLE : View.VISIBLE);
         mSearchView.setIconified(false);
         mSearchView.setVisibility(searchVisible ? View.VISIBLE : View.GONE);
         getViewFromRoot(R.id.title_container).setVisibility(searchVisible ? View.INVISIBLE : View.VISIBLE);
         updateRefreshLayoutEnabled();
+        if (!searchVisible) {
+            setSearchStatus(null);
+        }
     }
 
     private void updateRefreshLayoutEnabled() {
@@ -548,10 +568,14 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
 
             case R.id.fab_events:
 
-                mEventItemsView.smoothScrollToPosition(0);
-                if (searchViewVisible()) {
-                    mSearchView.setQuery("", true);
-                    applyMode(MODE.NORMAL);
+                if (mKeyboadVisible) {
+                    mEventItemsView.smoothScrollToPosition(0);
+                    if (searchViewVisible()) {
+                        mSearchView.setQuery("", true);
+                        applyMode(MODE.NORMAL);
+                    } else {
+                        applyMode(MODE.SEARCH);
+                    }
                 } else {
                     applyMode(MODE.SEARCH);
                 }

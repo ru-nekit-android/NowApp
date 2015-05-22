@@ -1,4 +1,4 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ru.nekit.android.nowapp.widget.SoftKeyboardListenerLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/root_layout"
@@ -46,5 +46,5 @@
         app:fab_icon="@drawable/ic_search"
         app:fab_plusIconColor="@android:color/white" />
 
-</RelativeLayout>
+</ru.nekit.android.nowapp.widget.SoftKeyboardListenerLayout>
 

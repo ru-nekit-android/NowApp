@@ -169,27 +169,13 @@ public class EventLocalDataSource {
         return eventItem;
     }
 
-    public ArrayList<EventItem> searchByField(String field, String query) {
-        ArrayList<EventItem> eventList = new ArrayList<>();
-        Cursor cursor = database.query(EventSQLiteHelper.TABLE_NAME, ALL_COLUMNS, field + " LIKE '%" + query + "%'", null, null, null, null);
-        cursor.moveToFirst();
-        while (!cursor.isAfterLast()) {
-            EventItem event = cursorToEventItem(cursor);
-            eventList.add(event);
-            cursor.moveToNext();
-        }
-        cursor.close();
-        return eventList;
-    }
-
     public ArrayList<EventItem> fullTextSearch(@NonNull String query) {
         ArrayList<EventItem> eventList = new ArrayList<>();
         ArrayList<String> queryList = new ArrayList<>();
         for (int i = 0; i < FTS_SEARCH_ORDER.length; i++) {
             String field = FTS_SEARCH_ORDER[i];
             queryList.add(EventSQLiteHelper._ID + " IN (" +
-                    "SELECT " + EventSQLiteHelper._ID + " FROM " + EventSQLiteHelper.FTS_TABLE_NAME + " WHERE " + field + " MATCH '" + query + "' ORDER BY " + EventSQLiteHelper.FTS_EVENT_START_TIME
-                    + ")");
+                    "SELECT " + EventSQLiteHelper._ID + " FROM " + EventSQLiteHelper.FTS_TABLE_NAME + " WHERE " + field + " MATCH '" + query + "') ");
         }
         Cursor cursor = database.rawQuery("SELECT * FROM " + EventSQLiteHelper.TABLE_NAME + " WHERE " + TextUtils.join(" OR ", queryList) + ";", null);
         if (cursor != null) {

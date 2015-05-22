@@ -242,11 +242,11 @@
                         android:paddingRight="@dimen/normal_space"
                         android:scaleType="fitStart" />
 
-                    <LinearLayout
+                    <RelativeLayout
                         android:id="@+id/place_container"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:layout_alignParentBottom="true"
+                        android:layout_centerVertical="true"
                         android:layout_marginBottom="@dimen/small_space"
                         android:layout_marginTop="@dimen/small_space"
                         android:layout_toEndOf="@+id/logo_view"
@@ -263,9 +263,12 @@
                             android:id="@+id/place_address_view"
                             style="@style/Place.Address"
                             android:layout_width="match_parent"
-                            android:layout_height="match_parent" />
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentBottom="true"
+                            android:layout_alignParentLeft="true"
+                            android:layout_alignParentStart="true" />
 
-                    </LinearLayout>
+                    </RelativeLayout>
 
                 </RelativeLayout>
 
