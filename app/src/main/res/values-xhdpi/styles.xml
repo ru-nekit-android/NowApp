@@ -116,7 +116,7 @@
     </style>
 
     <style name="Place.Address">
-        <item name="maxTextSize">18sp</item>
+        <item name="maxTextSize">16sp</item>
         <item name="minTextSize">8sp</item>
         <item name="android:gravity">bottom</item>
         <item name="typeface">roboto_light</item>
