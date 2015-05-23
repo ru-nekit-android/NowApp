@@ -161,10 +161,7 @@
                 <com.devspark.robototextview.widget.RobotoButton
                     android:id="@+id/site_button"
                     style="@style/ActionButton"
-                    android:layout_width="match_parent"
-                    android:layout_marginTop="-1px"
-                    android:paddingLeft="@dimen/large_space"
-                    android:paddingRight="@dimen/large_space" />
+                    android:layout_width="match_parent" />
 
             </LinearLayout>
 
@@ -196,7 +193,7 @@
                     android:layout_marginEnd="@dimen/normal_space"
                     android:layout_marginRight="@dimen/normal_space"
                     android:layout_marginTop="@dimen/normal_space"
-                    android:background="@drawable/ic_event_location" />
+                    android:background="@drawable/event_location" />
 
                 <Button
                     android:id="@+id/my_location"
@@ -204,7 +201,7 @@
                     android:layout_alignEnd="@+id/event_location"
                     android:layout_alignRight="@+id/event_location"
                     android:layout_below="@+id/event_location"
-                    android:background="@drawable/ic_my_location" />
+                    android:background="@drawable/my_location" />
 
                 <Button
                     android:id="@+id/zoom_plus"
@@ -212,7 +209,7 @@
                     android:layout_above="@+id/zoom_minus"
                     android:layout_alignEnd="@+id/event_location"
                     android:layout_alignRight="@+id/event_location"
-                    android:background="@drawable/ic_zoom_plus" />
+                    android:background="@drawable/zoom_plus" />
 
                 <Button
                     android:id="@+id/zoom_minus"
@@ -221,56 +218,66 @@
                     android:layout_alignParentBottom="true"
                     android:layout_alignRight="@+id/event_location"
                     android:layout_marginBottom="@dimen/normal_space"
-                    android:background="@drawable/ic_zoom_minus" />
+                    android:background="@drawable/zoom_minus" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/place_group"
+                    android:background="@drawable/bottom_shadow" />
 
                 <RelativeLayout
                     android:id="@+id/place_group"
                     android:layout_width="match_parent"
                     android:layout_height="@dimen/logo_max_height"
-                    android:background="@android:color/white"
-                    android:paddingBottom="@dimen/small_space"
+                    android:background="@drawable/place_group_background"
                     android:paddingLeft="@dimen/large_space"
-                    android:paddingRight="@dimen/large_space"
-                    android:paddingTop="@dimen/small_space">
+                    android:paddingRight="@dimen/large_space">
 
                     <ImageView
                         android:id="@+id/logo_view"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_centerVertical="true"
+                        android:paddingBottom="@dimen/small_space"
                         android:paddingEnd="@dimen/normal_space"
                         android:paddingRight="@dimen/normal_space"
+                        android:paddingTop="@dimen/small_space"
                         android:scaleType="fitStart" />
 
-                    <RelativeLayout
+                    <FrameLayout
                         android:id="@+id/place_container"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:layout_centerVertical="true"
-                        android:layout_marginBottom="@dimen/small_space"
-                        android:layout_marginTop="@dimen/small_space"
                         android:layout_toEndOf="@+id/logo_view"
                         android:layout_toRightOf="@+id/logo_view"
                         android:orientation="vertical">
 
-                        <ru.nekit.android.nowapp.widget.AutoResizeTextView
-                            android:id="@+id/place_name_view"
-                            style="@style/Place.Detail"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content" />
-
-                        <ru.nekit.android.nowapp.widget.AutoResizeTextView
-                            android:id="@+id/place_address_view"
-                            style="@style/Place.Address"
+                        <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_alignParentBottom="true"
-                            android:layout_alignParentLeft="true"
-                            android:layout_alignParentStart="true" />
+                            android:layout_gravity="center_vertical"
+                            android:orientation="vertical">
 
-                    </RelativeLayout>
+                            <ru.nekit.android.nowapp.widget.AutoResizeTextView
+                                android:id="@+id/place_name_view"
+                                style="@style/Place.Detail"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content" />
+
+                            <ru.nekit.android.nowapp.widget.AutoResizeTextView
+                                android:id="@+id/place_address_view"
+                                style="@style/Place.Address"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/small_space" />
+
+                        </LinearLayout>
+
+                    </FrameLayout>
 
                 </RelativeLayout>
+
 
             </RelativeLayout>
 
