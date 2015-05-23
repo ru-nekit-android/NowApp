@@ -61,7 +61,7 @@ public class EventItemsModel {
     private static final String SITE_NAME = "nowapp.ru";
     private static final String API_ROOT = "api/events.get";
     private static final String DATABASE_NAME = "nowapp.db";
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 2;
 
     public static final String LOAD_IN_BACKGROUND_NOTIFICATION = "ru.nekit.abdroid.nowapp.load_in_bavkgroun_result";
     public static final String LOADING_TYPE = "loading_type";
