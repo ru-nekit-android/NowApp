@@ -8,7 +8,6 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.DisplayMetrics;
-import android.util.Log;
 
 import java.util.concurrent.TimeUnit;
 
@@ -61,7 +60,7 @@ public class NowApplication extends Application implements ConnectivityReceiver.
         mConnectivityReceiver.setOnNetworkAvailableListener(this);
 
         DisplayMetrics metrics = getResources().getDisplayMetrics();
-        Log.v("ru.nekit.vtag", "!" + metrics.density);
+        VTAG.call("metrics density: " + metrics.density);
     }
 
     public static void updateDataTimestamp() {
