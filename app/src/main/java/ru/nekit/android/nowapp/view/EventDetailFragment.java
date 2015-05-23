@@ -280,10 +280,9 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         final ImageView logoView = (ImageView) view.findViewById(R.id.logo_view);
         TextView placeNameView = (TextView) view.findViewById(R.id.place_name_view);
         TextView placeAddressView = (TextView) view.findViewById(R.id.place_address_view);
-        placeNameView.setText(mEventItem.placeName);
 
         if ("".equals(logoThumb)) {
-            logoView.setVisibility(View.GONE);
+            logoView.setImageResource(R.drawable.ic_action_location_3);
         } else {
             logoView.setVisibility(View.VISIBLE);
             Glide.with(context).load(logoThumb).dontTransform().into(logoView);
@@ -374,7 +373,13 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         view.findViewById(R.id.event_location).setOnClickListener(this);
         view.findViewById(R.id.my_location).setOnClickListener(this);
 
-        placeAddressView.setText(mEventItem.address);
+        placeNameView.setText(mEventItem.placeName);
+        if (mEventItem.placeName != null && mEventItem.placeName.equals(mEventItem.address)) {
+            placeAddressView.setVisibility(View.GONE);
+        } else {
+            placeAddressView.setVisibility(View.VISIBLE);
+            placeAddressView.setText(mEventItem.address);
+        }
 
         mMapViewContainer = (RelativeLayout) view.findViewById(R.id.map_view_container);
 
@@ -453,7 +458,6 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     @Override
     public void onClick(View view) {
         Intent intent;
-        //Context context = getActivity();
         switch (view.getId()) {
             case R.id.phone_button:
                 intent = new Intent(Intent.ACTION_CALL);
