@@ -100,7 +100,7 @@
 
     <style name="Place">
         <item name="maxTextSize">18sp</item>
-        <item name="minTextSize">10sp</item>
+        <item name="minTextSize">8sp</item>
         <item name="android:singleLine">true</item>
         <item name="android:maxLines">1</item>
         <item name="android:ellipsize">none</item>

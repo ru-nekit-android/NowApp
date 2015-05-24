@@ -9,6 +9,7 @@
     <declare-styleable name="AutoResizeTextView">
         <attr name="minTextSize" format="dimension" />
         <attr name="maxTextSize" format="dimension" />
+        <attr name="threshold" format="float" />
     </declare-styleable>
 
 </resources>

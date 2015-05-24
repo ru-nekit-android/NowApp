@@ -9,7 +9,7 @@
 
     <style name="EventName">
         <item name="maxTextSize">32sp</item>
-        <item name="minTextSize">10sp</item>
+        <item name="minTextSize">8sp</item>
         <item name="android:paddingBottom">4dp</item>
         <item name="android:paddingRight">4dp</item>
         <item name="android:paddingTop">4dp</item>

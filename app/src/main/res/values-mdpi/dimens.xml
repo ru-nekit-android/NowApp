@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="logo_max_width">128dp</dimen>
+    <dimen name="logo_max_width">72dp</dimen>
     <dimen name="logo_max_height">54dp</dimen>
 </resources>
