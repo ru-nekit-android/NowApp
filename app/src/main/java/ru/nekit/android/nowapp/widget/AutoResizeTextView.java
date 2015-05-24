@@ -15,7 +15,7 @@ public class AutoResizeTextView extends RobotoTextView {
 
     private static final float THRESHOLD = 3f;
 
-    private enum Mode { Width, Height, Both, None }
+    private enum Mode {Width, Height, Both, None}
 
     private int minTextSize = 0;
     private int maxTextSize = 0;
@@ -24,6 +24,7 @@ public class AutoResizeTextView extends RobotoTextView {
     private boolean inComputation;
     private int widthMeasureSpec;
     private int heightMeasureSpec;
+    private float threshold;
 
     public AutoResizeTextView(Context context) {
         super(context);
@@ -39,6 +40,7 @@ public class AutoResizeTextView extends RobotoTextView {
         TypedArray tAttrs = context.obtainStyledAttributes(attrs, R.styleable.AutoResizeTextView, defStyle, 0);
         maxTextSize = tAttrs.getDimensionPixelSize(R.styleable.AutoResizeTextView_maxTextSize, maxTextSize);
         minTextSize = tAttrs.getDimensionPixelSize(R.styleable.AutoResizeTextView_minTextSize, minTextSize);
+        threshold = tAttrs.getFloat(R.styleable.AutoResizeTextView_threshold, THRESHOLD);
         tAttrs.recycle();
     }
 
@@ -46,7 +48,7 @@ public class AutoResizeTextView extends RobotoTextView {
         if (getWidth() <= 0 || getHeight() <= 0)
             return;
 
-        if(mode == Mode.None)
+        if (mode == Mode.None)
             return;
 
         final int targetWidth = getWidth();
@@ -56,7 +58,7 @@ public class AutoResizeTextView extends RobotoTextView {
         float higherSize = maxTextSize;
         float lowerSize = minTextSize;
         float textSize = getTextSize();
-        while(higherSize - lowerSize > THRESHOLD) {
+        while (higherSize - lowerSize > threshold) {
             textSize = (higherSize + lowerSize) / 2;
             if (isTooBig(textSize, targetWidth, targetHeight)) {
                 higherSize = textSize;
@@ -72,9 +74,9 @@ public class AutoResizeTextView extends RobotoTextView {
     private boolean isTooBig(float textSize, int targetWidth, int targetHeight) {
         setTextSize(TypedValue.COMPLEX_UNIT_PX, textSize);
         measure(0, 0);
-        if(mode == Mode.Both)
+        if (mode == Mode.Both)
             return getMeasuredWidth() >= targetWidth || getMeasuredHeight() >= targetHeight;
-        if(mode == Mode.Width)
+        if (mode == Mode.Width)
             return getMeasuredWidth() >= targetWidth;
         else
             return getMeasuredHeight() >= targetHeight;
@@ -83,11 +85,11 @@ public class AutoResizeTextView extends RobotoTextView {
     private Mode getMode(int widthMeasureSpec, int heightMeasureSpec) {
         int widthMode = MeasureSpec.getMode(widthMeasureSpec);
         int heightMode = MeasureSpec.getMode(heightMeasureSpec);
-        if(widthMode == MeasureSpec.EXACTLY && heightMode == MeasureSpec.EXACTLY)
+        if (widthMode == MeasureSpec.EXACTLY && heightMode == MeasureSpec.EXACTLY)
             return Mode.Both;
-        if(widthMode == MeasureSpec.EXACTLY)
+        if (widthMode == MeasureSpec.EXACTLY)
             return Mode.Width;
-        if(heightMode == MeasureSpec.EXACTLY)
+        if (heightMode == MeasureSpec.EXACTLY)
             return Mode.Height;
         return Mode.None;
     }
@@ -95,7 +97,7 @@ public class AutoResizeTextView extends RobotoTextView {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        if(!inComputation) {
+        if (!inComputation) {
             this.widthMeasureSpec = widthMeasureSpec;
             this.heightMeasureSpec = heightMeasureSpec;
             mode = getMode(widthMeasureSpec, heightMeasureSpec);
@@ -124,7 +126,7 @@ public class AutoResizeTextView extends RobotoTextView {
     @SuppressWarnings("deprecation")
     @Override
     public void setBackground(Drawable background) {
-        if(Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN)
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN)
             super.setBackground(background);
         else
             setBackgroundDrawable(background);
