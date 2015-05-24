@@ -156,12 +156,16 @@
                 <com.devspark.robototextview.widget.RobotoButton
                     android:id="@+id/phone_button"
                     style="@style/ActionButton"
-                    android:layout_width="match_parent" />
+                    android:layout_width="match_parent"
+                    android:paddingLeft="@dimen/large_space"
+                    android:paddingRight="@dimen/large_space" />
 
                 <com.devspark.robototextview.widget.RobotoButton
                     android:id="@+id/site_button"
                     style="@style/ActionButton"
-                    android:layout_width="match_parent" />
+                    android:layout_width="match_parent"
+                    android:paddingLeft="@dimen/large_space"
+                    android:paddingRight="@dimen/large_space" />
 
             </LinearLayout>
 
@@ -236,14 +240,16 @@
 
                     <ImageView
                         android:id="@+id/logo_view"
-                        android:layout_width="wrap_content"
+                        android:layout_width="@dimen/logo_max_width"
                         android:layout_height="wrap_content"
                         android:layout_centerVertical="true"
+                        android:maxWidth="@dimen/logo_max_width"
                         android:paddingBottom="@dimen/small_space"
                         android:paddingEnd="@dimen/normal_space"
                         android:paddingRight="@dimen/normal_space"
                         android:paddingTop="@dimen/small_space"
-                        android:scaleType="fitStart" />
+                        android:scaleType="fitCenter"
+                        />
 
                     <FrameLayout
                         android:id="@+id/place_container"
