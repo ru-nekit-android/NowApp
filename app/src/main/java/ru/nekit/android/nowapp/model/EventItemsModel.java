@@ -162,6 +162,14 @@ public class EventItemsModel {
     }
 
     public static String getStartTimeAlias(Context context, EventItem eventItem) {
+        return getStartTimeString(context, eventItem, false);
+    }
+
+    public static String getStartTimeKeywords(Context context, EventItem eventItem) {
+        return getStartTimeString(context, eventItem, true).toLowerCase();
+    }
+
+    private static String getStartTimeString(Context context, EventItem eventItem, boolean keywords) {
         long currentTimeTimestamp = getCurrentTimeTimestamp(context, true);
         long startAfterSeconds = eventItem.startAt - currentTimeTimestamp;
         long dateDelta = eventItem.date - getCurrentDateTimestamp(context, true);
@@ -169,7 +177,7 @@ public class EventItemsModel {
         startAfterSeconds += dateDelta;
         if (startAfterSeconds <= 0) {
             if (eventItem.endAt > currentTimeTimestamp) {
-                startTimeAliasString = context.getResources().getString(R.string.going_right_now);
+                startTimeAliasString = context.getResources().getString(keywords ? R.string.going_right_now_keywords : R.string.going_right_now);
             } else {
                 startTimeAliasString = context.getResources().getString(R.string.already_ended);
             }
@@ -348,7 +356,7 @@ public class EventItemsModel {
     }
 
     ArrayList<EventItem> performSearch(String query) {
-        String[] splitQuery = mEventLocalDataSource.normalizeForSearch(query).split(" ");
+        String[] splitQuery = query.split(" ");
         ArrayList<String> queryList = new ArrayList<>();
         for (String item : splitQuery) {
             queryList.add(item + "*");

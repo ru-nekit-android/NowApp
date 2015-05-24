@@ -27,4 +27,23 @@ public class EventItemsSearcher extends AsyncTaskLoader<ArrayList<EventItem>> {
         return NowApplication.getEventModel().performSearch(mArgs.getString(EVENT_ITEMS_SEARCH_KEY));
     }
 
+    @Override
+    public void deliverResult(ArrayList<EventItem> data) {
+        if (isReset()) {
+            return;
+        }
+        super.deliverResult(data);
+    }
+
+
+    @Override
+    protected void onStartLoading() {
+        forceLoad();
+    }
+
+    @Override
+    protected void onStopLoading() {
+        cancelLoad();
+    }
+
 }

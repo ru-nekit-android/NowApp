@@ -102,14 +102,14 @@ public class EventLocalDataSource {
         contentValuesFTS.put(EventFieldNameDictionary.EVENT_DESCRIPTION, normalizeForSearch(eventItem.eventDescription));
         contentValuesFTS.put(EventFieldNameDictionary.PLACE_NAME, normalizeForSearch(eventItem.placeName));
         contentValuesFTS.put(EventFieldNameDictionary.ADDRESS, normalizeForSearch(eventItem.address));
-        contentValuesFTS.put(EventSQLiteHelper.FTS_EVENT_START_TIME_ALIAS, EventItemsModel.getStartTimeAlias(mContext, eventItem));
-        contentValuesFTS.put(EventSQLiteHelper.FTS_EVENT_CATEGORY_KEYWORD, EventItemsModel.getCategoryKeywords(eventItem.category));
+        contentValuesFTS.put(EventSQLiteHelper.FTS_EVENT_START_TIME_ALIAS, EventItemsModel.getStartTimeKeywords(mContext, eventItem));
+        contentValuesFTS.put(EventSQLiteHelper.FTS_EVENT_CATEGORY_KEYWORD, EventItemsModel.getCategoryKeywords(eventItem.category).toLowerCase());
         contentValuesFTS.put(EventSQLiteHelper.FTS_EVENT_START_TIME, eventItem.startAt + eventItem.date);
         database.insert(EventSQLiteHelper.FTS_TABLE_NAME, null, contentValuesFTS);
     }
 
-    public String normalizeForSearch(String value) {
-        return value.toLowerCase().replaceAll("\"|«|»", "");
+    private String normalizeForSearch(String value) {
+        return value.toLowerCase().replaceAll("\"|«|\\(", "");
     }
 
     public ArrayList<EventItem> getAllEvents() {
@@ -170,6 +170,7 @@ public class EventLocalDataSource {
     }
 
     public ArrayList<EventItem> fullTextSearch(@NonNull String query) {
+        query = normalizeForSearch(query);
         ArrayList<EventItem> eventList = new ArrayList<>();
         ArrayList<String> queryList = new ArrayList<>();
         for (int i = 0; i < FTS_SEARCH_ORDER.length; i++) {
