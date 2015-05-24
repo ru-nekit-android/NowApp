@@ -13,6 +13,9 @@ public class StringUtil {
 
     public static ArrayList<String> wrapText(String text) {
         ArrayList<String> textArray = new ArrayList<String>(Arrays.asList(text.split(" ")));
+        if (textArray.size() < 3) {
+            return textArray;
+        }
         ArrayList<String> textArrayWithWordLengthLimit = new ArrayList<String>();
         ArrayList<String> textArrayResult = new ArrayList<String>();
         int maxWordLength = 0;
