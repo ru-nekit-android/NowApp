@@ -6,6 +6,7 @@
     <string name="going_right_now">уже идет!</string>
     <string name="going_right_now_keywords">уже идет сейчас</string>
     <string name="already_ended">уже закончилось!</string>
+    <string name="entrance_title">"ВХОД:"</string>
     <string name="today">Сегодня</string>
     <string name="tomorrow">Завтра</string>
     <string name="day_after_tomorrow">Послезавтра</string>
@@ -35,6 +36,7 @@
     <string name="event_category_other_keywords">другое корона</string>
     <string name="event_category_entertainment_keywords">развлечения веселье вечер</string>
     <string name="event_category_education_keywords">обучение книг* знания наука</string>
+    <string name="enterance_title">\"ВХОД:\"</string>
 
     <string-array name="day_of_week">
         <item>ВС</item>
