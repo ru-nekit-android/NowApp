@@ -10,7 +10,7 @@
                 </shape>
             </item>
 
-            <item android:drawable="@drawable/ic_action_location_3" />
+            <item android:drawable="@drawable/ic_action_location_2" />
 
             <item android:bottom="1px" android:left="-2dp" android:right="-2dp" android:top="-2dp">
                 <shape android:shape="rectangle">
