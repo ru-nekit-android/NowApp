@@ -58,7 +58,7 @@
         android:layout_alignStart="@+id/poster_thumb_view"
         android:layout_marginBottom="@dimen/event_item_view_shadow_size"
         android:scaleType="fitCenter"
-        android:src="@drawable/ic_action_location_3" />
+        android:src="@drawable/ic_action_location_2" />
 
     <ru.nekit.android.nowapp.widget.AutoResizeTextView
         android:id="@+id/place_name_view"
