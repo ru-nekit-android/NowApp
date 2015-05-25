@@ -75,7 +75,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     private MODE mMode;
     private String mLoadingType;
     private EventItem mWaitingForSelectItem;
-    private boolean mKeyboadVisible;
+    private boolean mKeyboardVisible;
 
     private EventCollectionAdapter mEventCollectionAdapter;
     private IEventItemSelectListener mEventItemSelectListener;
@@ -334,7 +334,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
 
     @Override
     public void onSoftKeyboardShown() {
-        mKeyboadVisible = true;
+        mKeyboardVisible = true;
     }
 
     @Override
@@ -343,7 +343,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
             mEventItemSelectListener.onEventItemSelect(mWaitingForSelectItem);
             mWaitingForSelectItem = null;
         }
-        mKeyboadVisible = false;
+        mKeyboardVisible = false;
     }
 
     private void applyApplicationState() {
@@ -568,7 +568,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
 
             case R.id.fab_events:
 
-                if (mKeyboadVisible) {
+                if (mKeyboardVisible) {
                     mEventItemsView.smoothScrollToPosition(0);
                     if (searchViewVisible()) {
                         mSearchView.setQuery("", true);
