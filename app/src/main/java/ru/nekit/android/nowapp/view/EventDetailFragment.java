@@ -76,7 +76,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
     public static final String TAG = "ru.nekit.android.event_detail_fragment";
 
-    private static final int LOADER_ID = 0;
+    private static final boolean FEATURE_USE_SWIPE_GEASTURE = false;
     private static final String EVENT_ITEM_KEY = "ru.nekit.android.event_item";
     private static final int MAX_ZOOM = 19;
     private static final float LOCATION_MIN_UPDATE_DISTANCE = 50f;
@@ -279,13 +279,24 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         String logoThumb = mEventItem.logoThumb;
         final ImageView logoView = (ImageView) view.findViewById(R.id.logo_view);
         TextView placeNameView = (TextView) view.findViewById(R.id.place_name_view);
-        TextView placeAddressView = (TextView) view.findViewById(R.id.place_address_view);
-
+        
         if ("".equals(logoThumb)) {
-            logoView.setImageResource(R.drawable.ic_action_location_3);
+            logoView.setImageResource(R.drawable.ic_action_location_2);
         } else {
             logoView.setVisibility(View.VISIBLE);
-            Glide.with(context).load(logoThumb).dontTransform().into(logoView);
+            Glide.with(context).load(logoThumb).dontTransform().listener(new RequestListener<String, GlideDrawable>() {
+                @Override
+                public boolean onException(Exception exp, String model, Target<GlideDrawable> target, boolean isFirstResource) {
+                    Glide.with(context).load(R.drawable.ic_action_location_2).dontTransform().into(logoView);
+                    return true;
+                }
+
+                @Override
+                public boolean onResourceReady(GlideDrawable resource, String model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
+
+                    return false;
+                }
+            }).into(logoView);
         }
         int categoryDrawableId = EventItemsModel.getCategoryBigDrawable(mEventItem.category);
         if (categoryDrawableId != 0) {
@@ -362,24 +373,20 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
             }
         });
 
-        view.setOnTouchListener(new OnSwipeTouchListener(context) {
-            public void onSwipeRight() {
-                getActivity().getSupportFragmentManager().popBackStack();
-            }
-        });
+        if (FEATURE_USE_SWIPE_GEASTURE) {
+            view.setOnTouchListener(new OnSwipeTouchListener(context) {
+                public void onSwipeRight() {
+                    getActivity().getSupportFragmentManager().popBackStack();
+                }
+            });
+        }
 
         view.findViewById(R.id.zoom_minus).setOnClickListener(this);
         view.findViewById(R.id.zoom_plus).setOnClickListener(this);
-        view.findViewById(R.id.event_location).setOnClickListener(this);
+        view.findViewById(R.id.place_group).setOnClickListener(this);
         view.findViewById(R.id.my_location).setOnClickListener(this);
 
-        placeNameView.setText(mEventItem.placeName);
-        if (mEventItem.placeName != null && mEventItem.placeName.equals(mEventItem.address)) {
-            placeAddressView.setVisibility(View.GONE);
-        } else {
-            placeAddressView.setVisibility(View.VISIBLE);
-            placeAddressView.setText(mEventItem.address);
-        }
+        createEventPlaceTextBlock(context, placeNameView, mEventItem.placeName, mEventItem.address);
 
         mMapViewContainer = (RelativeLayout) view.findViewById(R.id.map_view_container);
 
@@ -388,8 +395,17 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         return view;
     }
 
+    private void createEventPlaceTextBlock(Context context, TextView placeNameView, String placeName, String address) {
+        SpannableString placeNameSpan = new SpannableString(placeName);
+        placeNameSpan.setSpan(new RobotoTextAppearanceSpan(context, R.style.Place_Name), 0, placeName.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+        SpannableString addressSpan = new SpannableString(address);
+        addressSpan.setSpan(new RobotoTextAppearanceSpan(context, R.style.Place_Address), 0, address.length(), SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+        CharSequence finalText = address.equals(placeName) ? placeNameSpan : TextUtils.concat(placeNameSpan, "\n", addressSpan);
+        placeNameView.setText(finalText);
+    }
+
     private void createEventEntranceTextBlock(Context context, TextView entranceView, String entrance) {
-        String title = "ВХОД:";
+        String title = context.getResources().getString(R.string.entrance_title);
         SpannableString titleSpan = new SpannableString(title);
         titleSpan.setSpan(new RobotoTextAppearanceSpan(context, R.style.EntranceTitle), 0, title.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
         SpannableString entranceSpan = new SpannableString(entrance);
@@ -472,7 +488,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                 startActivity(intent);
                 break;
 
-            case R.id.event_location:
+            case R.id.place_group:
 
                 //mMapView.getController().setZoom(MAX_ZOOM);
                 mMapView.getController().animateTo(mEventLocationPoint);
