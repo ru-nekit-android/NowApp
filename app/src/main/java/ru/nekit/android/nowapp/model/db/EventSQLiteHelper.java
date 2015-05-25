@@ -20,9 +20,6 @@ public class EventSQLiteHelper extends SQLiteOpenHelper implements BaseColumns {
     static final String FTS_EVENT_START_TIME_ALIAS = "event_start_time_alias";
     static final String FTS_EVENT_CATEGORY_KEYWORD = "event_category_keyword";
     static final String FTS_EVENT_START_TIME = "event_start_time";
-
-    private static EventSQLiteHelper sInstance;
-
     private static final String DATABASE_CREATE = "CREATE TABLE "
             + TABLE_NAME + " ("
             + _ID + " INTEGER PRIMARY KEY, "
@@ -48,7 +45,6 @@ public class EventSQLiteHelper extends SQLiteOpenHelper implements BaseColumns {
             + EventFieldNameDictionary.POSTER_ORIGINAL + " TEXT, "
             + EventFieldNameDictionary.POSTER_THUMB + " TEXT"
             + ");";
-
     private static final String DATABASE_CREATE_FTS = "CREATE VIRTUAL TABLE " + FTS_TABLE_NAME +
             " USING " + FTS_ENGINE + "(" + _ID + " integer unique, "
             + EventFieldNameDictionary.NAME + ", "
@@ -58,9 +54,17 @@ public class EventSQLiteHelper extends SQLiteOpenHelper implements BaseColumns {
             + FTS_EVENT_START_TIME_ALIAS + " TEXT, "
             + FTS_EVENT_CATEGORY_KEYWORD + " TEXT, "
             + FTS_EVENT_START_TIME + " INTEGER);";
+    private static EventSQLiteHelper sInstance;
 
     private EventSQLiteHelper(Context context, String dataBaseName, int databaseVersion) {
         super(context, dataBaseName, null, databaseVersion);
+    }
+
+    public synchronized static EventSQLiteHelper getInstance(Context context, String dataBaseName, int databaseVersion) {
+        if (sInstance == null) {
+            sInstance = new EventSQLiteHelper(context, dataBaseName, databaseVersion);
+        }
+        return sInstance;
     }
 
     @Override
@@ -79,13 +83,6 @@ public class EventSQLiteHelper extends SQLiteOpenHelper implements BaseColumns {
     @Override
     public void onDowngrade(SQLiteDatabase database, int oldVersion, int newVersion) {
         onUpgrade(database, oldVersion, newVersion);
-    }
-
-    public synchronized static EventSQLiteHelper getInstance(Context context, String dataBaseName, int databaseVersion) {
-        if (sInstance == null) {
-            sInstance = new EventSQLiteHelper(context, dataBaseName, databaseVersion);
-        }
-        return sInstance;
     }
 
 

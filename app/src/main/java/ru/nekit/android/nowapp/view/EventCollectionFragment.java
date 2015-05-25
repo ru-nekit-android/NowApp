@@ -56,15 +56,6 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     private static final int SEARCHER_ID = 3;
     private static final int SMOOTH_SCROLL_DURATION = 1000;
     private static final boolean FEATURE_LIVE_SEARCH = true;
-
-    enum MODE {
-        NORMAL, SEARCH
-    }
-
-    enum LOADING_STATE {
-        LOADING, LOADED
-    }
-
     private EventItemsModel mEventModel;
     private boolean mRestoreSearchMode;
     private String mQueryWithResult;
@@ -76,11 +67,9 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     private String mLoadingType;
     private EventItem mWaitingForSelectItem;
     private boolean mKeyboardVisible;
-
     private EventCollectionAdapter mEventCollectionAdapter;
     private IEventItemSelectListener mEventItemSelectListener;
     private FloatingActionButtonForRecyclerViewScrollAnimator mFloatingActionButtonForRecyclerViewScrollAnimator;
-
     private RecyclerView mEventItemsView;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private BroadcastReceiver mLocalBroadcastReceiver;
@@ -88,8 +77,6 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     private FloatingActionButton mFloatingActionButton;
     private TextView mSearchStatus;
     private EditText mSearchViewEditText;
-
-
     public EventCollectionFragment() {
         mLoadingState = LOADING_STATE.LOADED;
         mLoadingType = null;
@@ -460,7 +447,6 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         return loader;
     }
 
-
     @Override
     public void onLoadFinished(Loader loader, Object result) {
         if (isResumed()) {
@@ -598,5 +584,13 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                 break;
         }
 
+    }
+
+    enum MODE {
+        NORMAL, SEARCH
+    }
+
+    enum LOADING_STATE {
+        LOADING, LOADED
     }
 }

@@ -11,6 +11,8 @@ import android.widget.RelativeLayout;
 public class SoftKeyboardListenerLayout extends RelativeLayout {
 
 
+    private OnSoftKeyboardListener onSoftKeyboardListener;
+
     public SoftKeyboardListenerLayout(final Context context, final AttributeSet attrs) {
         super(context, attrs);
     }
@@ -18,8 +20,6 @@ public class SoftKeyboardListenerLayout extends RelativeLayout {
     public SoftKeyboardListenerLayout(Context context) {
         super(context);
     }
-
-    private OnSoftKeyboardListener onSoftKeyboardListener;
 
     @Override
     protected void onMeasure(final int widthMeasureSpec, final int heightMeasureSpec) {

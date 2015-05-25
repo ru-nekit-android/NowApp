@@ -83,6 +83,18 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     private static final long LOCATION_MIN_UPDATE_TIME = TimeUnit.SECONDS.toMillis(5);
 
     private MapView mMapView;
+    private final MapListener mMapListener = new MapListener() {
+        @Override
+        public boolean onScroll(ScrollEvent event) {
+            return false;
+        }
+
+        @Override
+        public boolean onZoom(ZoomEvent event) {
+            checkZoomButtons();
+            return false;
+        }
+    };
     private EventItem mEventItem;
     private IEventItemPosterSelectListener mEventItemPosterSelectListener;
     private ProgressWheel mProgressWheel;
@@ -101,20 +113,14 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     private boolean mOpenCalendarAfterAdd;
     private LayoutInflater mInflater;
     private SearchView mSearchView;
-    private final MapListener mMapListener = new MapListener() {
-        @Override
-        public boolean onScroll(ScrollEvent event) {
-            return false;
-        }
-
-        @Override
-        public boolean onZoom(ZoomEvent event) {
-            checkZoomButtons();
-            return false;
-        }
-    };
 
     public EventDetailFragment() {
+    }
+
+    public static EventDetailFragment getInstance(EventItem eventItem) {
+        EventDetailFragment fragment = new EventDetailFragment();
+        fragment.setEventItem(eventItem);
+        return fragment;
     }
 
     @Override
@@ -279,7 +285,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         String logoThumb = mEventItem.logoThumb;
         final ImageView logoView = (ImageView) view.findViewById(R.id.logo_view);
         TextView placeNameView = (TextView) view.findViewById(R.id.place_name_view);
-        
+
         if ("".equals(logoThumb)) {
             logoView.setImageResource(R.drawable.ic_action_location_2);
         } else {
@@ -448,7 +454,6 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         setArguments(arg);
     }
 
-
     public void updateEventItem(EventItem eventItem) {
         Bundle arg = getArguments();
         arg.putParcelable(EVENT_ITEM_KEY, eventItem);
@@ -565,12 +570,5 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         dialogTextView.setText(R.string.gps_switch_on_ask);
         dialog = builder.create();
         dialog.show();
-
-    }
-
-    public static EventDetailFragment getInstance(EventItem eventItem) {
-        EventDetailFragment fragment = new EventDetailFragment();
-        fragment.setEventItem(eventItem);
-        return fragment;
     }
 }

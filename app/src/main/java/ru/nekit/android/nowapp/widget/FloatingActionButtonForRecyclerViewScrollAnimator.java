@@ -20,18 +20,13 @@ import ru.nekit.android.nowapp.R;
  */
 public class FloatingActionButtonForRecyclerViewScrollAnimator {
 
-    private boolean mVisible;
-
     private static final int TRANSLATE_DURATION_MILLIS = 200;
-
-
+    private final Interpolator mInterpolator = new AccelerateDecelerateInterpolator();
+    private boolean mVisible;
     private FloatingActionButton mButton;
     private RecyclerViewScrollDetectorImpl mScrollDetector;
     private RecyclerView mRecyclerView;
     private int mScrollThreshold;
-
-
-    private final Interpolator mInterpolator = new AccelerateDecelerateInterpolator();
 
     public FloatingActionButtonForRecyclerViewScrollAnimator(@NonNull Context context, @NonNull FloatingActionButton button, @NonNull RecyclerView recyclerView) {
         mButton = button;
@@ -59,84 +54,6 @@ public class FloatingActionButtonForRecyclerViewScrollAnimator {
 
     public void attachToRecyclerView() {
         attachToRecyclerView(mRecyclerView, null, null);
-    }
-
-
-    abstract class RecyclerViewScrollDetector extends RecyclerView.OnScrollListener {
-        private int mScrollThreshold;
-
-        abstract void onScrollUp();
-
-        abstract void onScrollDown();
-
-        @Override
-        public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-            boolean isSignificantDelta = Math.abs(dy) > mScrollThreshold;
-            if (isSignificantDelta) {
-                if (dy > 0) {
-                    onScrollUp();
-                } else {
-                    onScrollDown();
-                }
-            }
-        }
-
-        public void setScrollThreshold(int scrollThreshold) {
-            mScrollThreshold = scrollThreshold;
-        }
-    }
-
-    public interface ScrollDirectionListener {
-        void onScrollDown();
-
-        void onScrollUp();
-    }
-
-    private class RecyclerViewScrollDetectorImpl extends RecyclerViewScrollDetector {
-        private ScrollDirectionListener mScrollDirectionListener;
-        private RecyclerView.OnScrollListener mOnScrollListener;
-
-        private void setScrollDirectionListener(ScrollDirectionListener scrollDirectionListener) {
-            mScrollDirectionListener = scrollDirectionListener;
-        }
-
-        public void setOnScrollListener(RecyclerView.OnScrollListener onScrollListener) {
-            mOnScrollListener = onScrollListener;
-        }
-
-        @Override
-        public void onScrollDown() {
-            show();
-            if (mScrollDirectionListener != null) {
-                mScrollDirectionListener.onScrollDown();
-            }
-        }
-
-        @Override
-        public void onScrollUp() {
-            hide();
-            if (mScrollDirectionListener != null) {
-                mScrollDirectionListener.onScrollUp();
-            }
-        }
-
-        @Override
-        public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-            if (mOnScrollListener != null) {
-                mOnScrollListener.onScrolled(recyclerView, dx, dy);
-            }
-
-            super.onScrolled(recyclerView, dx, dy);
-        }
-
-        @Override
-        public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-            if (mOnScrollListener != null) {
-                mOnScrollListener.onScrollStateChanged(recyclerView, newState);
-            }
-
-            super.onScrollStateChanged(recyclerView, newState);
-        }
     }
 
     public void show() {
@@ -205,6 +122,83 @@ public class FloatingActionButtonForRecyclerViewScrollAnimator {
 
     private boolean hasHoneycombApi() {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB;
+    }
+
+    public interface ScrollDirectionListener {
+        void onScrollDown();
+
+        void onScrollUp();
+    }
+
+    abstract class RecyclerViewScrollDetector extends RecyclerView.OnScrollListener {
+        private int mScrollThreshold;
+
+        abstract void onScrollUp();
+
+        abstract void onScrollDown();
+
+        @Override
+        public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+            boolean isSignificantDelta = Math.abs(dy) > mScrollThreshold;
+            if (isSignificantDelta) {
+                if (dy > 0) {
+                    onScrollUp();
+                } else {
+                    onScrollDown();
+                }
+            }
+        }
+
+        public void setScrollThreshold(int scrollThreshold) {
+            mScrollThreshold = scrollThreshold;
+        }
+    }
+
+    private class RecyclerViewScrollDetectorImpl extends RecyclerViewScrollDetector {
+        private ScrollDirectionListener mScrollDirectionListener;
+        private RecyclerView.OnScrollListener mOnScrollListener;
+
+        private void setScrollDirectionListener(ScrollDirectionListener scrollDirectionListener) {
+            mScrollDirectionListener = scrollDirectionListener;
+        }
+
+        public void setOnScrollListener(RecyclerView.OnScrollListener onScrollListener) {
+            mOnScrollListener = onScrollListener;
+        }
+
+        @Override
+        public void onScrollDown() {
+            show();
+            if (mScrollDirectionListener != null) {
+                mScrollDirectionListener.onScrollDown();
+            }
+        }
+
+        @Override
+        public void onScrollUp() {
+            hide();
+            if (mScrollDirectionListener != null) {
+                mScrollDirectionListener.onScrollUp();
+            }
+        }
+
+        @Override
+        public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+            if (mOnScrollListener != null) {
+                mOnScrollListener.onScrolled(recyclerView, dx, dy);
+            }
+
+            super.onScrolled(recyclerView, dx, dy);
+        }
+
+        @Override
+        public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+            if (mOnScrollListener != null) {
+                mOnScrollListener.onScrollStateChanged(recyclerView, newState);
+            }
+
+            super.onScrollStateChanged(recyclerView, newState);
+        }
     }
 
 }

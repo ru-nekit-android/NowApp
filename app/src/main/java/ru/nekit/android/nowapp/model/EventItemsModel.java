@@ -40,42 +40,34 @@ import ru.nekit.android.nowapp.model.db.EventLocalDataSource;
  */
 public class EventItemsModel {
 
+    public static final int RESULT_OK = 0;
+    public static final int DATA_IS_EMPTY = 1;
+    public static final String LOAD_IN_BACKGROUND_NOTIFICATION = "ru.nekit.abdroid.nowapp.load_in_bavkgroun_result";
+    public static final String LOADING_TYPE = "loading_type";
+    public static final String REQUEST_NEW_EVENTS = "request_new_event_items";
+    public static final String REFRESH_EVENTS = "refresh_event_items";
+    public static final String LOAD_IN_BACKGROUND = "load_in_background";
     private static final long MAXIMUM_TIME_PERIOD_FOR_DATE_ALIAS_SUPPORT = TimeUnit.HOURS.toSeconds(4);
-
     private static final long[] NIGHT_PERIOD = {TimeUnit.HOURS.toSeconds(23), TimeUnit.HOURS.toSeconds(5) - 1};
     private static final long[] MORNING_PERIOD = {TimeUnit.HOURS.toSeconds(5), TimeUnit.HOURS.toSeconds(12) - 1};
     private static final long[] DAY_PERIOD = {TimeUnit.HOURS.toSeconds(12), TimeUnit.HOURS.toSeconds(19) - 1};
     private static final long[] EVENING_PERIOD = {TimeUnit.HOURS.toSeconds(19), TimeUnit.HOURS.toSeconds(23) - 1};
-
+    private static final String TAG_EVENTS = "events";
+    private static final String SITE_NAME = "nowapp.ru";
+    private static final String API_ROOT = "api/events.get";
+    private static final String DATABASE_NAME = "nowapp.db";
+    private static final int DATABASE_VERSION = 2;
+    private static final boolean FEATURE_LOAD_IN_BACKGROUND = true;
+    private static final HashMap<String, String> CATEGORY_TYPE_KEYWORDS = new HashMap<>();
+    private static final HashMap<String, Integer> CATEGORY_TYPE = new HashMap<>();
+    private static final HashMap<String, Integer> CATEGORY_TYPE_COLOR = new HashMap<>();
+    private static final HashMap<String, Integer> CATEGORY_TYPE_BIG = new HashMap<>();
     private static ArrayList<Pair<String, long[]>> PERIODS = new ArrayList<Pair<String, long[]>>(4) {{
         add(new Pair<>("ночью", NIGHT_PERIOD));
         add(new Pair<>("утром", MORNING_PERIOD));
         add(new Pair<>("днем", DAY_PERIOD));
         add(new Pair<>("вечером", EVENING_PERIOD));
     }};
-
-    public static final int RESULT_OK = 0;
-    public static final int DATA_IS_EMPTY = 1;
-
-    private static final String TAG_EVENTS = "events";
-    private static final String SITE_NAME = "nowapp.ru";
-    private static final String API_ROOT = "api/events.get";
-    private static final String DATABASE_NAME = "nowapp.db";
-    private static final int DATABASE_VERSION = 2;
-
-    public static final String LOAD_IN_BACKGROUND_NOTIFICATION = "ru.nekit.abdroid.nowapp.load_in_bavkgroun_result";
-    public static final String LOADING_TYPE = "loading_type";
-    public static final String REQUEST_NEW_EVENTS = "request_new_event_items";
-    public static final String REFRESH_EVENTS = "refresh_event_items";
-    public static final String LOAD_IN_BACKGROUND = "load_in_background";
-
-    private static final boolean FEATURE_LOAD_IN_BACKGROUND = true;
-
-    private static final HashMap<String, String> CATEGORY_TYPE_KEYWORDS = new HashMap<>();
-    private static final HashMap<String, Integer> CATEGORY_TYPE = new HashMap<>();
-    private static final HashMap<String, Integer> CATEGORY_TYPE_COLOR = new HashMap<>();
-    private static final HashMap<String, Integer> CATEGORY_TYPE_BIG = new HashMap<>();
-
     private static EventItemsModel sInstance;
 
     private final Context mContext;
@@ -149,18 +141,6 @@ public class EventItemsModel {
         setEventsFromLocalDataSource(allEvents);
     }
 
-    public void registerForLoadInBackgroundResultNotification(BroadcastReceiver receiver) {
-        LocalBroadcastManager.getInstance(mContext).registerReceiver(receiver, new IntentFilter(LOAD_IN_BACKGROUND_NOTIFICATION));
-    }
-
-    public void unregisterForLoadInBackgroundResultNotification(BroadcastReceiver receiver) {
-        LocalBroadcastManager.getInstance(mContext).unregisterReceiver(receiver);
-    }
-
-    private boolean eventIsActual(EventItem eventItem) {
-        return (eventItem.date + eventItem.endAt) > (getCurrentTimeTimestamp(mContext, true) + getCurrentDateTimestamp(mContext, true));
-    }
-
     public static String getStartTimeAlias(Context context, EventItem eventItem) {
         return getStartTimeString(context, eventItem, false);
     }
@@ -224,18 +204,6 @@ public class EventItemsModel {
         return alias;
     }
 
-    //TODO: get from database!!!
-    public EventItem getEventItemByID(int ID) {
-        EventItem result = null;
-        for (int i = 0; i < mEventItems.size() && result == null; i++) {
-            EventItem item = mEventItems.get(i);
-            if (item.id == ID) {
-                result = item;
-            }
-        }
-        return result;
-    }
-
     public static int getCategoryColor(String category) {
         return CATEGORY_TYPE_COLOR.get(category);
     }
@@ -257,23 +225,6 @@ public class EventItemsModel {
             sInstance = new EventItemsModel(context);
         }
         return sInstance;
-    }
-
-    public void addEvents(ArrayList<EventItem> eventItems) {
-        mEventItems.addAll(eventItems);
-    }
-
-    public void setEvents(ArrayList<EventItem> eventItems) {
-        mEventItems.clear();
-        mEventItems.addAll(eventItems);
-    }
-
-    public ArrayList<EventItem> getEventItems() {
-        return mEventItems;
-    }
-
-    public boolean dataIsActual() {
-        return mDataIsActual;
     }
 
     public static long getCurrentTimeTimestamp(Context context, boolean usePrecision) {
@@ -308,6 +259,47 @@ public class EventItemsModel {
 
     public static long getEventEndTimeInSeconds(EventItem eventItem) {
         return eventItem.date + eventItem.endAt - getTimeZoneOffsetInSeconds();
+    }
+
+    public void registerForLoadInBackgroundResultNotification(BroadcastReceiver receiver) {
+        LocalBroadcastManager.getInstance(mContext).registerReceiver(receiver, new IntentFilter(LOAD_IN_BACKGROUND_NOTIFICATION));
+    }
+
+    public void unregisterForLoadInBackgroundResultNotification(BroadcastReceiver receiver) {
+        LocalBroadcastManager.getInstance(mContext).unregisterReceiver(receiver);
+    }
+
+    private boolean eventIsActual(EventItem eventItem) {
+        return (eventItem.date + eventItem.endAt) > (getCurrentTimeTimestamp(mContext, true) + getCurrentDateTimestamp(mContext, true));
+    }
+
+    //TODO: get from database!!!
+    public EventItem getEventItemByID(int ID) {
+        EventItem result = null;
+        for (int i = 0; i < mEventItems.size() && result == null; i++) {
+            EventItem item = mEventItems.get(i);
+            if (item.id == ID) {
+                result = item;
+            }
+        }
+        return result;
+    }
+
+    public void addEvents(ArrayList<EventItem> eventItems) {
+        mEventItems.addAll(eventItems);
+    }
+
+    public void setEvents(ArrayList<EventItem> eventItems) {
+        mEventItems.clear();
+        mEventItems.addAll(eventItems);
+    }
+
+    public ArrayList<EventItem> getEventItems() {
+        return mEventItems;
+    }
+
+    public boolean dataIsActual() {
+        return mDataIsActual;
     }
 
     public boolean isAvailableLoad() {
@@ -347,12 +339,6 @@ public class EventItemsModel {
 
     private int getAvailablePageCount() {
         return mAvailableEventCount / mEventsCountPerPage + (mAvailableEventCount % mEventsCountPerPage == 0 ? 0 : 1);
-    }
-
-    private class EventNameComparator implements Comparator<EventItem> {
-        public int compare(EventItem left, EventItem right) {
-            return Long.valueOf(left.date + left.startAt).compareTo(right.date + right.startAt);
-        }
     }
 
     ArrayList<EventItem> performSearch(String query) {
@@ -520,5 +506,11 @@ public class EventItemsModel {
         }
 
         return result;
+    }
+
+    private class EventNameComparator implements Comparator<EventItem> {
+        public int compare(EventItem left, EventItem right) {
+            return Long.valueOf(left.date + left.startAt).compareTo(right.date + right.startAt);
+        }
     }
 }

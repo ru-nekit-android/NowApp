@@ -19,10 +19,6 @@ import ru.nekit.android.nowapp.model.EventItemsModel;
  */
 public class EventLocalDataSource {
 
-    private SQLiteDatabase database;
-    private EventSQLiteHelper eventSQLHelper;
-    private Context mContext;
-
     private static final String[] ALL_COLUMNS =
             {
                     EventSQLiteHelper._ID,
@@ -48,7 +44,6 @@ public class EventLocalDataSource {
                     EventFieldNameDictionary.POSTER_ORIGINAL,
                     EventFieldNameDictionary.POSTER_THUMB
             };
-
     private static String[] FTS_SEARCH_ORDER = {
             EventSQLiteHelper.FTS_EVENT_CATEGORY_KEYWORD,
             EventSQLiteHelper.FTS_EVENT_START_TIME_ALIAS,
@@ -57,6 +52,9 @@ public class EventLocalDataSource {
             EventFieldNameDictionary.PLACE_NAME,
             EventFieldNameDictionary.ADDRESS
     };
+    private SQLiteDatabase database;
+    private EventSQLiteHelper eventSQLHelper;
+    private Context mContext;
 
     public EventLocalDataSource(Context context, String dataBaseName, int databaseVersion) {
         eventSQLHelper = EventSQLiteHelper.getInstance(context, dataBaseName, databaseVersion);

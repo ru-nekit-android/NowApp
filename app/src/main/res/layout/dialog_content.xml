@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.devspark.robototextview.widget.RobotoTextView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<com.devspark.robototextview.widget.RobotoTextView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/text_view"
     style="@style/DialogContent"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    />
+    android:layout_height="match_parent" />

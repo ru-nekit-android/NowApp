@@ -29,38 +29,13 @@ public class NowApplication extends Application implements ConnectivityReceiver.
 
     private static final String LAST_UPDATE_TIME_KEY = "last_update_time_key";
     private static NowApplication instance;
-
-    public enum APP_STATE {
-        ONLINE,
-        OFFLINE
-    }
-
-    public enum OFFLINE_STATE {
-        DATA_IS_UP_TO_DATE,
-        DATA_IS_OUT_OF_DATE,
-        DATA_IS_EMPTY
-    }
-
     private static APP_STATE mState;
     private static EventItemsModel mEventModel;
     private static SharedPreferences mSharedPreferences;
     private static ConnectivityReceiver mConnectivityReceiver;
-
     public NowApplication() {
         super();
         instance = this;
-    }
-
-    @Override
-    public void onCreate() {
-
-        mEventModel = EventItemsModel.getInstance(this);
-        mSharedPreferences = getSharedPreferences("nowapp", Context.MODE_PRIVATE);
-        mConnectivityReceiver = new ConnectivityReceiver(this);
-        mConnectivityReceiver.setOnNetworkAvailableListener(this);
-
-        DisplayMetrics metrics = getResources().getDisplayMetrics();
-        VTAG.call("metrics density: " + metrics.density);
     }
 
     public static void updateDataTimestamp() {
@@ -98,16 +73,6 @@ public class NowApplication extends Application implements ConnectivityReceiver.
         LocalBroadcastManager.getInstance(instance).unregisterReceiver(changeApplicationStateReceiver);
     }
 
-    @Override
-    public void onNetworkAvailable() {
-        setState(ONLINE);
-    }
-
-    @Override
-    public void onNetworkUnavailable() {
-        setState(OFFLINE);
-    }
-
     public static void setConnectionReceiverActive(boolean value) {
         if (value) {
             if (ConnectionUtil.isInternetAvailable(instance)) {
@@ -119,5 +84,38 @@ public class NowApplication extends Application implements ConnectivityReceiver.
         } else {
             mConnectivityReceiver.unbind(instance);
         }
+    }
+
+    @Override
+    public void onCreate() {
+
+        mEventModel = EventItemsModel.getInstance(this);
+        mSharedPreferences = getSharedPreferences("nowapp", Context.MODE_PRIVATE);
+        mConnectivityReceiver = new ConnectivityReceiver(this);
+        mConnectivityReceiver.setOnNetworkAvailableListener(this);
+
+        DisplayMetrics metrics = getResources().getDisplayMetrics();
+        VTAG.call("metrics density: " + metrics.density);
+    }
+
+    @Override
+    public void onNetworkAvailable() {
+        setState(ONLINE);
+    }
+
+    @Override
+    public void onNetworkUnavailable() {
+        setState(OFFLINE);
+    }
+
+    public enum APP_STATE {
+        ONLINE,
+        OFFLINE
+    }
+
+    public enum OFFLINE_STATE {
+        DATA_IS_UP_TO_DATE,
+        DATA_IS_OUT_OF_DATE,
+        DATA_IS_EMPTY
     }
 }

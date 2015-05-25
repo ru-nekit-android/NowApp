@@ -8,6 +8,15 @@ import android.os.Parcelable;
  */
 public class EventItem implements Parcelable {
 
+    public static final Parcelable.Creator<EventItem> CREATOR = new Parcelable.Creator<EventItem>() {
+        public EventItem createFromParcel(Parcel source) {
+            return new EventItem(source);
+        }
+
+        public EventItem[] newArray(int size) {
+            return new EventItem[size];
+        }
+    };
     public int placeId;
     public int id;
     public long date;
@@ -31,8 +40,32 @@ public class EventItem implements Parcelable {
     public double lat;
     public double lng;
 
-
     public EventItem() {
+    }
+
+    private EventItem(Parcel in) {
+        this.placeId = in.readInt();
+        this.id = in.readInt();
+        this.date = in.readLong();
+        this.eventDescription = in.readString();
+        this.category = in.readString();
+        this.entrance = in.readString();
+        this.placeName = in.readString();
+        this.address = in.readString();
+        this.phone = in.readString();
+        this.site = in.readString();
+        this.email = in.readString();
+        this.name = in.readString();
+        this.startAt = in.readLong();
+        this.endAt = in.readLong();
+        this.posterThumb = in.readString();
+        this.posterBlur = in.readString();
+        this.posterOriginal = in.readString();
+        this.logoThumb = in.readString();
+        this.logoOriginal = in.readString();
+        this.allNightParty = in.readInt();
+        this.lat = in.readDouble();
+        this.lng = in.readDouble();
     }
 
     @Override
@@ -65,39 +98,4 @@ public class EventItem implements Parcelable {
         dest.writeDouble(this.lat);
         dest.writeDouble(this.lng);
     }
-
-    private EventItem(Parcel in) {
-        this.placeId = in.readInt();
-        this.id = in.readInt();
-        this.date = in.readLong();
-        this.eventDescription = in.readString();
-        this.category = in.readString();
-        this.entrance = in.readString();
-        this.placeName = in.readString();
-        this.address = in.readString();
-        this.phone = in.readString();
-        this.site = in.readString();
-        this.email = in.readString();
-        this.name = in.readString();
-        this.startAt = in.readLong();
-        this.endAt = in.readLong();
-        this.posterThumb = in.readString();
-        this.posterBlur = in.readString();
-        this.posterOriginal = in.readString();
-        this.logoThumb = in.readString();
-        this.logoOriginal = in.readString();
-        this.allNightParty = in.readInt();
-        this.lat = in.readDouble();
-        this.lng = in.readDouble();
-    }
-
-    public static final Parcelable.Creator<EventItem> CREATOR = new Parcelable.Creator<EventItem>() {
-        public EventItem createFromParcel(Parcel source) {
-            return new EventItem(source);
-        }
-
-        public EventItem[] newArray(int size) {
-            return new EventItem[size];
-        }
-    };
 }

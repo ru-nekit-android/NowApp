@@ -1,41 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_marginTop="@dimen/big_space"
+    android:orientation="vertical"
     android:paddingBottom="@dimen/large_space">
 
     <RelativeLayout
-        android:orientation="horizontal"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
 
         <com.devspark.robototextview.widget.RobotoTextView
             android:id="@+id/text_view"
             style="@style/AboutText"
-            android:text="@string/about_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_toLeftOf="@+id/image_view"
             android:layout_toStartOf="@+id/image_view"
-            android:paddingRight="@dimen/small_space"
             android:paddingEnd="@dimen/small_space"
             android:paddingLeft="@dimen/large_space"
-            />
+            android:paddingRight="@dimen/small_space"
+            android:text="@string/about_text" />
 
         <ImageView
             android:id="@+id/image_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@mipmap/ic_launcher"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"
-            android:paddingRight="@dimen/big_space"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true"
             android:paddingEnd="@dimen/big_space"
             android:paddingLeft="@dimen/small_space"
-            android:paddingStart="@dimen/small_space" />
+            android:paddingRight="@dimen/big_space"
+            android:paddingStart="@dimen/small_space"
+            android:src="@mipmap/ic_launcher" />
     </RelativeLayout>
 
 </LinearLayout>

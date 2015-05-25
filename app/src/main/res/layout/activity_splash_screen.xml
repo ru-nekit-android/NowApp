@@ -13,11 +13,11 @@
 
         <ImageView
             android:id="@+id/imageView"
-            android:layout_gravity="bottom|center_horizontal"
             style="@style/NowLogoOnSplashScreen"
-            android:src="@drawable/now_big"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center_horizontal"
+            android:src="@drawable/now_big" />
 
     </FrameLayout>
 
@@ -28,11 +28,11 @@
         android:paddingBottom="@dimen/progress_wheel_size">
 
         <com.pnikosis.materialishprogress.ProgressWheel
-            style="@style/ProgressWheel"
             android:id="@+id/progress_wheel"
-            android:layout_gravity="center"
+            style="@style/ProgressWheel"
             android:layout_width="@dimen/progress_wheel_size"
             android:layout_height="@dimen/progress_wheel_size"
+            android:layout_gravity="center"
             wheel:matProg_barColor="@android:color/white"
             wheel:matProg_progressIndeterminate="true" />
     </FrameLayout>

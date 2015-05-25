@@ -12,16 +12,9 @@ import android.net.NetworkInfo;
  */
 public class ConnectivityReceiver extends BroadcastReceiver {
 
-    public interface OnNetworkAvailableListener {
-        void onNetworkAvailable();
-
-        void onNetworkUnavailable();
-    }
-
     private final ConnectivityManager connectivityManager;
     private OnNetworkAvailableListener onNetworkAvailableListener;
     private boolean connection = false;
-
     public ConnectivityReceiver(Context context) {
         connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         checkConnectionOnDemand();
@@ -79,6 +72,12 @@ public class ConnectivityReceiver extends BroadcastReceiver {
 
     public void setOnNetworkAvailableListener(OnNetworkAvailableListener listener) {
         this.onNetworkAvailableListener = listener;
+    }
+
+    public interface OnNetworkAvailableListener {
+        void onNetworkAvailable();
+
+        void onNetworkUnavailable();
     }
 
 }

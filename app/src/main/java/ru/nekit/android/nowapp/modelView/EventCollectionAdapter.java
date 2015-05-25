@@ -49,11 +49,9 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     private final ArrayList<EventItemWrapper> mEventItems;
     private final ArrayList<Target> mLoadingList;
     private final EventItemsModel mEventModel;
-
-
+    private final int mItemHeight, mColumns, mMargin;
     private RecyclerView mRecyclerView;
     private RecyclerView.OnScrollListener mScrollListener;
-    private final int mItemHeight, mColumns, mMargin;
     private IEventItemSelectListener mItemClickListener;
     private boolean mImmediateImageLoading;
     private OnLoadMorelListener mLoadMoreListener;
@@ -61,6 +59,29 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     private Handler mHandler;
     private int mLoadMoreCount;
     private EventItemWrapper mLoadingItem;
+
+    public EventCollectionAdapter(Context context, EventItemsModel model, int columns) {
+        mContext = context;
+        mInflater = LayoutInflater.from(context);
+        mColumns = columns;
+        int screenWidth = getScreenWidth(context);
+        TypedValue outValue = new TypedValue();
+        context.getResources().getValue(R.dimen.event_item_view_height_ratio, outValue, true);
+        mItemHeight = (int) (((screenWidth - mContext.getResources().getDimensionPixelOffset(R.dimen.event_collection_padding) * 2 - mContext.getResources().getDimensionPixelOffset(R.dimen.event_collection_space) * (columns - 1)) / columns) * (columns > 1 ? outValue.getFloat() : .6));
+        mMargin = context.getResources().getDimensionPixelSize(R.dimen.event_collection_space);
+        mEventItems = new ArrayList<>();
+        mLoadingList = new ArrayList<>();
+        mEventModel = model;
+        mImmediateImageLoading = true;
+        mLoadMoreCount = columns > 2 ? 0 : columns;
+    }
+
+    private static int getScreenWidth(Context context) {
+        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        DisplayMetrics displaymetrics = new DisplayMetrics();
+        wm.getDefaultDisplay().getMetrics(displaymetrics);
+        return displaymetrics.widthPixels;
+    }
 
     public void setOnItemClickListener(IEventItemSelectListener listener) {
         mItemClickListener = listener;
@@ -140,33 +161,12 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         mLoadMoreListener = listener;
     }
 
-    abstract static public class OnLoadMorelListener {
-        public void onLoadMore() {
-        }
-    }
-
     public void unregisterRecyclerView(RecyclerView recyclerView) {
         mScrollListener = null;
         recyclerView.setOnScrollListener(null);
         mTimer.cancel();
         mTimer = null;
         mHandler = null;
-    }
-
-    public EventCollectionAdapter(Context context, EventItemsModel model, int columns) {
-        mContext = context;
-        mInflater = LayoutInflater.from(context);
-        mColumns = columns;
-        int screenWidth = getScreenWidth(context);
-        TypedValue outValue = new TypedValue();
-        context.getResources().getValue(R.dimen.event_item_view_height_ratio, outValue, true);
-        mItemHeight = (int) (((screenWidth - mContext.getResources().getDimensionPixelOffset(R.dimen.event_collection_padding) * 2 - mContext.getResources().getDimensionPixelOffset(R.dimen.event_collection_space) * (columns - 1)) / columns) * (columns > 1 ? outValue.getFloat() : .6));
-        mMargin = context.getResources().getDimensionPixelSize(R.dimen.event_collection_space);
-        mEventItems = new ArrayList<>();
-        mLoadingList = new ArrayList<>();
-        mEventModel = model;
-        mImmediateImageLoading = true;
-        mLoadMoreCount = columns > 2 ? 0 : columns;
     }
 
     public void addItems(ArrayList<EventItem> eventItems) {
@@ -202,7 +202,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 notifyDataSetChanged();
             }
             return true;
-        }else{
+        } else {
             notifyDataSetChanged();
         }
         return false;
@@ -216,13 +216,6 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     public void clearItems() {
         mEventItems.clear();
         notifyDataSetChanged();
-    }
-
-    private static int getScreenWidth(Context context) {
-        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-        DisplayMetrics displaymetrics = new DisplayMetrics();
-        wm.getDefaultDisplay().getMetrics(displaymetrics);
-        return displaymetrics.widthPixels;
     }
 
     @Override
@@ -398,14 +391,18 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         }
     }
 
-    class EventItemWrapper {
+    abstract static public class OnLoadMorelListener {
+        public void onLoadMore() {
+        }
+    }
 
-        private EventItem eventItem;
-        private boolean isLoadingItem = false;
+    class EventItemWrapper {
 
         public String cachedName;
         public int cachedNameLineCount;
         public boolean posterLoaded;
+        private EventItem eventItem;
+        private boolean isLoadingItem = false;
 
         EventItemWrapper(EventItem eventItem) {
             cachedName = null;
@@ -420,6 +417,22 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     }
 
     class EventCollectionItemViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+
+        private TextView mPlaceView;
+        private TextView mNameView;
+        private TextView mStartItemView;
+        private ImageView mPosterThumbView;
+        private ImageView mCatalogIcon;
+
+        public EventCollectionItemViewHolder(View view) {
+            super(view);
+            mPlaceView = (TextView) view.findViewById(R.id.place_name_view);
+            mNameView = (TextView) view.findViewById(R.id.name_view);
+            mPosterThumbView = (ImageView) view.findViewById(R.id.poster_thumb_view);
+            mCatalogIcon = (ImageView) view.findViewById(R.id.category_view);
+            mStartItemView = (TextView) view.findViewById(R.id.event_start_time_view);
+            view.setOnClickListener(this);
+        }
 
         public TextView getPlaceView() {
             return mPlaceView;
@@ -439,22 +452,6 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
         public TextView getStartEventView() {
             return mStartItemView;
-        }
-
-        private TextView mPlaceView;
-        private TextView mNameView;
-        private TextView mStartItemView;
-        private ImageView mPosterThumbView;
-        private ImageView mCatalogIcon;
-
-        public EventCollectionItemViewHolder(View view) {
-            super(view);
-            mPlaceView = (TextView) view.findViewById(R.id.place_name_view);
-            mNameView = (TextView) view.findViewById(R.id.name_view);
-            mPosterThumbView = (ImageView) view.findViewById(R.id.poster_thumb_view);
-            mCatalogIcon = (ImageView) view.findViewById(R.id.category_view);
-            mStartItemView = (TextView) view.findViewById(R.id.event_start_time_view);
-            view.setOnClickListener(this);
         }
 
         @Override

@@ -14,18 +14,13 @@ import ru.nekit.android.nowapp.R;
 public class AutoResizeTextView extends RobotoTextView {
 
     private static final float THRESHOLD = 3f;
-
-    private enum Mode {Width, Height, Both, None}
-
     private int minTextSize = 0;
     private int maxTextSize = 0;
-
     private Mode mode = Mode.None;
     private boolean inComputation;
     private int widthMeasureSpec;
     private int heightMeasureSpec;
     private float threshold;
-
     public AutoResizeTextView(Context context) {
         super(context);
     }
@@ -160,4 +155,6 @@ public class AutoResizeTextView extends RobotoTextView {
         this.maxTextSize = maxTextSize;
         resizeText();
     }
+
+    private enum Mode {Width, Height, Both, None}
 }

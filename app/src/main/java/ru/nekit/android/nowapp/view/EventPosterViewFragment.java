@@ -26,6 +26,15 @@ public class EventPosterViewFragment extends Fragment {
 
     private String mImageUrl;
 
+    public EventPosterViewFragment() {
+    }
+
+    public static EventPosterViewFragment getInstance(String posterUrl) {
+        EventPosterViewFragment fragment = new EventPosterViewFragment();
+        fragment.setEventPosterUrl(posterUrl);
+        return fragment;
+    }
+
     private void setEventPosterUrl(String imageUrl) {
         Bundle args = new Bundle();
         args.putString(IMAGE_URL, imageUrl);
@@ -35,9 +44,6 @@ public class EventPosterViewFragment extends Fragment {
     public void updateEventPosterUrl(String imageUrl) {
         Bundle args = getArguments();
         args.putString(IMAGE_URL, imageUrl);
-    }
-
-    public EventPosterViewFragment() {
     }
 
     @Override
@@ -78,11 +84,5 @@ public class EventPosterViewFragment extends Fragment {
             }
         }).into(posterView);
         return view;
-    }
-
-    public static EventPosterViewFragment getInstance(String posterUrl) {
-        EventPosterViewFragment fragment = new EventPosterViewFragment();
-        fragment.setEventPosterUrl(posterUrl);
-        return fragment;
     }
 }
