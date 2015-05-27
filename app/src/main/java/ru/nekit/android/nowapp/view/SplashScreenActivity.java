@@ -92,7 +92,7 @@ public class SplashScreenActivity extends ActionBarActivity implements LoaderMan
                 }).setCancelable(false)
                         .setView(dialogContentView)
                         .setCustomTitle(dialogTitleView);
-                dialogTextView.setText(R.string.default_state_dialog_text);
+                dialogTextView.setText(String.format(getResources().getString(R.string.default_state_dialog_text), getResources().getString(R.string.exit)));
                 dialogTitleTextView.setText(R.string.default_state_dialog_title);
 
                 break;
