@@ -1,24 +1,22 @@
 package ru.nekit.android.nowapp.widget;
 
 import android.content.Context;
-import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.ViewGroup;
+import android.view.ViewPropertyAnimator;
 import android.view.ViewTreeObserver;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Interpolator;
 
 import com.getbase.floatingactionbutton.FloatingActionButton;
-import com.nineoldandroids.view.ViewHelper;
-import com.nineoldandroids.view.ViewPropertyAnimator;
 
 import ru.nekit.android.nowapp.R;
 
 /**
  * Created by chuvac on 20.05.15.
  */
-public class FloatingActionButtonForRecyclerViewScrollAnimator {
+public class FloatingActionButtonAnimator {
 
     private static final int TRANSLATE_DURATION_MILLIS = 200;
     private final Interpolator mInterpolator = new AccelerateDecelerateInterpolator();
@@ -28,7 +26,7 @@ public class FloatingActionButtonForRecyclerViewScrollAnimator {
     private RecyclerView mRecyclerView;
     private int mScrollThreshold;
 
-    public FloatingActionButtonForRecyclerViewScrollAnimator(@NonNull Context context, @NonNull FloatingActionButton button, @NonNull RecyclerView recyclerView) {
+    public FloatingActionButtonAnimator(@NonNull Context context, @NonNull FloatingActionButton button, @NonNull RecyclerView recyclerView) {
         mButton = button;
         mVisible = true;
         mScrollThreshold = context.getResources().getDimensionPixelOffset(R.dimen.fab_scroll_threshold);
@@ -57,22 +55,14 @@ public class FloatingActionButtonForRecyclerViewScrollAnimator {
     }
 
     public void show() {
-        show(true);
+        toggle(true, false);
     }
 
     public void hide() {
-        hide(true);
+        toggle(false, false);
     }
 
-    public void show(boolean animate) {
-        toggle(true, animate, false);
-    }
-
-    public void hide(boolean animate) {
-        toggle(false, animate, false);
-    }
-
-    private void toggle(final boolean visible, final boolean animate, boolean force) {
+    private void toggle(final boolean visible, boolean force) {
         if (mVisible != visible || force) {
             mVisible = visible;
             int height = mButton.getHeight();
@@ -86,7 +76,7 @@ public class FloatingActionButtonForRecyclerViewScrollAnimator {
                             if (currentVto.isAlive()) {
                                 currentVto.removeOnPreDrawListener(this);
                             }
-                            toggle(visible, animate, true);
+                            toggle(visible, true);
                             return true;
                         }
                     });
@@ -95,18 +85,12 @@ public class FloatingActionButtonForRecyclerViewScrollAnimator {
             }
 
             int translationY = visible ? 0 : height + getMarginBottom();
-            if (animate) {
-                ViewPropertyAnimator.animate(mButton).setInterpolator(mInterpolator)
-                        .setDuration(TRANSLATE_DURATION_MILLIS)
-                        .translationY(translationY);
-            } else {
-                ViewHelper.setTranslationY(mButton, translationY);
-            }
 
-            // On pre-Honeycomb a translated view is still clickable, so we need to disable clicks manually
-            if (!hasHoneycombApi()) {
-                mButton.setClickable(visible);
-            }
+            ViewPropertyAnimator an = mButton.animate();
+            an.setInterpolator(mInterpolator)
+                    .setDuration(TRANSLATE_DURATION_MILLIS)
+                    .translationY(translationY);
+            mButton.setClickable(visible);
         }
     }
 
@@ -118,10 +102,6 @@ public class FloatingActionButtonForRecyclerViewScrollAnimator {
             marginBottom = ((ViewGroup.MarginLayoutParams) layoutParams).bottomMargin;
         }
         return marginBottom;
-    }
-
-    private boolean hasHoneycombApi() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB;
     }
 
     public interface ScrollDirectionListener {

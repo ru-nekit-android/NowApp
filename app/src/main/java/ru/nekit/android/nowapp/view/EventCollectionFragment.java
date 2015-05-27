@@ -42,7 +42,7 @@ import ru.nekit.android.nowapp.model.EventItemsSearcher;
 import ru.nekit.android.nowapp.modelView.EventCollectionAdapter;
 import ru.nekit.android.nowapp.modelView.listeners.IBackPressedListener;
 import ru.nekit.android.nowapp.modelView.listeners.IEventItemSelectListener;
-import ru.nekit.android.nowapp.widget.FloatingActionButtonForRecyclerViewScrollAnimator;
+import ru.nekit.android.nowapp.widget.FloatingActionButtonAnimator;
 import ru.nekit.android.nowapp.widget.ScrollingGridLayoutManager;
 import ru.nekit.android.nowapp.widget.SoftKeyboardListenerLayout;
 
@@ -69,7 +69,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     private boolean mKeyboardVisible;
     private EventCollectionAdapter mEventCollectionAdapter;
     private IEventItemSelectListener mEventItemSelectListener;
-    private FloatingActionButtonForRecyclerViewScrollAnimator mFloatingActionButtonForRecyclerViewScrollAnimator;
+    private FloatingActionButtonAnimator mFloatingActionButtonAnimator;
     private RecyclerView mEventItemsView;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private BroadcastReceiver mLocalBroadcastReceiver;
@@ -216,7 +216,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         }
 
         mEventCollectionAdapter.registerRecyclerView(mEventItemsView);
-        mFloatingActionButtonForRecyclerViewScrollAnimator.attachToRecyclerView();
+        mFloatingActionButtonAnimator.attachToRecyclerView();
 
         applyApplicationState();
         NowApplication.registerForAppChangeStateNotification(mLocalBroadcastReceiver);
@@ -311,7 +311,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         mFloatingActionButton.setOnClickListener(this);
 
         mSearchStatus = (TextView) view.findViewById(R.id.search_status);
-        mFloatingActionButtonForRecyclerViewScrollAnimator = new FloatingActionButtonForRecyclerViewScrollAnimator(context, mFloatingActionButton, mEventItemsView);
+        mFloatingActionButtonAnimator = new FloatingActionButtonAnimator(context, mFloatingActionButton, mEventItemsView);
 
         SoftKeyboardListenerLayout scrollView = (SoftKeyboardListenerLayout) view.findViewById(R.id.root_layout);
         scrollView.setOnSoftKeyboardListener(this);
@@ -340,9 +340,9 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     private void setLoadingState(LOADING_STATE state) {
         boolean hideFAB = state == LOADING_STATE.LOADING && EventItemsModel.REFRESH_EVENTS.equals(mLoadingType);
         if (hideFAB) {
-            mFloatingActionButtonForRecyclerViewScrollAnimator.hide();
+            mFloatingActionButtonAnimator.hide();
         } else {
-            mFloatingActionButtonForRecyclerViewScrollAnimator.show();
+            mFloatingActionButtonAnimator.show();
         }
         //another types of deactivate FAB
         //mFloatingActionButton.setClickable(!hideFAB);
@@ -420,7 +420,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         loaderManager.destroyLoader(SEARCHER_ID);
         setLoadingState(LOADING_STATE.LOADED);
         mEventCollectionAdapter.unregisterRecyclerView(mEventItemsView);
-        mFloatingActionButtonForRecyclerViewScrollAnimator.dettachFromRecyclerView();
+        mFloatingActionButtonAnimator.dettachFromRecyclerView();
         NowApplication.unregisterForAppChangeStateNotification(mLocalBroadcastReceiver);
         mEventModel.unregisterForLoadInBackgroundResultNotification(mLocalBroadcastReceiver);
         super.onPause();
@@ -477,7 +477,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                     boolean isEmpty = resultForSearch.size() == 0;
                     setSearchStatus(isEmpty ? getActivity().getString(R.string.nothing_found) : null);
                     if (isEmpty) {
-                        mFloatingActionButtonForRecyclerViewScrollAnimator.show();
+                        mFloatingActionButtonAnimator.show();
                     }
 
                     break;
@@ -572,7 +572,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
 
                 if (searchQueryIsValid()) {
                     mSearchView.setQuery("", true);
-                    mFloatingActionButtonForRecyclerViewScrollAnimator.show();
+                    mFloatingActionButtonAnimator.show();
                 } else {
                     applyMode(MODE.NORMAL);
                     setEventsFromModel();
