@@ -1,5 +1,6 @@
 package ru.nekit.android.nowapp.view;
 
+import android.animation.Animator;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -54,8 +55,15 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
 
     private static final int LOADER_ID = 2;
     private static final int SEARCHER_ID = 3;
-    private static final int SMOOTH_SCROLL_DURATION = 1000;
-    private static final boolean FEATURE_LIVE_SEARCH = true;
+
+    private int smoothScrollDuration() {
+        return getActivity().getResources().getInteger(R.integer.smooth_scroll_duration);
+    }
+
+    private boolean featureLiveSearch() {
+        return getActivity().getResources().getBoolean(R.bool.feature_live_search);
+    }
+
     private EventItemsModel mEventModel;
     private boolean mRestoreSearchMode;
     private String mQueryWithResult;
@@ -77,6 +85,8 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     private FloatingActionButton mFloatingActionButton;
     private TextView mSearchStatus;
     private EditText mSearchViewEditText;
+    private Animator.AnimatorListener mAnimatorListener;
+
     public EventCollectionFragment() {
         mLoadingState = LOADING_STATE.LOADED;
         mLoadingType = null;
@@ -124,7 +134,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                                 mSwipeRefreshLayout.setRefreshing(true);
                                 performLoad();
                             }
-                        }, SMOOTH_SCROLL_DURATION);
+                        }, smoothScrollDuration());
                     } else {
                         performLoad();
                     }
@@ -157,7 +167,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     @Override
     public boolean onQueryTextChange(String query) {
         if (mMode == MODE.SEARCH) {
-            if (FEATURE_LIVE_SEARCH) {
+            if (featureLiveSearch()) {
                 if (searchQueryIsValid()) {
                     performSearch(query);
                 } else {
@@ -273,7 +283,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         mEventItemsView.setItemAnimator(new DefaultItemAnimator());
         int listColumn = getResources().getInteger(R.integer.event_collection_column_count);
 
-        ScrollingGridLayoutManager mEventCollectionLayoutManager = new ScrollingGridLayoutManager(context, listColumn, SMOOTH_SCROLL_DURATION);
+        ScrollingGridLayoutManager mEventCollectionLayoutManager = new ScrollingGridLayoutManager(context, listColumn, smoothScrollDuration());
         mEventCollectionAdapter = new EventCollectionAdapter(context, mEventModel, listColumn);
         mEventCollectionAdapter.setHasStableIds(true);
         mEventItemsView.setAdapter(mEventCollectionAdapter);
@@ -516,15 +526,46 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
 
     private void applyMode(MODE mode) {
         mMode = mode;
-        boolean searchVisible = mode == MODE.SEARCH;
-        //mFloatingActionButton.setVisibility(searchVisible ? View.INVISIBLE : View.VISIBLE);
         mSearchView.setIconified(false);
-        mSearchView.setVisibility(searchVisible ? View.VISIBLE : View.GONE);
-        getViewFromRoot(R.id.title_container).setVisibility(searchVisible ? View.INVISIBLE : View.VISIBLE);
+
+        final boolean searchVisible = mode == MODE.SEARCH;
+
+        final View titleContainer = getViewFromRoot(R.id.title_container);
+
+        mAnimatorListener = new Animator.AnimatorListener() {
+
+            @Override
+            public void onAnimationStart(Animator animation) {
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                titleContainer.setVisibility(searchVisible ? View.INVISIBLE : View.VISIBLE);
+                mSearchView.setVisibility(searchVisible ? View.VISIBLE : View.GONE);
+                animateFade(true, searchVisible ? mSearchView : titleContainer);
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+            }
+
+        };
+
+        animateFade(false, searchVisible ? titleContainer : mSearchView);
+
         updateRefreshLayoutEnabled();
         if (!searchVisible) {
             setSearchStatus(null);
         }
+    }
+
+    private void animateFade(boolean in, View view) {
+        int duration = getActivity().getResources().getInteger(R.integer.change_mode_animation_duration);
+        view.animate().alpha(in ? 1 : 0).setListener(mAnimatorListener).setDuration(duration);
     }
 
     private void updateRefreshLayoutEnabled() {
