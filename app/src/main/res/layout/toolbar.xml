@@ -8,7 +8,9 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="?attr/colorPrimary">
+        android:background="?attr/colorPrimary"
+        app:popupTheme="@style/PopupMenuStyle"
+        >
 
         <android.support.v7.widget.SearchView
             android:id="@+id/search_view"
