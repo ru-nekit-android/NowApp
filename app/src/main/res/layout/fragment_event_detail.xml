@@ -245,7 +245,9 @@
                         android:id="@+id/place_name_view"
                         style="@style/Place_TextBlock"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent" />
+                        android:layout_height="match_parent"
+                        android:paddingBottom="@dimen/small_space"
+                        android:paddingTop="@dimen/small_space" />
 
                 </LinearLayout>
 
