@@ -23,6 +23,7 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -565,7 +566,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
 
     private void animateFade(boolean in, View view) {
         int duration = getActivity().getResources().getInteger(R.integer.change_mode_animation_duration);
-        view.animate().alpha(in ? 1 : 0).setListener(mAnimatorListener).setDuration(duration);
+        view.animate().alpha(in ? 1 : 0).setInterpolator(new AccelerateDecelerateInterpolator()).setListener(mAnimatorListener).setDuration(duration);
     }
 
     private void updateRefreshLayoutEnabled() {
