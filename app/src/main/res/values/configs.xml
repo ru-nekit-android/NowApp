@@ -3,7 +3,7 @@
     <integer name="event_collection_column_count">2</integer>
     <integer name="event_time_precision_in_minutes">5</integer>
     <integer name="slide_animation_duration">600</integer>
-    <integer name="change_mode_animation_duration">200</integer>
+    <integer name="change_mode_animation_duration">300</integer>
     <integer name="smooth_scroll_duration">1000</integer>
     <bool name="feature_live_search">true</bool>
 </resources>

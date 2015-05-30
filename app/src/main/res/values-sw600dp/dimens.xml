@@ -16,7 +16,7 @@
     <dimen name="small_space">4dp</dimen>
     <dimen name="normal_space">8dp</dimen>
     <dimen name="big_space">16dp</dimen>
-    <dimen name="event_name_height">140dp</dimen>
+    <dimen name="event_name_height">200dp</dimen>
     <dimen name="large_space">24dp</dimen>
     <dimen name="logo_max_width">96dp</dimen>
     <dimen name="logo_max_height">54dp</dimen>

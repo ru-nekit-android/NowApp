@@ -10,7 +10,6 @@
     <style name="NowLogoOnSplashScreen">
         <item name="android:layout_marginRight">@dimen/large_space</item>
         <item name="android:layout_marginLeft">@dimen/large_space</item>
-        <item name="android:layout_marginBottom">@dimen/large_space</item>
     </style>
 
     <style name="EventStartTime">
@@ -32,7 +31,7 @@
     </style>
 
     <style name="Place_TextBlock">
-        <item name="maxTextSize">16sp</item>
+        <item name="maxTextSize">15sp</item>
         <item name="minTextSize">8sp</item>
         <item name="android:lineSpacingMultiplier">1.2</item>
         <item name="android:gravity">center_vertical</item>
@@ -41,7 +40,8 @@
     </style>
 
     <style name="EventName">
-        <item name="maxTextSize">28sp</item>
+        <item name="maxTextSize">48sp</item>
+        <item name="minTextSize">8sp</item>
         <item name="android:paddingBottom">4dp</item>
         <item name="android:paddingRight">4dp</item>
         <item name="android:paddingTop">4dp</item>
@@ -51,7 +51,7 @@
         <item name="android:textColor">@android:color/white</item>
     </style>
 
-    <style name="EventName.DetailTitle">
+    <style name="EventName.Detail">
         <item name="maxTextSize">36sp</item>
         <item name="minTextSize">10sp</item>
         <item name="android:textColor">@android:color/black</item>
@@ -59,6 +59,7 @@
 
     <style name="EventDescription">
         <item name="android:textSize">15sp</item>
+        <item name="typeface">roboto_light</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
@@ -127,6 +128,7 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:textColor">@android:color/black</item>
         <item name="android:singleLine">true</item>
+        <item name="typeface">roboto_regular</item>
         <item name="android:background">@drawable/action_button_background</item>
     </style>
 

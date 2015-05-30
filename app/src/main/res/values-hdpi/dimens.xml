@@ -3,7 +3,7 @@
 
     <dimen name="event_collection_padding">1dp</dimen>
     <dimen name="event_collection_space">1dp</dimen>
-    <dimen name="small_space">4dp</dimen>
+    <dimen name="small_space">2dp</dimen>
     <dimen name="normal_space">4dp</dimen>
     <dimen name="big_space">8dp</dimen>
     <dimen name="event_category_view_size">44dp</dimen>
@@ -14,7 +14,7 @@
     <dimen name="large_space">24dp</dimen>
     <dimen name="event_item_view_background_margin_right">7dp</dimen>
     <dimen name="event_category_view_shift">2dp</dimen>
-    <dimen name="logo_max_width">72dp</dimen>
-    <dimen name="logo_max_height">72dp</dimen>
+    <dimen name="logo_max_width">64dp</dimen>
+    <dimen name="logo_max_height">48dp</dimen>
 
 </resources>

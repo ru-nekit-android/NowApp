@@ -45,7 +45,7 @@
         <item name="android:textColor">@android:color/white</item>
     </style>
 
-    <style name="EventName.DetailTitle">
+    <style name="EventName.Detail">
         <item name="maxTextSize">42sp</item>
         <item name="minTextSize">10sp</item>
         <item name="android:textColor">@android:color/black</item>
@@ -144,7 +144,7 @@
     </style>
 
     <style name="Place_Name">
-        <item name="typeface">roboto_medium</item>
+        <item name="typeface">roboto_regular</item>
     </style>
 
     <style name="Place_Address">
@@ -153,6 +153,7 @@
 
     <style name="EventDescription">
         <item name="android:textSize">16sp</item>
+        <item name="typeface">roboto_light</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
@@ -161,13 +162,13 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:textColor">@android:color/black</item>
         <item name="android:singleLine">true</item>
+        <item name="typeface">roboto_regular</item>
         <item name="android:background">@drawable/action_button_background</item>
     </style>
 
     <style name="NowLogoOnSplashScreen">
         <item name="android:layout_marginRight">@dimen/large_space</item>
         <item name="android:layout_marginLeft">@dimen/large_space</item>
-        <item name="android:layout_marginBottom">@dimen/large_space</item>
     </style>
 
     <style name="NowLogoInToolbar">
