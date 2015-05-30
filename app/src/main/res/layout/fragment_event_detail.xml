@@ -50,7 +50,7 @@
 
                 <ru.nekit.android.nowapp.widget.AutoResizeTextView
                     android:id="@+id/title_view"
-                    style="@style/EventName.DetailTitle"
+                    style="@style/EventName.Detail"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/event_name_height"
                     android:layout_marginLeft="@dimen/normal_space"
@@ -63,10 +63,11 @@
                 android:id="@+id/information_layout"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_below="@+id/top_layout"
                 android:layout_gravity="center_vertical"
+                android:layout_marginBottom="@dimen/small_space"
                 android:layout_marginLeft="@dimen/large_space"
                 android:layout_marginRight="@dimen/large_space"
+                android:layout_marginTop="@dimen/normal_space"
                 android:orientation="horizontal">
 
                 <RelativeLayout
