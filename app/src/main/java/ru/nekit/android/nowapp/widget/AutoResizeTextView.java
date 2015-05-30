@@ -13,7 +13,7 @@ import ru.nekit.android.nowapp.R;
 
 public class AutoResizeTextView extends RobotoTextView {
 
-    private static final float THRESHOLD = 3f;
+    private static final float THRESHOLD = 2f;
     private int minTextSize = 0;
     private int maxTextSize = 0;
     private Mode mode = Mode.None;

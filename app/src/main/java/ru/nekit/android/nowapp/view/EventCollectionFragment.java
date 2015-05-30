@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
@@ -66,7 +67,6 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     }
 
     private EventItemsModel mEventModel;
-    private boolean mRestoreSearchMode;
     private String mQueryWithResult;
     private String mQuery;
     private boolean mHasResultOfSearch;
@@ -97,10 +97,14 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     @Override
     public void onEventItemSelect(final EventItem eventItem) {
         if (mLoadingState == LOADING_STATE.LOADED) {
-            mRestoreSearchMode = mMode == MODE.SEARCH && searchQueryIsValid();
             if (searchViewVisible()) {
                 applyMode(MODE.NORMAL);
-                mWaitingForSelectItem = eventItem;
+                if (mKeyboardVisible) {
+                    mWaitingForSelectItem = eventItem;
+                } else {
+                    mEventItemsView.requestFocus();
+                    mEventItemSelectListener.onEventItemSelect(eventItem);
+                }
             } else {
                 mEventItemSelectListener.onEventItemSelect(eventItem);
             }
@@ -198,14 +202,15 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         super.onResume();
 
         ((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(false);
-        if (mRestoreSearchMode) {
+        if (mHasResultOfSearch) {
             new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     restoreMode();
                 }
-            }, getActivity().getResources().getInteger(R.integer.slide_animation_duration) / 2);
+            }, getActivity().getResources().getInteger(R.integer.slide_animation_duration) / 3 * 2);
         } else {
+            mEventItemsView.requestFocus();
             setEventsFromModel();
             if (mEventModel.dataIsActual()) {
                 if (mEventModel.getCurrentPage() != mCurrentPage) {
@@ -553,7 +558,6 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
             @Override
             public void onAnimationRepeat(Animator animation) {
             }
-
         };
 
         animateFade(false, searchVisible ? titleContainer : mSearchView);
@@ -565,8 +569,11 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     }
 
     private void animateFade(boolean in, View view) {
-        int duration = getActivity().getResources().getInteger(R.integer.change_mode_animation_duration);
-        view.animate().alpha(in ? 1 : 0).setInterpolator(new AccelerateDecelerateInterpolator()).setListener(mAnimatorListener).setDuration(duration);
+        Resources res = getActivity() != null ? getActivity().getResources() : null;
+        if (res != null) {
+            int duration = getActivity().getResources().getInteger(R.integer.change_mode_animation_duration);
+            view.animate().alpha(in ? 1 : 0).setInterpolator(new AccelerateDecelerateInterpolator()).setListener(mAnimatorListener).setDuration(duration);
+        }
     }
 
     private void updateRefreshLayoutEnabled() {

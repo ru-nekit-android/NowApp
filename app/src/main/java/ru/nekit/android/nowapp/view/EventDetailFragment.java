@@ -406,8 +406,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         placeNameSpan.setSpan(new RobotoTextAppearanceSpan(context, R.style.Place_Name), 0, placeName.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
         SpannableString addressSpan = new SpannableString(address);
         addressSpan.setSpan(new RobotoTextAppearanceSpan(context, R.style.Place_Address), 0, address.length(), SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
-        CharSequence finalText = address.equals(placeName) ? placeNameSpan : TextUtils.concat(placeNameSpan, "\n", addressSpan);
-        placeNameView.setText(finalText);
+        placeNameView.setText(address.equals(placeName) ? placeNameSpan : TextUtils.concat(placeNameSpan, "\n", addressSpan));
     }
 
     private void createEventEntranceTextBlock(Context context, TextView entranceView, String entrance) {
@@ -416,8 +415,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         titleSpan.setSpan(new RobotoTextAppearanceSpan(context, R.style.EntranceTitle), 0, title.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
         SpannableString entranceSpan = new SpannableString(entrance);
         entranceSpan.setSpan(new RobotoTextAppearanceSpan(context, R.style.Entrance), 0, entrance.length(), SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
-        CharSequence finalText = TextUtils.concat(titleSpan, "\n", entranceSpan);
-        entranceView.setText(finalText);
+        entranceView.setText(TextUtils.concat(titleSpan, "\n", entranceSpan));
     }
 
     private void createEventTimeTextBlock(Context context, TextView timeView, int hour, int minute) {
