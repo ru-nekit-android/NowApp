@@ -23,13 +23,16 @@ android {
 }
 
 dependencies {
-    compile 'com.android.support:appcompat-v7:22.1.1'
+    compile 'com.android.support:appcompat-v7:22.2.0'
+    compile 'com.android.support:recyclerview-v7:22.2.0'
+    compile 'com.android.support:design:22.2.0'
+    compile 'com.android.support:support-v4:22.2.0'
+
     compile 'com.github.bumptech.glide:glide:3.5.2'
-    compile 'com.android.support:recyclerview-v7:22.1.1'
-    compile 'com.android.support:support-v4:22.1.1'
+
     compile 'com.pnikosis:materialish-progress:1.4'
+
     compile 'org.osmdroid:osmdroid-android:4.3'
     compile 'org.slf4j:slf4j-simple:1.6.1'
     compile project(":robototextview")
-    compile 'com.getbase:floatingactionbutton:1.9.0'
 }

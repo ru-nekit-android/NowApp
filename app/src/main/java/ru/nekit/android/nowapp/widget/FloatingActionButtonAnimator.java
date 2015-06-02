@@ -3,13 +3,12 @@ package ru.nekit.android.nowapp.widget;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewPropertyAnimator;
 import android.view.ViewTreeObserver;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Interpolator;
-
-import com.getbase.floatingactionbutton.FloatingActionButton;
 
 import ru.nekit.android.nowapp.R;
 
@@ -21,12 +20,12 @@ public class FloatingActionButtonAnimator {
     private static final int TRANSLATE_DURATION_MILLIS = 200;
     private final Interpolator mInterpolator = new AccelerateDecelerateInterpolator();
     private boolean mVisible;
-    private FloatingActionButton mButton;
+    private View mButton;
     private RecyclerViewScrollDetectorImpl mScrollDetector;
     private RecyclerView mRecyclerView;
     private int mScrollThreshold;
 
-    public FloatingActionButtonAnimator(@NonNull Context context, @NonNull FloatingActionButton button, @NonNull RecyclerView recyclerView) {
+    public FloatingActionButtonAnimator(@NonNull Context context, @NonNull View button, @NonNull RecyclerView recyclerView) {
         mButton = button;
         mVisible = true;
         mScrollThreshold = context.getResources().getDimensionPixelOffset(R.dimen.fab_scroll_threshold);

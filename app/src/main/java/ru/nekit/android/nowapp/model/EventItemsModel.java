@@ -365,7 +365,7 @@ public class EventItemsModel {
 
         if (FEATURE_LOAD_IN_BACKGROUND) {
             if (requestNewEvents) {
-                if (mCurrentPage < mLoadedInBackgroundPage) {
+                if (mLoadedInBackgroundPage > 1 && mCurrentPage <= mLoadedInBackgroundPage) {
                     if (mCurrentPage <= getAvailablePageCount()) {
                         mCurrentPage = mLoadedInBackgroundPage;
                         setEvents(sortByStartTime(mEventLocalDataSource.getAllEvents()));

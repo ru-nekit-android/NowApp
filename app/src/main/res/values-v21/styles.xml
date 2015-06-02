@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="NowTheme" parent="NowThemeBase">
+        <item name="android:colorAccent">@color/primary_color</item>
+    </style>
+
+    <style name="SplashScreenTheme" parent="SplashScreenThemeBase" />
+
+    <style name="DialogTheme" parent="DialogThemeBase" />
+
+</resources>
