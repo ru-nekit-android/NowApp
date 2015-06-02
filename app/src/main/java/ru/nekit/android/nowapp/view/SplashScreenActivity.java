@@ -66,7 +66,7 @@ public class SplashScreenActivity extends ActionBarActivity implements LoaderMan
                     public void onClick(DialogInterface dialog, int which) {
                         finish();
                     }
-                }).setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                }).setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         mProgressWheel.setVisibility(View.VISIBLE);
