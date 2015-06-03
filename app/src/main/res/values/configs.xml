@@ -6,4 +6,6 @@
     <integer name="change_mode_animation_duration">300</integer>
     <integer name="smooth_scroll_duration">1000</integer>
     <bool name="feature_live_search">true</bool>
+    <bool name="feature_load_in_background">true</bool>
+    <integer name="page_limit_load_in_background">10</integer>
 </resources>

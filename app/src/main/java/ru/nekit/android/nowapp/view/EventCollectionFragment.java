@@ -588,9 +588,10 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     }
 
     private void animateFade(boolean in, View view) {
-        Resources res = getActivity() != null ? getActivity().getResources() : null;
+        Context context = getActivity();
+        Resources res = context != null ? context.getResources() : null;
         if (res != null) {
-            int duration = getActivity().getResources().getInteger(R.integer.change_mode_animation_duration);
+            int duration = context.getResources().getInteger(R.integer.change_mode_animation_duration);
             view.animate().alpha(in ? 1 : 0).setInterpolator(new AccelerateDecelerateInterpolator()).setListener(mAnimatorListener).setDuration(duration);
         }
     }

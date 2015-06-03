@@ -42,7 +42,7 @@ public class EventItemsModel {
 
     public static final int RESULT_OK = 0;
     public static final int DATA_IS_EMPTY = 1;
-    public static final String LOAD_IN_BACKGROUND_NOTIFICATION = "ru.nekit.abdroid.nowapp.load_in_bavkgroun_result";
+    public static final String LOAD_IN_BACKGROUND_NOTIFICATION = "ru.nekit.android.nowapp.load_in_background_result";
     public static final String LOADING_TYPE = "loading_type";
     public static final String REQUEST_NEW_EVENTS = "request_new_event_items";
     public static final String REFRESH_EVENTS = "refresh_event_items";
@@ -57,7 +57,15 @@ public class EventItemsModel {
     private static final String API_ROOT = "api/events.get";
     private static final String DATABASE_NAME = "nowapp.db";
     private static final int DATABASE_VERSION = 2;
-    private static final boolean FEATURE_LOAD_IN_BACKGROUND = true;
+
+    private boolean FEATURE_LOAD_IN_BACKGROUND (){
+        return mContext.getResources().getBoolean(R.bool.feature_load_in_background);
+    }
+
+    private int PAGE_LIMIT_LOAD_IN_BACKGROUND (){
+        return mContext.getResources().getInteger(R.integer.page_limit_load_in_background);
+    }
+
     private static final HashMap<String, String> CATEGORY_TYPE_KEYWORDS = new HashMap<>();
     private static final HashMap<String, Integer> CATEGORY_TYPE = new HashMap<>();
     private static final HashMap<String, Integer> CATEGORY_TYPE_COLOR = new HashMap<>();
@@ -120,7 +128,7 @@ public class EventItemsModel {
                 Bundle args = new Bundle();
                 args.putString(LOADING_TYPE, LOAD_IN_BACKGROUND);
                 int result = RESULT_OK;
-                while (!Thread.interrupted() && mLoadedInBackgroundPage < getAvailablePageCount() && result == RESULT_OK) {
+                while (!Thread.interrupted() && mLoadedInBackgroundPage < getAvailablePageCount() && mLoadedInBackgroundPage <= PAGE_LIMIT_LOAD_IN_BACKGROUND() && result == RESULT_OK) {
                     result = performLoad(context, args);
                     LocalBroadcastManager.getInstance(mContext).sendBroadcast(new Intent(LOAD_IN_BACKGROUND_NOTIFICATION));
                     VTAG.call("Background Load Task: " + mLoadedInBackgroundPage + " : " + getAvailablePageCount() + " : " + result);
@@ -328,7 +336,7 @@ public class EventItemsModel {
 
 
     private void loadInBackground() {
-        if (FEATURE_LOAD_IN_BACKGROUND) {
+        if (FEATURE_LOAD_IN_BACKGROUND()) {
             if (mBackgroundThread != null && mBackgroundThread.isAlive()) {
                 mBackgroundThread.interrupt();
             }
@@ -363,7 +371,7 @@ public class EventItemsModel {
 
         boolean requestNewEvents = REQUEST_NEW_EVENTS.equals(type);
 
-        if (FEATURE_LOAD_IN_BACKGROUND) {
+        if (FEATURE_LOAD_IN_BACKGROUND()) {
             if (requestNewEvents) {
                 if (mLoadedInBackgroundPage > 1 && mCurrentPage <= mLoadedInBackgroundPage) {
                     if (mCurrentPage <= getAvailablePageCount()) {
