@@ -606,7 +606,9 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     @Override
     public void onBackPressed() {
         if (searchViewVisible()) {
+            mSearchView.setQuery("", true);
             applyMode(MODE.NORMAL);
+            setEventsFromModel();
         }
     }
 
