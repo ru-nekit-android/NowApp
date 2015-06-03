@@ -33,6 +33,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 
 import ru.nekit.android.nowapp.NowApplication;
@@ -68,7 +69,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     private EventItemsModel mEventModel;
     private String mQueryWithResult;
     private String mQuery;
-    private boolean mHasResultOfSearch;
+    private boolean mSearchResultIsPresent;
     private int mCurrentPage;
     private LOADING_STATE mLoadingState;
     private MODE mMode;
@@ -101,10 +102,12 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                 if (mKeyboardVisible) {
                     mWaitingForSelectItem = eventItem;
                 } else {
+                    mFloatingActionButtonAnimator.hide();
                     mEventItemsView.requestFocus();
                     mEventItemSelectListener.onEventItemSelect(eventItem);
                 }
             } else {
+                mFloatingActionButtonAnimator.hide();
                 mEventItemSelectListener.onEventItemSelect(eventItem);
             }
         } else {
@@ -143,8 +146,12 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                         performLoad();
                     }
                 } else if (action.equals(EventItemsModel.LOAD_IN_BACKGROUND_NOTIFICATION)) {
-                    if (mMode == MODE.SEARCH && mHasResultOfSearch) {
+                    if (mMode == MODE.SEARCH && mSearchResultIsPresent) {
                         performSearch(mQueryWithResult);
+                    }
+                    if (mMode == MODE.NORMAL) {
+                        mLoadingType = EventItemsModel.REQUEST_NEW_EVENTS;
+                        performLoad();
                     }
                 }
             }
@@ -161,7 +168,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
             if (searchQueryIsValid()) {
                 performSearch(query);
             } else {
-                mHasResultOfSearch = false;
+                mSearchResultIsPresent = false;
                 setEventsFromModel();
             }
         }
@@ -175,7 +182,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                 if (searchQueryIsValid()) {
                     performSearch(query);
                 } else {
-                    mHasResultOfSearch = false;
+                    mSearchResultIsPresent = false;
                     setSearchStatus(null);
                     setEventsFromModel();
                 }
@@ -201,7 +208,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         super.onResume();
 
         ((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(false);
-         if (mHasResultOfSearch) {
+        if (mSearchResultIsPresent) {
             new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
@@ -257,12 +264,24 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         mSearchView = (SearchView) getViewFromRoot(R.id.search_view);
         mSearchView.setOnQueryTextListener(this);
         mSearchView.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
+
         mSearchViewEditText = (EditText) mSearchView.findViewById(android.support.v7.appcompat.R.id.search_src_text);
         mSearchViewEditText.setOnEditorActionListener(this);
         mSearchViewEditText.setHint(" " + getActivity().getString(R.string.search_hint));
+        setCursorDrawableColor(mSearchViewEditText);
+
         ImageView searchCloseButton = (ImageView) mSearchView.findViewById(android.support.v7.appcompat.R.id.search_close_btn);
         searchCloseButton.setAlpha(192);
         searchCloseButton.setOnClickListener(this);
+    }
+
+    public void setCursorDrawableColor(EditText editText) {
+        try {
+            final Field fCursorDrawableRes = TextView.class.getDeclaredField("mCursorDrawableRes");
+            fCursorDrawableRes.setAccessible(true);
+            fCursorDrawableRes.set(editText, R.drawable.edit_text_cursor);
+        } catch (final Throwable ignored) {
+        }
     }
 
     @Override
@@ -315,7 +334,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         mEventCollectionAdapter.setLoadMoreListener(new EventCollectionAdapter.OnLoadMorelListener() {
             @Override
             public void onLoadMore() {
-                if (mMode == MODE.NORMAL || !mHasResultOfSearch) {
+                if (mMode == MODE.NORMAL || !mSearchResultIsPresent) {
                     mLoadingType = EventItemsModel.REQUEST_NEW_EVENTS;
                     setLoadingState(LOADING_STATE.LOADING);
                 }
@@ -342,6 +361,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     @Override
     public void onSoftKeyboardHidden() {
         if (mWaitingForSelectItem != null) {
+            mFloatingActionButtonAnimator.hide();
             mEventItemSelectListener.onEventItemSelect(mWaitingForSelectItem);
             mWaitingForSelectItem = null;
         }
@@ -486,8 +506,8 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                 case SEARCHER_ID:
 
                     ArrayList<EventItem> resultForSearch = (ArrayList<EventItem>) result;
-                    mHasResultOfSearch = resultForSearch.size() > 0;
-                    mQueryWithResult = mHasResultOfSearch ? mQuery : null;
+                    mSearchResultIsPresent = resultForSearch.size() > 0;
+                    mQueryWithResult = mSearchResultIsPresent ? mQuery : null;
                     mEventCollectionAdapter.setItems(resultForSearch);
                     boolean isEmpty = resultForSearch.size() == 0;
                     setSearchStatus(isEmpty ? getActivity().getString(R.string.nothing_found) : null);

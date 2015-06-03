@@ -2,7 +2,10 @@
 <resources>
 
     <style name="NowTheme" parent="NowThemeBase">
+        <item name="android:colorPrimary">@color/primary_color</item>
         <item name="android:colorAccent">@color/primary_color</item>
+        <item name="android:colorControlActivated">@android:color/white</item>
+        <item name="typeface">roboto_light</item>
     </style>
 
     <style name="SplashScreenTheme" parent="SplashScreenThemeBase" />
