@@ -162,29 +162,30 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         return getActivity().getResources().getInteger(R.integer.location_min_update_time);
     }
 
-    private void updateFloatingActionButtonPosition() {
+    private boolean updateFloatingActionButtonPosition() {
+        View bottomView = mMapViewContainer;
+        if (mPhoneButton.getVisibility() == View.VISIBLE) {
+            bottomView = mPhoneButton;
+        } else if (mSiteButton.getVisibility() == View.VISIBLE) {
+            bottomView = mSiteButton;
+        }
+        float appWorkAreaHeight = mRootLayout.getHeight();
+        int[] appWorkAreaCords = new int[2];
+        mRootLayout.getLocationOnScreen(appWorkAreaCords);
+        float appHeight = appWorkAreaCords[1] + appWorkAreaHeight;
+        int fabHeight = mFloatingActionButton.getHeight();
+        int[] bottomViewCords = new int[2];
+        bottomView.getLocationOnScreen(bottomViewCords);
+        float bottomViewBottom = bottomViewCords[1];
         if (mAllowUpdateFloatingActionButtonPosition) {
-            View bottomView = mMapViewContainer;
-            if (mPhoneButton.getVisibility() == View.VISIBLE) {
-                bottomView = mPhoneButton;
-            } else if (mSiteButton.getVisibility() == View.VISIBLE) {
-                bottomView = mSiteButton;
-            }
-            float appWorkAreaHeight = mRootLayout.getHeight();
-            int[] appWorkAreaCords = new int[2];
-            mRootLayout.getLocationOnScreen(appWorkAreaCords);
-            float appHeight = appWorkAreaCords[1] + appWorkAreaHeight;
-            int fabHeight = mFloatingActionButton.getHeight();
-            int[] bottomViewCords = new int[2];
-            bottomView.getLocationOnScreen(bottomViewCords);
-            float bottomViewBottom = bottomViewCords[1];
             if (appHeight < bottomViewBottom) {
                 mFloatingActionButton.setY(appWorkAreaHeight - fabHeight);
             } else {
                 mFloatingActionButton.setY(appWorkAreaHeight - (appHeight - bottomViewBottom) - fabHeight);
             }
-            mDescriptionView.setPadding(0, 0, 0, fabHeight / 3 * 2);
         }
+        mDescriptionView.setPadding(0, 0, 0, fabHeight / 3 * 2);
+        return appHeight < bottomViewBottom;
     }
 
     @Override
@@ -265,7 +266,14 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
             messageId = R.string.remove_from_calendar_message;
         }
         if (messageId != 0) {
-            mAllowUpdateFloatingActionButtonPosition = false;
+            final CoordinatorLayout.LayoutParams fabLayoutParams = (CoordinatorLayout.LayoutParams) mFloatingActionButton.getLayoutParams();
+            final CoordinatorLayout.Behavior behavior = fabLayoutParams.getBehavior();
+            if (!updateFloatingActionButtonPosition()) {
+                fabLayoutParams.setBehavior(new CoordinatorLayout.Behavior() {
+                });
+            } else {
+                mAllowUpdateFloatingActionButtonPosition = false;
+            }
             Snackbar snackbar = Snackbar.make(mFloatingActionButton, messageId, Snackbar.LENGTH_LONG);
             if (result.first == EventToCalendarLoader.ADD) {
                 snackbar.setAction(R.string.open_calendar_message, new View.OnClickListener() {
@@ -281,9 +289,10 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                 @Override
                 public void run() {
                     mAllowUpdateFloatingActionButtonPosition = true;
+                    fabLayoutParams.setBehavior(behavior);
                     updateFloatingActionButtonPosition();
                 }
-            }, snackbar.getDuration());
+            }, 3500);
         }
     }
 
