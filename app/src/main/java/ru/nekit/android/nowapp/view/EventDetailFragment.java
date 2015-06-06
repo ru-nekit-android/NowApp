@@ -2,6 +2,7 @@ package ru.nekit.android.nowapp.view;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -12,9 +13,16 @@ import android.graphics.PorterDuffColorFilter;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.CalendarContract;
 import android.provider.Settings;
+import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.Loader;
+import android.support.v4.util.Pair;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.AppCompatDialog;
@@ -26,9 +34,13 @@ import android.text.Spanned;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -63,6 +75,7 @@ import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.EventItem;
 import ru.nekit.android.nowapp.model.EventItemsModel;
+import ru.nekit.android.nowapp.model.EventToCalendarLoader;
 import ru.nekit.android.nowapp.model.vo.EventToCalendarLink;
 import ru.nekit.android.nowapp.modelView.listeners.IEventItemPosterSelectListener;
 import ru.nekit.android.nowapp.utils.RobotoTextAppearanceSpan;
@@ -72,16 +85,14 @@ import ru.nekit.android.nowapp.widget.OnSwipeTouchListener;
 import static ru.nekit.android.nowapp.NowApplication.APP_STATE.ONLINE;
 
 @SuppressWarnings("ResourceType")
-public class EventDetailFragment extends Fragment implements View.OnClickListener {
+public class EventDetailFragment extends Fragment implements View.OnClickListener, LoaderManager.LoaderCallbacks<Pair<Integer, EventToCalendarLink>> {
 
     public static final String TAG = "ru.nekit.android.event_detail_fragment";
 
-    private static final boolean FEATURE_USE_SWIPE_GEASTURE = false;
+    private static final int LOADER_ID = 0;
+    private static final boolean FEATURE_USE_SWIPE_GESTURE = true;
     private static final String EVENT_ITEM_KEY = "ru.nekit.android.event_item";
     private static final int MAX_ZOOM = 19;
-    private static final float LOCATION_MIN_UPDATE_DISTANCE = 50f;
-    private static final long LOCATION_MIN_UPDATE_TIME = TimeUnit.SECONDS.toMillis(5);
-
     private MapView mMapView;
     private final MapListener mMapListener = new MapListener() {
         @Override
@@ -109,12 +120,32 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     private TextView mDescriptionView;
     private Button mPhoneButton;
     private Button mSiteButton;
-    private EventToCalendarLink mEventToCalendarLink;
-    private boolean mOpenCalendarAfterAdd;
+    private FloatingActionButton mFloatingActionButton;
     private LayoutInflater mInflater;
     private SearchView mSearchView;
+    private CoordinatorLayout mRootLayout;
+    private boolean mAllowUpdateFloatingActionButtonPosition;
+    private final ViewTreeObserver.OnGlobalLayoutListener floatingActionButtonLayoutListener = new ViewTreeObserver.OnGlobalLayoutListener() {
+
+        @Override
+        public void onGlobalLayout() {
+            updateFloatingActionButtonPosition();
+        }
+
+    };
+    private EventToCalendarLink mEventToCalendarLink;
+
+    private ViewTreeObserver.OnScrollChangedListener scrollListener = new ViewTreeObserver.OnScrollChangedListener() {
+
+        @Override
+        public void onScrollChanged() {
+            updateFloatingActionButtonPosition();
+        }
+    };
+    private Menu mOptionMenu;
 
     public EventDetailFragment() {
+        mAllowUpdateFloatingActionButtonPosition = true;
     }
 
     public static EventDetailFragment getInstance(EventItem eventItem) {
@@ -123,10 +154,44 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         return fragment;
     }
 
+    private float LOCATION_MIN_UPDATE_DISTANCE() {
+        return getActivity().getResources().getInteger(R.integer.location_min_update_distance);
+    }
+
+    private long LOCATION_MIN_UPDATE_TIME() {
+        return getActivity().getResources().getInteger(R.integer.location_min_update_time);
+    }
+
+    private void updateFloatingActionButtonPosition() {
+        if (mAllowUpdateFloatingActionButtonPosition) {
+            View bottomView = mMapViewContainer;
+            if (mPhoneButton.getVisibility() == View.VISIBLE) {
+                bottomView = mPhoneButton;
+            } else if (mSiteButton.getVisibility() == View.VISIBLE) {
+                bottomView = mSiteButton;
+            }
+            float appWorkAreaHeight = mRootLayout.getHeight();
+            int[] appWorkAreaCords = new int[2];
+            mRootLayout.getLocationOnScreen(appWorkAreaCords);
+            float appHeight = appWorkAreaCords[1] + appWorkAreaHeight;
+            int fabHeight = mFloatingActionButton.getHeight();
+            int[] bottomViewCords = new int[2];
+            bottomView.getLocationOnScreen(bottomViewCords);
+            float bottomViewBottom = bottomViewCords[1];
+            if (appHeight < bottomViewBottom) {
+                mFloatingActionButton.setY(appWorkAreaHeight - fabHeight);
+            } else {
+                mFloatingActionButton.setY(appWorkAreaHeight - (appHeight - bottomViewBottom) - fabHeight);
+            }
+            mDescriptionView.setPadding(0, 0, 0, fabHeight / 3 * 2);
+        }
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
+        setHasOptionsMenu(true);
         mChangeApplicationStateReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -155,16 +220,94 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         NowApplication.registerForAppChangeStateNotification(mChangeApplicationStateReceiver);
 
         GpsMyLocationProvider gpsLocationProvider = new GpsMyLocationProvider(activity);
-        gpsLocationProvider.setLocationUpdateMinTime(LOCATION_MIN_UPDATE_TIME);
-        gpsLocationProvider.setLocationUpdateMinDistance(LOCATION_MIN_UPDATE_DISTANCE);
+        gpsLocationProvider.setLocationUpdateMinTime(LOCATION_MIN_UPDATE_TIME());
+        gpsLocationProvider.setLocationUpdateMinDistance(LOCATION_MIN_UPDATE_DISTANCE());
         myLocationOverLay.enableMyLocation(gpsLocationProvider);
         myLocationOverLay.setDrawAccuracyEnabled(true);
+        mFloatingActionButton.getViewTreeObserver().addOnGlobalLayoutListener(floatingActionButtonLayoutListener);
+        mScrollView.getViewTreeObserver().addOnScrollChangedListener(scrollListener);
+        initEventToCalendarLoader(EventToCalendarLoader.CHECK);
+        updateFloatingActionButtonPosition();
+    }
+
+    private void initEventToCalendarLoader(int method) {
+        Bundle loaderArgs = new Bundle();
+        loaderArgs.putInt(EventToCalendarLoader.METHOD_KEY, method);
+        loaderArgs.putInt(EventToCalendarLoader.EVENT_ITEM_ID_KEY, mEventItem.id);
+        LoaderManager loaderManager = getActivity().getSupportLoaderManager();
+        final Loader<EventToCalendarLink> loader = loaderManager.getLoader(LOADER_ID);
+        if (loader != null) {
+            loaderManager.restartLoader(LOADER_ID, loaderArgs, this);
+        } else {
+            loaderManager.initLoader(LOADER_ID, loaderArgs, this);
+        }
+    }
+
+    @Override
+    public Loader<Pair<Integer, EventToCalendarLink>> onCreateLoader(int id, Bundle args) {
+        mEventToCalendarLink = null;
+        EventToCalendarLoader loader = new EventToCalendarLoader(getActivity(), args);
+        loader.forceLoad();
+        return loader;
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Pair<Integer, EventToCalendarLink>> loader, Pair<Integer, EventToCalendarLink> result) {
+        mEventToCalendarLink = result.second;
+        boolean calendarLinkIsPresent = mEventToCalendarLink != null;
+        setMenuItVisible(R.id.action_remove_from_calendar, calendarLinkIsPresent);
+        setMenuItVisible(R.id.action_show_in_calendar, calendarLinkIsPresent);
+        setMenuItVisible(R.id.action_add_to_calendar, !calendarLinkIsPresent);
+        int messageId = 0;
+        if (result.first == EventToCalendarLoader.ADD) {
+            messageId = R.string.add_to_calendar_message;
+        } else if (result.first == EventToCalendarLoader.REMOVE) {
+            messageId = R.string.remove_from_calendar_message;
+        }
+        if (messageId != 0) {
+            mAllowUpdateFloatingActionButtonPosition = false;
+            Snackbar snackbar = Snackbar.make(mFloatingActionButton, messageId, Snackbar.LENGTH_LONG);
+            if (result.first == EventToCalendarLoader.ADD) {
+                snackbar.setAction(R.string.open_calendar_message, new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        openCalendarApplication();
+                    }
+                });
+            }
+            snackbar.show();
+            updateFloatingActionButtonPosition();
+            mFloatingActionButton.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    mAllowUpdateFloatingActionButtonPosition = true;
+                    updateFloatingActionButtonPosition();
+                }
+            }, snackbar.getDuration());
+        }
+    }
+
+    private void setMenuItVisible(int id, boolean visible) {
+        mOptionMenu.findItem(id).setVisible(visible);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Pair<Integer, EventToCalendarLink>> loader) {
+    }
+
+    private void openCalendarApplication() {
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setData(ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, mEventToCalendarLink.getCalendarEventID()));
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
     }
 
     @Override
     public void onPause() {
         super.onPause();
         NowApplication.unregisterForAppChangeStateNotification(mChangeApplicationStateReceiver);
+        mFloatingActionButton.getViewTreeObserver().removeOnGlobalLayoutListener(floatingActionButtonLayoutListener);
+        mScrollView.getViewTreeObserver().removeOnScrollChangedListener(scrollListener);
         myLocationOverLay.disableMyLocation();
     }
 
@@ -254,6 +397,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
         final Context context = getActivity();
 
+        mRootLayout = (CoordinatorLayout) view.findViewById(R.id.root_layout);
         TextView titleView = (TextView) view.findViewById(R.id.title_view);
         ArrayList<String> eventNameArray = ru.nekit.android.nowapp.utils.StringUtil.wrapText(mEventItem.name.toUpperCase());
         titleView.setLines(eventNameArray.size());
@@ -379,7 +523,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
             }
         });
 
-        if (FEATURE_USE_SWIPE_GEASTURE) {
+        if (FEATURE_USE_SWIPE_GESTURE) {
             view.setOnTouchListener(new OnSwipeTouchListener(context) {
                 public void onSwipeRight() {
                     getActivity().getSupportFragmentManager().popBackStack();
@@ -396,9 +540,60 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
         mMapViewContainer = (RelativeLayout) view.findViewById(R.id.map_view_container);
 
+        //TODO: do not work
         mScrollView.scrollTo(0, 0);
 
+        mFloatingActionButton = (FloatingActionButton) view.findViewById(R.id.fab_event);
+        mFloatingActionButton.setOnClickListener(this);
+
         return view;
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_event_detail, menu);
+        mOptionMenu = menu;
+        setMenuItVisible(R.id.action_add_to_calendar, false);
+        setMenuItVisible(R.id.action_remove_from_calendar, false);
+        setMenuItVisible(R.id.action_show_in_calendar, false);
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+        Context context = getActivity();
+        switch (item.getItemId()) {
+
+            case R.id.action_share:
+
+                Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
+                sharingIntent.setType("text/plain");
+                sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, mEventItem.name);
+                sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, mEventItem.eventDescription);
+                startActivity(Intent.createChooser(sharingIntent, context.getResources().getString(R.string.share_title)));
+
+                return true;
+
+            case R.id.action_add_to_calendar:
+
+                initEventToCalendarLoader(EventToCalendarLoader.ADD);
+
+                return true;
+
+            case R.id.action_remove_from_calendar:
+
+                initEventToCalendarLoader(EventToCalendarLoader.REMOVE);
+
+                return true;
+
+            case R.id.action_show_in_calendar:
+
+                openCalendarApplication();
+
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     private void createEventPlaceTextBlock(Context context, TextView placeNameView, String placeName, String address) {

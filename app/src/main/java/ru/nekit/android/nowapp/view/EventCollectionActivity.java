@@ -65,11 +65,7 @@ public class EventCollectionActivity extends AppCompatActivity implements IEvent
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_event_collection, menu);
-        return super.onCreateOptionsMenu(menu);
-    }
+
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {

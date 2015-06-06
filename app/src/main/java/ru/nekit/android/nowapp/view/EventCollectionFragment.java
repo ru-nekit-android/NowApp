@@ -23,6 +23,9 @@ import android.text.Html;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -74,7 +77,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     private LOADING_STATE mLoadingState;
     private MODE mMode;
     private String mLoadingType;
-    private EventItem mWaitingForSelectItem;
+    private EventItem mWaitingForOpenItem;
     private boolean mKeyboardVisible;
     private EventCollectionAdapter mEventCollectionAdapter;
     private IEventItemSelectListener mEventItemSelectListener;
@@ -100,7 +103,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
             if (searchViewVisible()) {
                 applyMode(MODE.NORMAL);
                 if (mKeyboardVisible) {
-                    mWaitingForSelectItem = eventItem;
+                    mWaitingForOpenItem = eventItem;
                 } else {
                     mFloatingActionButtonAnimator.hide();
                     mEventItemsView.requestFocus();
@@ -117,6 +120,19 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
 
     private boolean searchQueryIsValid() {
         return TextUtils.getTrimmedLength(mSearchView.getQuery().toString()) > 0;
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_event_collection, menu);
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     @Override
@@ -360,10 +376,10 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
 
     @Override
     public void onSoftKeyboardHidden() {
-        if (mWaitingForSelectItem != null) {
+        if (mWaitingForOpenItem != null) {
             mFloatingActionButtonAnimator.hide();
-            mEventItemSelectListener.onEventItemSelect(mWaitingForSelectItem);
-            mWaitingForSelectItem = null;
+            mEventItemSelectListener.onEventItemSelect(mWaitingForOpenItem);
+            mWaitingForOpenItem = null;
         }
         mKeyboardVisible = false;
     }

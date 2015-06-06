@@ -1,14 +1,21 @@
 package ru.nekit.android.nowapp.model;
 
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
+import android.content.ContentUris;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.CalendarContract;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.util.Pair;
 import android.text.TextUtils;
+
+import junit.framework.Assert;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -28,12 +35,15 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.VTAG;
 import ru.nekit.android.nowapp.model.db.EventLocalDataSource;
+import ru.nekit.android.nowapp.model.db.EventToCalendarDataSource;
+import ru.nekit.android.nowapp.model.vo.EventToCalendarLink;
 
 /**
  * Created by chuvac on 15.03.15.
@@ -56,13 +66,13 @@ public class EventItemsModel {
     private static final String SITE_NAME = "nowapp.ru";
     private static final String API_ROOT = "api/events.get";
     private static final String DATABASE_NAME = "nowapp.db";
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3;
 
-    private boolean FEATURE_LOAD_IN_BACKGROUND (){
+    private boolean FEATURE_LOAD_IN_BACKGROUND() {
         return mContext.getResources().getBoolean(R.bool.feature_load_in_background);
     }
 
-    private int PAGE_LIMIT_LOAD_IN_BACKGROUND (){
+    private int PAGE_LIMIT_LOAD_IN_BACKGROUND() {
         return mContext.getResources().getInteger(R.integer.page_limit_load_in_background);
     }
 
@@ -82,6 +92,7 @@ public class EventItemsModel {
     private final ArrayList<EventItem> mEventItems;
     private final EventLocalDataSource mEventLocalDataSource;
     private final Runnable mBackgroundLoadTask;
+    private final EventToCalendarDataSource mEventToCalendarDataSource;
 
     private int mAvailableEventCount;
     private int mCurrentPage;
@@ -92,6 +103,7 @@ public class EventItemsModel {
     private int mEventsCountPerPage;
     private EventItem mLastAddedInBackgroundEventItem;
     private Thread mBackgroundThread;
+
 
     private EventItemsModel(final Context context) {
         mContext = context;
@@ -121,6 +133,7 @@ public class EventItemsModel {
         CATEGORY_TYPE_COLOR.put("category_education", context.getResources().getColor(R.color.event_category_education));
 
         mEventLocalDataSource = new EventLocalDataSource(context, DATABASE_NAME, DATABASE_VERSION);
+        mEventToCalendarDataSource = new EventToCalendarDataSource(context, DATABASE_NAME, DATABASE_VERSION);
 
         mBackgroundLoadTask = new Runnable() {
             @Override
@@ -137,17 +150,31 @@ public class EventItemsModel {
         };
 
         mEventLocalDataSource.openForWrite();
-
+        mEventToCalendarDataSource.openForWrite();
 
         ArrayList<EventItem> allEvents = mEventLocalDataSource.getAllEvents();
         for (EventItem event : allEvents) {
             if (!eventIsActual(event)) {
                 mEventLocalDataSource.removeEventByID(event.id);
+                mEventToCalendarDataSource.removeLinkByEventID(event.id);
             }
         }
 
         setEventsFromLocalDataSource(allEvents);
     }
+
+    private EventToCalendarLink addEventToCalendarLink(EventItem eventItem, long calendarEventID) {
+        return mEventToCalendarDataSource.addLink(eventItem.id, calendarEventID);
+    }
+
+    private void removeEventToCalendarLinkByEventId(long eventItemId) {
+        mEventToCalendarDataSource.removeLinkByEventID(eventItemId);
+    }
+
+    private EventToCalendarLink getEventToCalendarLinkByEventId(long eventItemId) {
+        return mEventToCalendarDataSource.getLinkByEventID(eventItemId);
+    }
+
 
     public static String getStartTimeAlias(Context context, EventItem eventItem) {
         return getStartTimeString(context, eventItem, false);
@@ -196,8 +223,6 @@ public class EventItemsModel {
                 startTimeAliasString = String.format("%s %s", calendar.get(Calendar.DAY_OF_MONTH), new DateFormatSymbols().getMonths()[calendar.get(Calendar.MONTH)].toLowerCase());
             }
         }
-
-
         return startTimeAliasString;
     }
 
@@ -282,7 +307,7 @@ public class EventItemsModel {
     }
 
     //TODO: get from database!!!
-    public EventItem getEventItemByID(int ID) {
+    private EventItem getEventItemByID(int ID) {
         EventItem result = null;
         for (int i = 0; i < mEventItems.size() && result == null; i++) {
             EventItem item = mEventItems.get(i);
@@ -514,6 +539,56 @@ public class EventItemsModel {
         }
 
         return result;
+    }
+
+    public Pair<Integer, EventToCalendarLink> performCalendarFunctionality(int method, int eventItemId) {
+        EventToCalendarLink result = null;
+        long calendarEventID;
+        ContentResolver contentResolver = mContext.getContentResolver();
+        if (method == EventToCalendarLoader.CHECK) {
+            result = getEventToCalendarLinkByEventId(eventItemId);
+            if (result != null) {
+                calendarEventID = result.getCalendarEventID();
+                Cursor cursor = contentResolver.query(ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, calendarEventID), null, null, null, null);
+                if (!cursor.moveToFirst()) {
+                    result = null;
+                    removeEventToCalendarLinkByEventId(eventItemId);
+                }
+                cursor.close();
+            }
+        } else if (method == EventToCalendarLoader.ADD) {
+            EventItem eventItem = getEventItemByID(eventItemId);
+            TimeZone timeZone = Calendar.getInstance().getTimeZone();
+            ContentValues values = new ContentValues();
+            values.put(CalendarContract.Events.DTSTART, TimeUnit.SECONDS.toMillis(getEventStartTimeInSeconds(eventItem)));
+            values.put(CalendarContract.Events.DTEND, TimeUnit.SECONDS.toMillis(getEventEndTimeInSeconds(eventItem)));
+            values.put(CalendarContract.Events.TITLE, eventItem.name);
+            values.put(CalendarContract.Events.EVENT_LOCATION, eventItem.placeName);
+            if (!"".equals(eventItem.email)) {
+                values.put(CalendarContract.Events.ORGANIZER, eventItem.email);
+            }
+            values.put(CalendarContract.Events.DESCRIPTION, eventItem.eventDescription);
+            values.put(CalendarContract.Events.EVENT_COLOR, getCategoryColor(eventItem.category));
+            values.put(CalendarContract.Events.EVENT_TIMEZONE, timeZone.getID());
+            values.put(CalendarContract.Events.CALENDAR_ID, 1);
+            Uri insertToCalendarURI = contentResolver.insert(CalendarContract.Events.CONTENT_URI, values);
+            calendarEventID = Long.parseLong(insertToCalendarURI.getLastPathSegment());
+            result = addEventToCalendarLink(eventItem, calendarEventID);
+        } else if (method == EventToCalendarLoader.REMOVE) {
+            result = getEventToCalendarLinkByEventId(eventItemId);
+            if (result != null) {
+                calendarEventID = result.getCalendarEventID();
+                Cursor cursor = contentResolver.query(ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, calendarEventID), null, null, null, null);
+                removeEventToCalendarLinkByEventId(eventItemId);
+                if (cursor.moveToFirst()) {
+                    int status = contentResolver.delete(ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, calendarEventID), null, null);
+                    Assert.assertTrue(status != 0);
+                }
+                cursor.close();
+                result = null;
+            }
+        }
+        return new Pair<Integer, EventToCalendarLink>(method, result);
     }
 
     private class EventNameComparator implements Comparator<EventItem> {
