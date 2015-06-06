@@ -8,4 +8,8 @@
     <bool name="feature_live_search">true</bool>
     <bool name="feature_load_in_background">true</bool>
     <integer name="page_limit_load_in_background">10</integer>
+    <integer name="location_min_update_distance">50</integer>
+    <integer name="location_min_update_time">5000</integer>
+
+
 </resources>
