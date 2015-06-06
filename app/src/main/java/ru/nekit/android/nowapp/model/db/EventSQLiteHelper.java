@@ -17,6 +17,17 @@ public class EventSQLiteHelper extends SQLiteOpenHelper implements BaseColumns {
     public static final String FTS_TABLE_NAME = "events_fts";
     public static final String FTS_ENGINE = "fts4";
 
+    public static final String EVENT_TO_CALENDAR_LINK_TABLE_NAME = "event_to_calendar_link";
+
+    public static final String EVENT_ID = EventSQLiteHelper._ID;
+    public static final String CALENDAR_EVENT_ID = "calendar_event" + EventSQLiteHelper._ID;
+
+    private static final String EVENT_TO_CALENDAR_LINK_DATABASE_CREATE = "CREATE TABLE "
+            + EVENT_TO_CALENDAR_LINK_TABLE_NAME + " ("
+            + EVENT_ID + " INTEGER UNIQUE, "
+            + CALENDAR_EVENT_ID + " INTEGER"
+            + ");";
+
     static final String FTS_EVENT_START_TIME_ALIAS = "event_start_time_alias";
     static final String FTS_EVENT_CATEGORY_KEYWORD = "event_category_keyword";
     static final String FTS_EVENT_START_TIME = "event_start_time";
@@ -71,12 +82,14 @@ public class EventSQLiteHelper extends SQLiteOpenHelper implements BaseColumns {
     public void onCreate(SQLiteDatabase database) {
         database.execSQL(DATABASE_CREATE);
         database.execSQL(DATABASE_CREATE_FTS);
+        database.execSQL(EVENT_TO_CALENDAR_LINK_DATABASE_CREATE);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase database, int oldVersion, int newVersion) {
         database.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
         database.execSQL("DROP TABLE IF EXISTS " + FTS_TABLE_NAME);
+        database.execSQL("DROP TABLE IF EXISTS " + EVENT_TO_CALENDAR_LINK_TABLE_NAME);
         onCreate(database);
     }
 

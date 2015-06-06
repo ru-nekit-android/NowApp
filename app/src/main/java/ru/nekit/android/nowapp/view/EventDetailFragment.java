@@ -292,7 +292,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                     fabLayoutParams.setBehavior(behavior);
                     updateFloatingActionButtonPosition();
                 }
-            }, 3500);
+            }, 3200);
         }
     }
 

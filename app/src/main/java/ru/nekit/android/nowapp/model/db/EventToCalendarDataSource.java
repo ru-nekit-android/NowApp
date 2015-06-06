@@ -16,16 +16,16 @@ import ru.nekit.android.nowapp.model.vo.EventToCalendarLink;
 public class EventToCalendarDataSource {
 
     private SQLiteDatabase database;
-    private EventToCalendarSQLiteHelper dbHelper;
+    private EventSQLiteHelper dbHelper;
 
     private static final String[] ALL_COLUMNS =
             {
-                    EventToCalendarSQLiteHelper.EVENT_ID,
-                    EventToCalendarSQLiteHelper.CALENDAR_EVENT_ID
+                    EventSQLiteHelper.EVENT_ID,
+                    EventSQLiteHelper.CALENDAR_EVENT_ID
             };
 
     public EventToCalendarDataSource(Context context, String dataBaseName, int databaseVersion) {
-        dbHelper = EventToCalendarSQLiteHelper.getInstance(context, dataBaseName, databaseVersion);
+        dbHelper = EventSQLiteHelper.getInstance(context, dataBaseName, databaseVersion);
     }
 
     public void openForWrite() throws SQLException {
@@ -38,9 +38,9 @@ public class EventToCalendarDataSource {
 
     public EventToCalendarLink addLink(long eventID, long calendarID) {
         ContentValues values = new ContentValues();
-        values.put(EventToCalendarSQLiteHelper.EVENT_ID, eventID);
-        values.put(EventToCalendarSQLiteHelper.CALENDAR_EVENT_ID, calendarID);
-        long result = database.insert(EventToCalendarSQLiteHelper.TABLE_NAME, null, values);
+        values.put(EventSQLiteHelper.EVENT_ID, eventID);
+        values.put(EventSQLiteHelper.CALENDAR_EVENT_ID, calendarID);
+        long result = database.insert(EventSQLiteHelper.EVENT_TO_CALENDAR_LINK_TABLE_NAME, null, values);
         if (result != -1) {
             return new EventToCalendarLink(eventID, calendarID);
         }
@@ -50,7 +50,7 @@ public class EventToCalendarDataSource {
     public ArrayList<EventToCalendarLink> getAllEventToCalendarLinks() {
         ArrayList<EventToCalendarLink> linkList = new ArrayList<>();
 
-        Cursor cursor = database.query(EventToCalendarSQLiteHelper.TABLE_NAME,
+        Cursor cursor = database.query(EventSQLiteHelper.EVENT_TO_CALENDAR_LINK_TABLE_NAME,
                 ALL_COLUMNS, null, null, null, null, null);
 
         cursor.moveToFirst();
@@ -64,7 +64,7 @@ public class EventToCalendarDataSource {
     }
 
     private EventToCalendarLink cursorToLink(Cursor cursor) {
-        return new EventToCalendarLink(cursor.getLong(cursor.getColumnIndex(EventToCalendarSQLiteHelper.EVENT_ID)), cursor.getLong(cursor.getColumnIndex(EventToCalendarSQLiteHelper.CALENDAR_EVENT_ID)));
+        return new EventToCalendarLink(cursor.getLong(cursor.getColumnIndex(EventSQLiteHelper.EVENT_ID)), cursor.getLong(cursor.getColumnIndex(EventSQLiteHelper.CALENDAR_EVENT_ID)));
     }
 
     public void close() {
@@ -73,13 +73,13 @@ public class EventToCalendarDataSource {
 
     public void removeLinkByEventID(long ID) {
         String idString = String.valueOf(ID);
-        database.delete(EventToCalendarSQLiteHelper.TABLE_NAME, String.format("%s = %s", EventToCalendarSQLiteHelper.EVENT_ID, idString), null);
+        database.delete(EventSQLiteHelper.TABLE_NAME, String.format("%s = %s", EventSQLiteHelper.EVENT_ID, idString), null);
     }
 
     public EventToCalendarLink getLinkByEventID(long ID) {
         String idString = String.valueOf(ID);
         EventToCalendarLink link = null;
-        Cursor cursor = database.query(EventToCalendarSQLiteHelper.TABLE_NAME, ALL_COLUMNS, String.format("%s = %s;", EventToCalendarSQLiteHelper.EVENT_ID, idString), null, null, null, null);
+        Cursor cursor = database.query(EventSQLiteHelper.EVENT_TO_CALENDAR_LINK_TABLE_NAME, ALL_COLUMNS, String.format("%s = %s;", EventSQLiteHelper.EVENT_ID, idString), null, null, null, null);
         if (cursor.moveToFirst()) {
             link = cursorToLink(cursor);
         }

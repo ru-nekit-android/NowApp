@@ -66,7 +66,7 @@ public class EventItemsModel {
     private static final String SITE_NAME = "nowapp.ru";
     private static final String API_ROOT = "api/events.get";
     private static final String DATABASE_NAME = "nowapp.db";
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 4;
 
     private boolean FEATURE_LOAD_IN_BACKGROUND() {
         return mContext.getResources().getBoolean(R.bool.feature_load_in_background);
