@@ -131,13 +131,25 @@ public class EventLocalDataSource {
                     ALL_COLUMNS, EventSQLiteHelper._ID + " IN (" + TextUtils.join(",", ids) + ")", null, null, null, null);
             cursor.moveToFirst();
             while (!cursor.isAfterLast()) {
-                EventItem eventitem = cursorToEventItem(cursor);
-                eventItems.add(eventitem);
+                EventItem eventItem = cursorToEventItem(cursor);
+                eventItems.add(eventItem);
                 cursor.moveToNext();
             }
             cursor.close();
         }
         return eventItems;
+    }
+
+    public EventItem getByEventID(int id) {
+        EventItem eventItem = null;
+        Cursor cursor = database.query(EventSQLiteHelper.TABLE_NAME,
+                ALL_COLUMNS, EventSQLiteHelper._ID + "=" + id, null, null, null, null);
+        cursor.moveToFirst();
+        if (!cursor.isAfterLast()) {
+            eventItem = cursorToEventItem(cursor);
+        }
+        cursor.close();
+        return eventItem;
     }
 
     private EventItem cursorToEventItem(Cursor cursor) {
