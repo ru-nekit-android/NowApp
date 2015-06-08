@@ -13,7 +13,7 @@ import ru.nekit.android.nowapp.NowApplication;
  */
 public class EventItemsSearcher extends AsyncTaskLoader<ArrayList<EventItem>> {
 
-    public static final String EVENT_ITEMS_SEARCH_KEY = "event_items_search_key";
+    public static final String KEY_EVENT_ITEMS_SEARCH = "event_items_search_key";
 
     private Bundle mArgs;
 
@@ -24,7 +24,7 @@ public class EventItemsSearcher extends AsyncTaskLoader<ArrayList<EventItem>> {
 
     @Override
     public ArrayList<EventItem> loadInBackground() {
-        return NowApplication.getEventModel().performSearch(mArgs.getString(EVENT_ITEMS_SEARCH_KEY));
+        return NowApplication.getEventModel().performSearch(mArgs.getString(KEY_EVENT_ITEMS_SEARCH));
     }
 
     @Override

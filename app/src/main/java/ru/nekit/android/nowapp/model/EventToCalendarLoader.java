@@ -13,8 +13,9 @@ import ru.nekit.android.nowapp.model.vo.EventToCalendarLink;
  */
 public class EventToCalendarLoader extends AsyncTaskLoader<Pair<Integer, EventToCalendarLink>> {
 
-    public static final String EVENT_ITEM_ID_KEY = "event_item_id_key";
-    public static final String METHOD_KEY = "method_key";
+    public static final String KEY_EVENT_ITEM_ID = "event_item_id_key";
+    public static final String KEY_METHOD = "method_key";
+
     public static final int CHECK = 1;
     public static final int ADD = 2;
     public static final int REMOVE = 3;
@@ -28,6 +29,7 @@ public class EventToCalendarLoader extends AsyncTaskLoader<Pair<Integer, EventTo
 
     @Override
     public Pair<Integer, EventToCalendarLink> loadInBackground() {
-        return NowApplication.getEventModel().performCalendarFunctionality(mArgs.getInt(METHOD_KEY), mArgs.getInt(EVENT_ITEM_ID_KEY));
+        int method = mArgs.getInt(KEY_METHOD);
+        return new Pair<>(method, NowApplication.getEventModel().performCalendarFunctionality(method, mArgs.getInt(KEY_EVENT_ITEM_ID)));
     }
 }

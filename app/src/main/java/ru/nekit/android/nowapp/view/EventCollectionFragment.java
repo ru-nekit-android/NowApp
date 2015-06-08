@@ -425,7 +425,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         mQuery = query;
         LoaderManager loaderManager = getLoaderManager();
         Bundle searchArgs = new Bundle();
-        searchArgs.putString(EventItemsSearcher.EVENT_ITEMS_SEARCH_KEY, query);
+        searchArgs.putString(EventItemsSearcher.KEY_EVENT_ITEMS_SEARCH, query);
         final Loader loader = loaderManager.getLoader(SEARCHER_ID);
         if (loader != null) {
             loaderManager.restartLoader(SEARCHER_ID, searchArgs, EventCollectionFragment.this);
