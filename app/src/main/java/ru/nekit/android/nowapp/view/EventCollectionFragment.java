@@ -494,7 +494,9 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
             default:
 
         }
-        loader.forceLoad();
+        if (loader != null) {
+            loader.forceLoad();
+        }
         return loader;
     }
 
