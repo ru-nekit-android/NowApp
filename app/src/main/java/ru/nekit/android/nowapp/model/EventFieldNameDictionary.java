@@ -27,5 +27,8 @@ public class EventFieldNameDictionary {
     public static final String LOGO_THUMB = "logoThumb";
     public static final String LOGO_ORIGINAL = "logoOriginal";
     public static final String ALL_NIGHT_PARTY = "all_night_party";
+    //Internal part
+    public static final String LIKE_COUNT = "likes";
+    public static final String VIEW_COUNT = "views";
 
 }

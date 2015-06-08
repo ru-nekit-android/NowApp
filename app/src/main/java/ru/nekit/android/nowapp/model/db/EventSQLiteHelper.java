@@ -55,6 +55,8 @@ public class EventSQLiteHelper extends SQLiteOpenHelper implements BaseColumns {
             + EventFieldNameDictionary.POSTER_BLUR + " TEXT, "
             + EventFieldNameDictionary.POSTER_ORIGINAL + " TEXT, "
             + EventFieldNameDictionary.POSTER_THUMB + " TEXT"
+            + EventFieldNameDictionary.LIKE_COUNT + " INTEGER, "
+            + EventFieldNameDictionary.VIEW_COUNT + " INTEGER"
             + ");";
     private static final String DATABASE_CREATE_FTS = "CREATE VIRTUAL TABLE " + FTS_TABLE_NAME +
             " USING " + FTS_ENGINE + "(" + _ID + " integer unique, "
@@ -64,7 +66,8 @@ public class EventSQLiteHelper extends SQLiteOpenHelper implements BaseColumns {
             + EventFieldNameDictionary.ADDRESS + " TEXT, "
             + FTS_EVENT_START_TIME_ALIAS + " TEXT, "
             + FTS_EVENT_CATEGORY_KEYWORD + " TEXT, "
-            + FTS_EVENT_START_TIME + " INTEGER);";
+            + FTS_EVENT_START_TIME + " INTEGER"
+            + ");";
     private static EventSQLiteHelper sInstance;
 
     private EventSQLiteHelper(Context context, String dataBaseName, int databaseVersion) {

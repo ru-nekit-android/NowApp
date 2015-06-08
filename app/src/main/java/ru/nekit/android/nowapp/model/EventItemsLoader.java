@@ -20,7 +20,7 @@ public class EventItemsLoader extends AsyncTaskLoader<Integer> {
 
     @Override
     public Integer loadInBackground() {
-        return NowApplication.getEventModel().performLoad(getContext(), mArgs);
+        return NowApplication.getEventModel().performLoad(mArgs == null ? null : mArgs.getString(EventItemsModel.LOADING_TYPE));
     }
 
 }

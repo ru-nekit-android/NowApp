@@ -73,6 +73,7 @@ import java.util.concurrent.TimeUnit;
 
 import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
+import ru.nekit.android.nowapp.model.EventApiCaller;
 import ru.nekit.android.nowapp.model.EventItem;
 import ru.nekit.android.nowapp.model.EventItemsModel;
 import ru.nekit.android.nowapp.model.EventToCalendarLoader;
@@ -85,11 +86,12 @@ import ru.nekit.android.nowapp.widget.OnSwipeTouchListener;
 import static ru.nekit.android.nowapp.NowApplication.APP_STATE.ONLINE;
 
 @SuppressWarnings("ResourceType")
-public class EventDetailFragment extends Fragment implements View.OnClickListener, LoaderManager.LoaderCallbacks<Pair<Integer, EventToCalendarLink>> {
+public class EventDetailFragment extends Fragment implements View.OnClickListener, LoaderManager.LoaderCallbacks {
 
     public static final String TAG = "ru.nekit.android.event_detail_fragment";
 
-    private static final int LOADER_ID = 0;
+    private static final int CALENDAR_LOADER_ID = 0;
+    private static final int API_CALLER_ID = 1;
     private static final boolean FEATURE_USE_SWIPE_GESTURE = true;
     private static final String EVENT_ITEM_KEY = "ru.nekit.android.event_item";
     private static final int MAX_ZOOM = 19;
@@ -228,71 +230,115 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         mFloatingActionButton.getViewTreeObserver().addOnGlobalLayoutListener(floatingActionButtonLayoutListener);
         mScrollView.getViewTreeObserver().addOnScrollChangedListener(scrollListener);
         initEventToCalendarLoader(EventToCalendarLoader.CHECK);
+        initEventApiLoader(EventApiCaller.METHOD_GET_STATS);
         updateFloatingActionButtonPosition();
+    }
+
+    private void initEventApiLoader(int method) {
+        Bundle loaderArgs = new Bundle();
+        loaderArgs.putInt(EventApiCaller.KEY_METHOD, method);
+        loaderArgs.putInt(EventApiCaller.KEY_EVENT_ITEM_ID, mEventItem.id);
+        LoaderManager loaderManager = getActivity().getSupportLoaderManager();
+        final Loader<Integer> loader = loaderManager.getLoader(API_CALLER_ID);
+        if (loader != null) {
+            loaderManager.restartLoader(API_CALLER_ID, loaderArgs, this);
+        } else {
+            loaderManager.initLoader(API_CALLER_ID, loaderArgs, this);
+        }
     }
 
     private void initEventToCalendarLoader(int method) {
         Bundle loaderArgs = new Bundle();
-        loaderArgs.putInt(EventToCalendarLoader.METHOD_KEY, method);
-        loaderArgs.putInt(EventToCalendarLoader.EVENT_ITEM_ID_KEY, mEventItem.id);
+        loaderArgs.putInt(EventToCalendarLoader.KEY_METHOD, method);
+        loaderArgs.putInt(EventToCalendarLoader.KEY_EVENT_ITEM_ID, mEventItem.id);
         LoaderManager loaderManager = getActivity().getSupportLoaderManager();
-        final Loader<EventToCalendarLink> loader = loaderManager.getLoader(LOADER_ID);
+        final Loader<EventToCalendarLink> loader = loaderManager.getLoader(CALENDAR_LOADER_ID);
         if (loader != null) {
-            loaderManager.restartLoader(LOADER_ID, loaderArgs, this);
+            loaderManager.restartLoader(CALENDAR_LOADER_ID, loaderArgs, this);
         } else {
-            loaderManager.initLoader(LOADER_ID, loaderArgs, this);
+            loaderManager.initLoader(CALENDAR_LOADER_ID, loaderArgs, this);
         }
     }
 
+
     @Override
-    public Loader<Pair<Integer, EventToCalendarLink>> onCreateLoader(int id, Bundle args) {
-        mEventToCalendarLink = null;
-        EventToCalendarLoader loader = new EventToCalendarLoader(getActivity(), args);
-        loader.forceLoad();
+    public Loader onCreateLoader(int id, Bundle args) {
+        Loader loader = null;
+        switch (id) {
+            case CALENDAR_LOADER_ID:
+
+                mEventToCalendarLink = null;
+                loader = new EventToCalendarLoader(getActivity(), args);
+
+                break;
+
+            case API_CALLER_ID:
+
+                loader = new EventApiCaller(getActivity(), args);
+
+                break;
+        }
+        if (loader != null) {
+            loader.forceLoad();
+        }
         return loader;
     }
 
+
     @Override
-    public void onLoadFinished(Loader<Pair<Integer, EventToCalendarLink>> loader, Pair<Integer, EventToCalendarLink> result) {
-        mEventToCalendarLink = result.second;
-        boolean calendarLinkIsPresent = mEventToCalendarLink != null;
-        setMenuItVisible(R.id.action_remove_from_calendar, calendarLinkIsPresent);
-        setMenuItVisible(R.id.action_show_in_calendar, calendarLinkIsPresent);
-        setMenuItVisible(R.id.action_add_to_calendar, !calendarLinkIsPresent);
-        int messageId = 0;
-        if (result.first == EventToCalendarLoader.ADD) {
-            messageId = R.string.add_to_calendar_message;
-        } else if (result.first == EventToCalendarLoader.REMOVE) {
-            messageId = R.string.remove_from_calendar_message;
-        }
-        if (messageId != 0) {
-            final CoordinatorLayout.LayoutParams fabLayoutParams = (CoordinatorLayout.LayoutParams) mFloatingActionButton.getLayoutParams();
-            final CoordinatorLayout.Behavior behavior = fabLayoutParams.getBehavior();
-            if (!updateFloatingActionButtonPosition()) {
-                fabLayoutParams.setBehavior(new CoordinatorLayout.Behavior() {
-                });
-            } else {
-                mAllowUpdateFloatingActionButtonPosition = false;
-            }
-            Snackbar snackbar = Snackbar.make(mFloatingActionButton, messageId, Snackbar.LENGTH_LONG);
-            if (result.first == EventToCalendarLoader.ADD) {
-                snackbar.setAction(R.string.open_calendar_message, new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        openCalendarApplication();
-                    }
-                });
-            }
-            snackbar.show();
-            updateFloatingActionButtonPosition();
-            mFloatingActionButton.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    mAllowUpdateFloatingActionButtonPosition = true;
-                    fabLayoutParams.setBehavior(behavior);
-                    updateFloatingActionButtonPosition();
+    public void onLoadFinished(Loader loader, Object result) {
+        switch (loader.getId()) {
+            case CALENDAR_LOADER_ID:
+
+                Pair<Integer, EventToCalendarLink> calendarResult = (Pair<Integer, EventToCalendarLink>) result;
+                mEventToCalendarLink = calendarResult.second;
+                boolean calendarLinkIsPresent = mEventToCalendarLink != null;
+                setMenuItVisible(R.id.action_remove_from_calendar, calendarLinkIsPresent);
+                setMenuItVisible(R.id.action_show_in_calendar, calendarLinkIsPresent);
+                setMenuItVisible(R.id.action_add_to_calendar, !calendarLinkIsPresent);
+                int messageId = 0;
+                if (calendarResult.first == EventToCalendarLoader.ADD) {
+                    messageId = R.string.add_to_calendar_message;
+                } else if (calendarResult.first == EventToCalendarLoader.REMOVE) {
+                    messageId = R.string.remove_from_calendar_message;
                 }
-            }, 3200);
+                if (messageId != 0) {
+                    final CoordinatorLayout.LayoutParams fabLayoutParams = (CoordinatorLayout.LayoutParams) mFloatingActionButton.getLayoutParams();
+                    final CoordinatorLayout.Behavior behavior = fabLayoutParams.getBehavior();
+                    if (!updateFloatingActionButtonPosition()) {
+                        fabLayoutParams.setBehavior(new CoordinatorLayout.Behavior() {
+                        });
+                    } else {
+                        mAllowUpdateFloatingActionButtonPosition = false;
+                    }
+                    Snackbar snackbar = Snackbar.make(mFloatingActionButton, messageId, Snackbar.LENGTH_LONG);
+                    if (calendarResult.first == EventToCalendarLoader.ADD) {
+                        snackbar.setAction(R.string.open_calendar_message, new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                openCalendarApplication();
+                            }
+                        });
+                    }
+                    snackbar.show();
+                    updateFloatingActionButtonPosition();
+                    mFloatingActionButton.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            mAllowUpdateFloatingActionButtonPosition = true;
+                            fabLayoutParams.setBehavior(behavior);
+                            updateFloatingActionButtonPosition();
+                        }
+                    }, 3200);
+                }
+
+                break;
+
+            case API_CALLER_ID:
+
+
+                break;
+
         }
     }
 
@@ -301,7 +347,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     }
 
     @Override
-    public void onLoaderReset(Loader<Pair<Integer, EventToCalendarLink>> loader) {
+    public void onLoaderReset(Loader loader) {
     }
 
     private void openCalendarApplication() {
@@ -315,7 +361,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     public void onPause() {
         super.onPause();
         NowApplication.unregisterForAppChangeStateNotification(mChangeApplicationStateReceiver);
-        mFloatingActionButton.getViewTreeObserver().removeOnGlobalLayoutListener(floatingActionButtonLayoutListener);
+        mFloatingActionButton.getViewTreeObserver().removeGlobalOnLayoutListener(floatingActionButtonLayoutListener);
         mScrollView.getViewTreeObserver().removeOnScrollChangedListener(scrollListener);
         myLocationOverLay.disableMyLocation();
     }
@@ -360,6 +406,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         mSearchView = (SearchView) getViewFromRoot(R.id.search_view);
+        assert mSearchView != null;
         mSearchView.setVisibility(View.GONE);
     }
 

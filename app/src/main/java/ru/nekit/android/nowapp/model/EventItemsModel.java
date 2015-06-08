@@ -9,7 +9,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Bundle;
 import android.provider.CalendarContract;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.util.Pair;
@@ -64,9 +63,10 @@ public class EventItemsModel {
     private static final long[] EVENING_PERIOD = {TimeUnit.HOURS.toSeconds(19), TimeUnit.HOURS.toSeconds(23) - 1};
     private static final String TAG_EVENTS = "events";
     private static final String SITE_NAME = "nowapp.ru";
-    private static final String API_ROOT = "api/events.get";
+    private static final String API_REQUEST_GET_EVENTS = "api/events.get";
+    private static final String API_REQUEST_GET_STATS = "api/event.get.stats";
     private static final String DATABASE_NAME = "nowapp.db";
-    private static final int DATABASE_VERSION = 4;
+    private static final int DATABASE_VERSION = 5;
 
     private boolean FEATURE_LOAD_IN_BACKGROUND() {
         return mContext.getResources().getBoolean(R.bool.feature_load_in_background);
@@ -138,11 +138,9 @@ public class EventItemsModel {
         mBackgroundLoadTask = new Runnable() {
             @Override
             public void run() {
-                Bundle args = new Bundle();
-                args.putString(LOADING_TYPE, LOAD_IN_BACKGROUND);
                 int result = RESULT_OK;
                 while (!Thread.interrupted() && mLoadedInBackgroundPage < getAvailablePageCount() && mLoadedInBackgroundPage <= PAGE_LIMIT_LOAD_IN_BACKGROUND() && result == RESULT_OK) {
-                    result = performLoad(context, args);
+                    result = performLoad(LOAD_IN_BACKGROUND);
                     LocalBroadcastManager.getInstance(mContext).sendBroadcast(new Intent(LOAD_IN_BACKGROUND_NOTIFICATION));
                     VTAG.call("Background Load Task: " + mLoadedInBackgroundPage + " : " + getAvailablePageCount() + " : " + result);
                 }
@@ -384,17 +382,43 @@ public class EventItemsModel {
         return mEventLocalDataSource.fullTextSearch(queryResult);
     }
 
-    int performLoad(Context context, Bundle args) {
+    int performGetStats(int eventId) {
+        Integer result = RESULT_OK;
+        EventItem eventItem = getEventItemByID(eventId);
+        if (eventItem == null) {
+            eventItem = mEventLocalDataSource.getByEventID(eventId);
+        }
+        Uri.Builder uriBuilder = createUriBuilder(API_REQUEST_GET_STATS);
+        uriBuilder.appendQueryParameter("id", Integer.toString(eventId));
+        Uri uri = uriBuilder.build();
+        String query = uri.toString();
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        HttpGet httpGet = new HttpGet(query);
+        try {
+            HttpResponse httpResponse = httpClient.execute(httpGet);
+            HttpEntity httpEntity = httpResponse.getEntity();
+            String jsonString = EntityUtils.toString(httpEntity);
+            JSONObject jsonRootObject = new JSONObject(jsonString);
+            eventItem.likeCount = jsonRootObject.getInt(EventFieldNameDictionary.LIKE_COUNT);
+            eventItem.viewCount = jsonRootObject.getInt(EventFieldNameDictionary.VIEW_COUNT);
+        } catch (IOException | JSONException exp) {
+            result = -1;
+        }
+        return result;
+    }
+
+    private Uri.Builder createUriBuilder(String apiMethod) {
+        return new Uri.Builder()
+                .scheme("http")
+                .authority(SITE_NAME)
+                .path(apiMethod);
+    }
+
+    int performLoad(String loadingType) {
 
         Integer result = RESULT_OK;
 
-        String type = null;
-
-        if (args != null) {
-            type = args.getString(LOADING_TYPE);
-        }
-
-        boolean requestNewEvents = REQUEST_NEW_EVENTS.equals(type);
+        boolean requestNewEvents = REQUEST_NEW_EVENTS.equals(loadingType);
 
         if (FEATURE_LOAD_IN_BACKGROUND()) {
             if (requestNewEvents) {
@@ -410,16 +434,13 @@ public class EventItemsModel {
             }
         }
 
-        boolean loadInBackground = LOAD_IN_BACKGROUND.equals(type);
-        boolean refreshEvents = REFRESH_EVENTS.equals(type) || type == null;
+        boolean loadInBackground = LOAD_IN_BACKGROUND.equals(loadingType);
+        boolean refreshEvents = REFRESH_EVENTS.equals(loadingType) || loadingType == null;
 
         ArrayList<EventItem> eventList = new ArrayList<>();
 
         if (NowApplication.getState() == NowApplication.APP_STATE.ONLINE) {
-            Uri.Builder uriBuilder = new Uri.Builder()
-                    .scheme("http")
-                    .authority(SITE_NAME)
-                    .path(API_ROOT);
+            Uri.Builder uriBuilder = createUriBuilder(API_REQUEST_GET_EVENTS);
             if (requestNewEvents || loadInBackground) {
                 EventItem lastEventItem = requestNewEvents ? mEventItems.get(mEventItems.size() - 1) : mLastAddedInBackgroundEventItem;
                 if (lastEventItem != null) {
@@ -433,8 +454,8 @@ public class EventItemsModel {
             } else {
                 uriBuilder
                         .appendQueryParameter("fl", "1")
-                        .appendQueryParameter("date", String.format("%d", getCurrentDateTimestamp(context, true)))
-                        .appendQueryParameter("startAt", String.format("%d", getCurrentTimeTimestamp(context, true)));
+                        .appendQueryParameter("date", String.format("%d", getCurrentDateTimestamp(mContext, true)))
+                        .appendQueryParameter("startAt", String.format("%d", getCurrentTimeTimestamp(mContext, true)));
             }
 
             Uri uri = uriBuilder.build();
@@ -481,6 +502,9 @@ public class EventItemsModel {
                             eventItem.logoOriginal = jsonEventItem.optString(EventFieldNameDictionary.LOGO_ORIGINAL);
                             eventItem.logoThumb = jsonEventItem.optString(EventFieldNameDictionary.LOGO_THUMB);
                             eventItem.allNightParty = jsonEventItem.optBoolean(EventFieldNameDictionary.ALL_NIGHT_PARTY) ? 1 : 0;
+                            //
+                            eventItem.likeCount = jsonEventItem.optInt(EventFieldNameDictionary.LIKE_COUNT);
+                            eventItem.viewCount = jsonEventItem.optInt(EventFieldNameDictionary.VIEW_COUNT);
 
                             eventList.add(eventItem);
 
@@ -541,7 +565,7 @@ public class EventItemsModel {
         return result;
     }
 
-    public Pair<Integer, EventToCalendarLink> performCalendarFunctionality(int method, int eventItemId) {
+    public EventToCalendarLink performCalendarFunctionality(int method, int eventItemId) {
         EventToCalendarLink result = null;
         long calendarEventID;
         ContentResolver contentResolver = mContext.getContentResolver();
@@ -588,7 +612,7 @@ public class EventItemsModel {
                 result = null;
             }
         }
-        return new Pair<Integer, EventToCalendarLink>(method, result);
+        return result;
     }
 
     private class EventNameComparator implements Comparator<EventItem> {

@@ -40,6 +40,10 @@ public class EventItem implements Parcelable {
     public double lat;
     public double lng;
 
+    //Internal part
+    public int likeCount;
+    public int viewCount;
+
     public EventItem() {
     }
 
