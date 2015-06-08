@@ -91,7 +91,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     public static final String TAG = "ru.nekit.android.event_detail_fragment";
 
     private static final int CALENDAR_LOADER_ID = 0;
-    private static final int API_CALLER_ID = 1;
+    private static final int API_CALLER_GROUP_ID = 1;
     private static final boolean FEATURE_USE_SWIPE_GESTURE = true;
     private static final String EVENT_ITEM_KEY = "ru.nekit.android.event_item";
     private static final int MAX_ZOOM = 19;
@@ -120,6 +120,8 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     private LocationManager mLocationManager;
     private ScrollView mScrollView;
     private TextView mDescriptionView;
+    private TextView mViewsView;
+    private TextView mLikesView;
     private Button mPhoneButton;
     private Button mSiteButton;
     private FloatingActionButton mFloatingActionButton;
@@ -230,7 +232,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         mFloatingActionButton.getViewTreeObserver().addOnGlobalLayoutListener(floatingActionButtonLayoutListener);
         mScrollView.getViewTreeObserver().addOnScrollChangedListener(scrollListener);
         initEventToCalendarLoader(EventToCalendarLoader.CHECK);
-        initEventApiLoader(EventApiCaller.METHOD_GET_STATS);
+        initEventApiLoader(EventApiCaller.METHOD_UPDATE_VIEW);
         updateFloatingActionButtonPosition();
     }
 
@@ -239,11 +241,12 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         loaderArgs.putInt(EventApiCaller.KEY_METHOD, method);
         loaderArgs.putInt(EventApiCaller.KEY_EVENT_ITEM_ID, mEventItem.id);
         LoaderManager loaderManager = getActivity().getSupportLoaderManager();
-        final Loader<Integer> loader = loaderManager.getLoader(API_CALLER_ID);
+        int loaderId = API_CALLER_GROUP_ID + method;
+        final Loader<Integer> loader = loaderManager.getLoader(loaderId);
         if (loader != null) {
-            loaderManager.restartLoader(API_CALLER_ID, loaderArgs, this);
+            loaderManager.restartLoader(loaderId, loaderArgs, this);
         } else {
-            loaderManager.initLoader(API_CALLER_ID, loaderArgs, this);
+            loaderManager.initLoader(loaderId, loaderArgs, this);
         }
     }
 
@@ -272,7 +275,8 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
                 break;
 
-            case API_CALLER_ID:
+            case API_CALLER_GROUP_ID + EventApiCaller.METHOD_GET_STATS:
+            case API_CALLER_GROUP_ID + EventApiCaller.METHOD_UPDATE_VIEW:
 
                 loader = new EventApiCaller(getActivity(), args);
 
@@ -334,12 +338,26 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
                 break;
 
-            case API_CALLER_ID:
+            case API_CALLER_GROUP_ID + EventApiCaller.METHOD_GET_STATS:
 
+                updateEventLikesAndViews();
 
                 break;
 
+            case API_CALLER_GROUP_ID + EventApiCaller.METHOD_UPDATE_VIEW:
+
+                initEventApiLoader(EventApiCaller.METHOD_GET_STATS);
+                break;
+
+            default:
+                break;
+
         }
+    }
+
+    private void updateEventLikesAndViews() {
+        mViewsView.setText(Integer.toString(mEventItem.viewCount));
+        mLikesView.setText(Integer.toString(mEventItem.likeCount));
     }
 
     private void setMenuItVisible(int id, boolean visible) {
@@ -517,6 +535,8 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         TextView timeView = (TextView) view.findViewById(R.id.time_view);
         TextView entranceView = (TextView) view.findViewById(R.id.entrance_view);
         mDescriptionView = (TextView) view.findViewById(R.id.description_view);
+        mViewsView = (TextView) view.findViewById(R.id.event_views);
+        mLikesView = (TextView) view.findViewById(R.id.event_likes);
         mPhoneButton = (Button) view.findViewById(R.id.phone_button);
         mSiteButton = (Button) view.findViewById(R.id.site_button);
         mPhoneButton.setVisibility(View.GONE);

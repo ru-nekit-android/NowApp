@@ -54,7 +54,7 @@ public class EventSQLiteHelper extends SQLiteOpenHelper implements BaseColumns {
             + EventFieldNameDictionary.PLACE_NAME + " TEXT, "
             + EventFieldNameDictionary.POSTER_BLUR + " TEXT, "
             + EventFieldNameDictionary.POSTER_ORIGINAL + " TEXT, "
-            + EventFieldNameDictionary.POSTER_THUMB + " TEXT"
+            + EventFieldNameDictionary.POSTER_THUMB + " TEXT, "
             + EventFieldNameDictionary.LIKE_COUNT + " INTEGER, "
             + EventFieldNameDictionary.VIEW_COUNT + " INTEGER"
             + ");";

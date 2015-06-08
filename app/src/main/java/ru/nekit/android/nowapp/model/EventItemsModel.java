@@ -63,10 +63,13 @@ public class EventItemsModel {
     private static final long[] EVENING_PERIOD = {TimeUnit.HOURS.toSeconds(19), TimeUnit.HOURS.toSeconds(23) - 1};
     private static final String TAG_EVENTS = "events";
     private static final String SITE_NAME = "nowapp.ru";
-    private static final String API_REQUEST_GET_EVENTS = "api/events.get";
-    private static final String API_REQUEST_GET_STATS = "api/event.get.stats";
+    private static final String API_ROOT = "api/event";
+    private static final String API_REQUEST_GET_EVENTS = API_ROOT + "s.get";
+    private static final String API_REQUEST_GET_STATS = API_ROOT + ".get.stats";
+    private static final String API_REQUEST_UPDATE_VIEW = API_ROOT + ".update.view";
+
     private static final String DATABASE_NAME = "nowapp.db";
-    private static final int DATABASE_VERSION = 5;
+    private static final int DATABASE_VERSION = 70;
 
     private boolean FEATURE_LOAD_IN_BACKGROUND() {
         return mContext.getResources().getBoolean(R.bool.feature_load_in_background);
@@ -401,6 +404,30 @@ public class EventItemsModel {
             JSONObject jsonRootObject = new JSONObject(jsonString);
             eventItem.likeCount = jsonRootObject.getInt(EventFieldNameDictionary.LIKE_COUNT);
             eventItem.viewCount = jsonRootObject.getInt(EventFieldNameDictionary.VIEW_COUNT);
+            mEventLocalDataSource.createOrUpdateEvent(eventItem);
+        } catch (IOException | JSONException exp) {
+            result = -1;
+        }
+        return result;
+    }
+
+    int performUpdateView(int eventId) {
+        Integer result = RESULT_OK;
+        Uri.Builder uriBuilder = createUriBuilder(API_REQUEST_UPDATE_VIEW);
+        uriBuilder.appendQueryParameter("id", Integer.toString(eventId));
+        VTAG.call("METHOD_UPDATE_VIEW " + android.os.Build.SERIAL);
+        Uri uri = uriBuilder.build();
+        String query = uri.toString();
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        HttpGet httpGet = new HttpGet(query);
+        try {
+            HttpResponse httpResponse = httpClient.execute(httpGet);
+            HttpEntity httpEntity = httpResponse.getEntity();
+            String jsonString = EntityUtils.toString(httpEntity);
+            VTAG.call("METHOD_UPDATE_VIEW " + Integer.toString(eventId));
+            JSONObject jsonRootObject = new JSONObject(jsonString);
+
+            //mEventLocalDataSource.createOrUpdateEvent(eventItem);
         } catch (IOException | JSONException exp) {
             result = -1;
         }

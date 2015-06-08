@@ -22,7 +22,6 @@
                 android:orientation="vertical">
 
                 <LinearLayout
-                    android:id="@+id/top_layout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="@dimen/large_space"
@@ -54,14 +53,45 @@
                             android:layout_gravity="center_vertical" />
                     </FrameLayout>
 
-                    <ru.nekit.android.nowapp.widget.AutoResizeTextView
-                        android:id="@+id/title_view"
-                        style="@style/EventName.Detail"
+                    <LinearLayout
                         android:layout_width="0dp"
-                        android:layout_height="@dimen/event_name_height"
-                        android:layout_marginLeft="@dimen/normal_space"
-                        android:layout_marginStart="@dimen/normal_space"
-                        android:layout_weight="3" />
+                        android:layout_height="wrap_content"
+                        android:layout_weight="3"
+                        android:orientation="vertical">
+
+                        <ru.nekit.android.nowapp.widget.AutoResizeTextView
+                            android:id="@+id/title_view"
+                            style="@style/EventName.Detail"
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/event_name_height"
+                            android:layout_marginLeft="@dimen/normal_space"
+                            android:layout_marginStart="@dimen/normal_space" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/normal_space"
+                            android:orientation="horizontal">
+
+                            <com.devspark.robototextview.widget.RobotoTextView
+                                android:id="@+id/event_views"
+                                style="@style/StatsText"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:paddingLeft="@dimen/large_space"
+                                android:paddingRight="@dimen/large_space" />
+
+                            <com.devspark.robototextview.widget.RobotoTextView
+                                android:id="@+id/event_likes"
+                                style="@style/StatsText"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:paddingLeft="@dimen/large_space"
+                                android:paddingRight="@dimen/large_space" />
+                        </LinearLayout>
+
+
+                    </LinearLayout>
 
                 </LinearLayout>
 
@@ -269,7 +299,6 @@
                 android:layout_gravity="end"
                 android:scaleType="fitXY"
                 android:src="@drawable/event_category_education_big" />
-
 
         </FrameLayout>
 

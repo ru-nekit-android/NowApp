@@ -42,7 +42,9 @@ public class EventLocalDataSource {
                     EventFieldNameDictionary.PLACE_NAME,
                     EventFieldNameDictionary.POSTER_BLUR,
                     EventFieldNameDictionary.POSTER_ORIGINAL,
-                    EventFieldNameDictionary.POSTER_THUMB
+                    EventFieldNameDictionary.POSTER_THUMB,
+                    EventFieldNameDictionary.VIEW_COUNT,
+                    EventFieldNameDictionary.LIKE_COUNT
             };
     private static String[] FTS_SEARCH_ORDER = {
             EventSQLiteHelper.FTS_EVENT_CATEGORY_KEYWORD,
@@ -63,10 +65,6 @@ public class EventLocalDataSource {
 
     public void openForWrite() throws SQLException {
         database = eventSQLHelper.getWritableDatabase();
-    }
-
-    public void openForRead() throws SQLException {
-        database = eventSQLHelper.getReadableDatabase();
     }
 
     public void createOrUpdateEvent(EventItem eventItem) {
@@ -93,6 +91,8 @@ public class EventLocalDataSource {
         contentValues.put(EventFieldNameDictionary.POSTER_BLUR, eventItem.posterBlur);
         contentValues.put(EventFieldNameDictionary.POSTER_ORIGINAL, eventItem.posterOriginal);
         contentValues.put(EventFieldNameDictionary.POSTER_THUMB, eventItem.posterThumb);
+        contentValues.put(EventFieldNameDictionary.VIEW_COUNT, eventItem.viewCount);
+        contentValues.put(EventFieldNameDictionary.LIKE_COUNT, eventItem.likeCount);
         database.insertWithOnConflict(EventSQLiteHelper.TABLE_NAME, EventSQLiteHelper._ID, contentValues, SQLiteDatabase.CONFLICT_REPLACE);
         ContentValues contentValuesFTS = new ContentValues();
         contentValuesFTS.put(EventSQLiteHelper._ID, eventItem.id);
@@ -176,6 +176,8 @@ public class EventLocalDataSource {
         eventItem.posterBlur = cursor.getString(cursor.getColumnIndex(EventFieldNameDictionary.POSTER_BLUR));
         eventItem.posterOriginal = cursor.getString(cursor.getColumnIndex(EventFieldNameDictionary.POSTER_ORIGINAL));
         eventItem.posterThumb = cursor.getString(cursor.getColumnIndex(EventFieldNameDictionary.POSTER_THUMB));
+        eventItem.viewCount = cursor.getInt(cursor.getColumnIndex(EventFieldNameDictionary.VIEW_COUNT));
+        eventItem.likeCount = cursor.getInt(cursor.getColumnIndex(EventFieldNameDictionary.LIKE_COUNT));
         return eventItem;
     }
 
