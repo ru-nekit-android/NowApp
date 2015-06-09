@@ -18,16 +18,18 @@ import junit.framework.Assert;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.text.DateFormatSymbols;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -50,6 +52,7 @@ import ru.nekit.android.nowapp.model.vo.EventToCalendarLink;
 public class EventItemsModel {
 
     public static final int RESULT_OK = 0;
+    public static final int RESULT_BAD = -1;
     public static final int DATA_IS_EMPTY = 1;
     public static final String LOAD_IN_BACKGROUND_NOTIFICATION = "ru.nekit.android.nowapp.load_in_background_result";
     public static final String LOADING_TYPE = "loading_type";
@@ -66,6 +69,7 @@ public class EventItemsModel {
     private static final String API_ROOT = "api/event";
     private static final String API_REQUEST_GET_EVENTS = API_ROOT + "s.get";
     private static final String API_REQUEST_GET_STATS = API_ROOT + ".get.stats";
+    private static final String API_REQUEST_UPDATE_LIKE = API_ROOT + ".update.like";
     private static final String API_REQUEST_UPDATE_VIEW = API_ROOT + ".update.view";
 
     private static final String DATABASE_NAME = "nowapp.db";
@@ -143,7 +147,10 @@ public class EventItemsModel {
             public void run() {
                 int result = RESULT_OK;
                 while (!Thread.interrupted() && mLoadedInBackgroundPage < getAvailablePageCount() && mLoadedInBackgroundPage <= PAGE_LIMIT_LOAD_IN_BACKGROUND() && result == RESULT_OK) {
-                    result = performLoad(LOAD_IN_BACKGROUND);
+                    try {
+                        result = performLoad(LOAD_IN_BACKGROUND);
+                    } catch (IOException | JSONException exp) {
+                    }
                     LocalBroadcastManager.getInstance(mContext).sendBroadcast(new Intent(LOAD_IN_BACKGROUND_NOTIFICATION));
                     VTAG.call("Background Load Task: " + mLoadedInBackgroundPage + " : " + getAvailablePageCount() + " : " + result);
                 }
@@ -390,11 +397,11 @@ public class EventItemsModel {
         return mEventLocalDataSource.fullTextSearch(queryResult);
     }
 
-    int performGetStats(int eventId) {
+    int performGetStats(int eventId) throws IOException, JSONException {
         Integer result = RESULT_OK;
         EventItem eventItem = getEventItemByID(eventId);
         if (eventItem == null) {
-            eventItem = mEventLocalDataSource.getByEventID(eventId);
+            eventItem = mEventLocalDataSource.getByEventId(eventId);
         }
         Uri.Builder uriBuilder = createUriBuilder(API_REQUEST_GET_STATS);
         uriBuilder.appendQueryParameter("id", Integer.toString(eventId));
@@ -402,39 +409,49 @@ public class EventItemsModel {
         String query = uri.toString();
         DefaultHttpClient httpClient = new DefaultHttpClient();
         HttpGet httpGet = new HttpGet(query);
-        try {
-            HttpResponse httpResponse = httpClient.execute(httpGet);
-            HttpEntity httpEntity = httpResponse.getEntity();
-            String jsonString = EntityUtils.toString(httpEntity);
-            JSONObject jsonRootObject = new JSONObject(jsonString);
-            eventItem.likeCount = jsonRootObject.getInt(EventFieldNameDictionary.LIKE_COUNT);
-            eventItem.viewCount = jsonRootObject.getInt(EventFieldNameDictionary.VIEW_COUNT);
-            mEventLocalDataSource.createOrUpdateEvent(eventItem);
-        } catch (IOException | JSONException exp) {
-            result = -1;
-        }
+        HttpResponse httpResponse = httpClient.execute(httpGet);
+        HttpEntity httpEntity = httpResponse.getEntity();
+        String jsonString = EntityUtils.toString(httpEntity);
+        JSONObject jsonRootObject = new JSONObject(jsonString);
+        eventItem.likeCount = jsonRootObject.getInt(EventFieldNameDictionary.LIKE_COUNT);
+        eventItem.viewCount = jsonRootObject.getInt(EventFieldNameDictionary.VIEW_COUNT);
+        mEventLocalDataSource.createOrUpdateEvent(eventItem);
         return result;
     }
 
-    int performUpdateView(int eventId) {
+    int performUpdateLike(int eventId) throws IOException, JSONException {
         Integer result = RESULT_OK;
-        Uri.Builder uriBuilder = createUriBuilder(API_REQUEST_UPDATE_VIEW);
+        Uri.Builder uriBuilder = createUriBuilder(API_REQUEST_UPDATE_LIKE);
         uriBuilder.appendQueryParameter("id", Integer.toString(eventId));
-        VTAG.call("METHOD_UPDATE_VIEW " + android.os.Build.SERIAL);
+        uriBuilder.appendQueryParameter("key", "jljklj");
         Uri uri = uriBuilder.build();
         String query = uri.toString();
         DefaultHttpClient httpClient = new DefaultHttpClient();
         HttpGet httpGet = new HttpGet(query);
-        try {
-            HttpResponse httpResponse = httpClient.execute(httpGet);
-            HttpEntity httpEntity = httpResponse.getEntity();
-            String jsonString = EntityUtils.toString(httpEntity);
-            VTAG.call("METHOD_UPDATE_VIEW " + Integer.toString(eventId));
-            JSONObject jsonRootObject = new JSONObject(jsonString);
+        HttpResponse httpResponse = httpClient.execute(httpGet);
+        HttpEntity httpEntity = httpResponse.getEntity();
+        String jsonString = EntityUtils.toString(httpEntity);
+        JSONObject jsonRootObject = new JSONObject(jsonString);
+        return result;
+    }
 
-            //mEventLocalDataSource.createOrUpdateEvent(eventItem);
-        } catch (IOException | JSONException exp) {
-            result = -1;
+    int performUpdateView(int eventId) throws IOException, JSONException {
+        Integer result = RESULT_OK;
+        Uri.Builder uriBuilder = createUriBuilder(API_REQUEST_UPDATE_VIEW);
+        Uri uri = uriBuilder.build();
+        String query = uri.toString();
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        ArrayList<NameValuePair> postParameters = new ArrayList<>();
+        postParameters.add(new BasicNameValuePair("id", Integer.toString(eventId)));
+        HttpPost httpPost = new HttpPost(query);
+        httpPost.setEntity(new UrlEncodedFormEntity(postParameters));
+        HttpResponse httpResponse = httpClient.execute(httpPost);
+        HttpEntity httpEntity = httpResponse.getEntity();
+        String jsonString = EntityUtils.toString(httpEntity);
+        JSONObject jsonRootObject = new JSONObject(jsonString);
+        String response = jsonRootObject.getString("response");
+        if (!("ok".equals(response))) {
+            result = RESULT_BAD;
         }
         return result;
     }

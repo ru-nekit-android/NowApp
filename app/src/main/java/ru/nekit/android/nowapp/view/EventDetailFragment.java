@@ -73,7 +73,7 @@ import java.util.concurrent.TimeUnit;
 
 import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
-import ru.nekit.android.nowapp.model.EventApiCaller;
+import ru.nekit.android.nowapp.model.EventApiExecutor;
 import ru.nekit.android.nowapp.model.EventItem;
 import ru.nekit.android.nowapp.model.EventItemsModel;
 import ru.nekit.android.nowapp.model.EventToCalendarLoader;
@@ -91,9 +91,10 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     public static final String TAG = "ru.nekit.android.event_detail_fragment";
 
     private static final int CALENDAR_LOADER_ID = 0;
-    private static final int API_CALLER_GROUP_ID = 1;
+    private static final int API_EXECUTOR_GROUP_ID = 1;
     private static final boolean FEATURE_USE_SWIPE_GESTURE = true;
-    private static final String EVENT_ITEM_KEY = "ru.nekit.android.event_item";
+    private static final String KEY_EVENT_ITEM = "ru.nekit.android.event_item";
+    private static final String KEY_SELECTED = "ru.nekit.android.selected";
     private static final int MAX_ZOOM = 19;
     private MapView mMapView;
     private final MapListener mMapListener = new MapListener() {
@@ -146,7 +147,6 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
             updateFloatingActionButtonPosition();
         }
     };
-    private Menu mOptionMenu;
 
     public EventDetailFragment() {
         mAllowUpdateFloatingActionButtonPosition = true;
@@ -231,37 +231,44 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         mFloatingActionButton.getViewTreeObserver().addOnGlobalLayoutListener(floatingActionButtonLayoutListener);
         mScrollView.getViewTreeObserver().addOnScrollChangedListener(scrollListener);
         initEventToCalendarLoader(EventToCalendarLoader.CHECK);
-        initEventApiLoader(EventApiCaller.METHOD_UPDATE_VIEW);
+        Bundle arg = getArguments();
+        if (arg.getBoolean(KEY_SELECTED, false)) {
+            initEventApiExecutor(EventApiExecutor.METHOD_UPDATE_VIEW);
+        } else {
+            initEventApiExecutor(EventApiExecutor.METHOD_GET_STATS);
+        }
+        arg.putBoolean(KEY_SELECTED, false);
         updateFloatingActionButtonPosition();
+        updateEventLikesAndViews();
     }
 
-    private void initEventApiLoader(int method) {
-        Bundle loaderArgs = new Bundle();
-        loaderArgs.putInt(EventApiCaller.KEY_METHOD, method);
-        loaderArgs.putInt(EventApiCaller.KEY_EVENT_ITEM_ID, mEventItem.id);
+    private void initEventApiExecutor(int method) {
+        Bundle args = new Bundle();
+        args.putInt(EventApiExecutor.KEY_METHOD, method);
+        args.putInt(EventApiExecutor.KEY_EVENT_ITEM_ID, mEventItem.id);
         LoaderManager loaderManager = getActivity().getSupportLoaderManager();
-        int loaderId = API_CALLER_GROUP_ID + method;
-        final Loader<Integer> loader = loaderManager.getLoader(loaderId);
+        int id = API_EXECUTOR_GROUP_ID + method;
+        final Loader<Integer> loader = loaderManager.getLoader(id);
         if (loader != null) {
-            loaderManager.restartLoader(loaderId, loaderArgs, this);
+            loaderManager.restartLoader(id, args, this);
         } else {
-            loaderManager.initLoader(loaderId, loaderArgs, this);
+            loaderManager.initLoader(id, args, this);
         }
     }
 
     private void initEventToCalendarLoader(int method) {
-        Bundle loaderArgs = new Bundle();
-        loaderArgs.putInt(EventToCalendarLoader.KEY_METHOD, method);
-        loaderArgs.putInt(EventToCalendarLoader.KEY_EVENT_ITEM_ID, mEventItem.id);
+        Bundle args = new Bundle();
+        args.putInt(EventToCalendarLoader.KEY_METHOD, method);
+        args.putInt(EventToCalendarLoader.KEY_EVENT_ITEM_ID, mEventItem.id);
         LoaderManager loaderManager = getActivity().getSupportLoaderManager();
-        final Loader<EventToCalendarLink> loader = loaderManager.getLoader(CALENDAR_LOADER_ID);
+        int id = CALENDAR_LOADER_ID;
+        final Loader<EventToCalendarLink> loader = loaderManager.getLoader(id);
         if (loader != null) {
-            loaderManager.restartLoader(CALENDAR_LOADER_ID, loaderArgs, this);
+            loaderManager.restartLoader(id, args, this);
         } else {
-            loaderManager.initLoader(CALENDAR_LOADER_ID, loaderArgs, this);
+            loaderManager.initLoader(id, args, this);
         }
     }
-
 
     @Override
     public Loader onCreateLoader(int id, Bundle args) {
@@ -274,10 +281,11 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
                 break;
 
-            case API_CALLER_GROUP_ID + EventApiCaller.METHOD_GET_STATS:
-            case API_CALLER_GROUP_ID + EventApiCaller.METHOD_UPDATE_VIEW:
+            case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_GET_STATS:
+            case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_UPDATE_VIEW:
+            case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_LIKE:
 
-                loader = new EventApiCaller(getActivity(), args);
+                loader = new EventApiExecutor(getActivity(), args);
 
                 break;
         }
@@ -287,6 +295,14 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         return loader;
     }
 
+    @Override
+    public void onPrepareOptionsMenu(Menu menu) {
+        boolean calendarLinkIsPresent = mEventToCalendarLink != null;
+        setMenuItVisible(R.id.action_remove_from_calendar, calendarLinkIsPresent, menu);
+        setMenuItVisible(R.id.action_show_in_calendar, calendarLinkIsPresent, menu);
+        setMenuItVisible(R.id.action_add_to_calendar, !calendarLinkIsPresent, menu);
+        super.onPrepareOptionsMenu(menu);
+    }
 
     @Override
     public void onLoadFinished(Loader loader, Object result) {
@@ -295,10 +311,6 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
                 Pair<Integer, EventToCalendarLink> calendarResult = (Pair<Integer, EventToCalendarLink>) result;
                 mEventToCalendarLink = calendarResult.second;
-                boolean calendarLinkIsPresent = mEventToCalendarLink != null;
-                setMenuItVisible(R.id.action_remove_from_calendar, calendarLinkIsPresent);
-                setMenuItVisible(R.id.action_show_in_calendar, calendarLinkIsPresent);
-                setMenuItVisible(R.id.action_add_to_calendar, !calendarLinkIsPresent);
                 int messageId = 0;
                 if (calendarResult.first == EventToCalendarLoader.ADD) {
                     messageId = R.string.add_to_calendar_message;
@@ -337,15 +349,16 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
                 break;
 
-            case API_CALLER_GROUP_ID + EventApiCaller.METHOD_GET_STATS:
+            case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_GET_STATS:
+            case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_LIKE:
 
                 updateEventLikesAndViews();
 
                 break;
 
-            case API_CALLER_GROUP_ID + EventApiCaller.METHOD_UPDATE_VIEW:
+            case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_UPDATE_VIEW:
 
-                initEventApiLoader(EventApiCaller.METHOD_GET_STATS);
+                initEventApiExecutor(EventApiExecutor.METHOD_GET_STATS);
                 break;
 
             default:
@@ -359,8 +372,10 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         mLikesView.setText(Integer.toString(mEventItem.likeCount));
     }
 
-    private void setMenuItVisible(int id, boolean visible) {
-        mOptionMenu.findItem(id).setVisible(visible);
+    private void setMenuItVisible(int id, boolean visible, Menu menu) {
+        if (menu != null) {
+            menu.findItem(id).setVisible(visible);
+        }
     }
 
     @Override
@@ -461,7 +476,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         Bundle arg = getArguments();
-        mEventItem = arg.getParcelable(EVENT_ITEM_KEY);
+        mEventItem = arg.getParcelable(KEY_EVENT_ITEM);
         mInflater = inflater;
         return constructInterface(inflater.inflate(R.layout.fragment_event_detail, container, false));
     }
@@ -627,11 +642,10 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.menu_event_detail, menu);
-        mOptionMenu = menu;
-        setMenuItVisible(R.id.action_add_to_calendar, false);
-        setMenuItVisible(R.id.action_remove_from_calendar, false);
-        setMenuItVisible(R.id.action_show_in_calendar, false);
         super.onCreateOptionsMenu(menu, inflater);
+        setMenuItVisible(R.id.action_add_to_calendar, false, menu);
+        setMenuItVisible(R.id.action_remove_from_calendar, false, menu);
+        setMenuItVisible(R.id.action_show_in_calendar, false, menu);
     }
 
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -716,15 +730,14 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         timeView.setText(finalText);
     }
 
-    private void setEventItem(EventItem eventItem) {
-        Bundle arg = new Bundle();
-        arg.putParcelable(EVENT_ITEM_KEY, eventItem);
-        setArguments(arg);
-    }
-
-    public void updateEventItem(EventItem eventItem) {
+    public void setEventItem(EventItem eventItem) {
         Bundle arg = getArguments();
-        arg.putParcelable(EVENT_ITEM_KEY, eventItem);
+        if (arg == null) {
+            arg = new Bundle();
+        }
+        arg.putParcelable(KEY_EVENT_ITEM, eventItem);
+        arg.putBoolean(KEY_SELECTED, true);
+        setArguments(arg);
     }
 
     @Override
@@ -806,7 +819,14 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
                 break;
 
+            case R.id.fab_event:
+
+                initEventApiExecutor(EventApiExecutor.METHOD_LIKE);
+
+                break;
+
             default:
+                break;
         }
     }
 
