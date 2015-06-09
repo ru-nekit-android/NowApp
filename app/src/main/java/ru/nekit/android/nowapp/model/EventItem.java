@@ -70,6 +70,8 @@ public class EventItem implements Parcelable {
         this.allNightParty = in.readInt();
         this.lat = in.readDouble();
         this.lng = in.readDouble();
+        this.viewCount = in.readInt();
+        this.likeCount = in.readInt();
     }
 
     @Override
@@ -101,5 +103,7 @@ public class EventItem implements Parcelable {
         dest.writeInt(this.allNightParty);
         dest.writeDouble(this.lat);
         dest.writeDouble(this.lng);
+        dest.writeInt(this.viewCount);
+        dest.writeInt(this.likeCount);
     }
 }
