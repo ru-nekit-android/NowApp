@@ -1,22 +1,23 @@
 package ru.nekit.android.nowapp.model.vo;
 
-import android.support.v4.util.Pair;
-
 /**
  * Created by chuvac on 29.04.15.
  */
-public class EventToCalendarLink extends Pair<Long, Long> {
+public class EventToCalendarLink {
 
+    private long eventId;
+    private long calendarEventId;
 
-    public EventToCalendarLink(Long eventID, Long CalendarEventID) {
-        super(eventID, CalendarEventID);
+    public EventToCalendarLink(long eventId, long calendarEventId) {
+        this.eventId = eventId;
+        this.calendarEventId = calendarEventId;
     }
 
     public long getEventID() {
-        return first;
+        return eventId;
     }
 
     public long getCalendarEventID() {
-        return second;
+        return calendarEventId;
     }
 }
