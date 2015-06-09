@@ -642,6 +642,10 @@ public class EventItemsModel {
         return result;
     }
 
+    public EventItem getEventItemById(int id) {
+        return mEventLocalDataSource.getByEventId(id);
+    }
+
     private class EventNameComparator implements Comparator<EventItem> {
         public int compare(EventItem left, EventItem right) {
             return Long.valueOf(left.date + left.startAt).compareTo(right.date + right.startAt);
