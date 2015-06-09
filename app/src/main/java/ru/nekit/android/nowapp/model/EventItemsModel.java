@@ -10,6 +10,7 @@ import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.CalendarContract;
+import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.util.Pair;
 import android.text.TextUtils;
@@ -148,7 +149,7 @@ public class EventItemsModel {
                 int result = RESULT_OK;
                 while (!Thread.interrupted() && mLoadedInBackgroundPage < getAvailablePageCount() && mLoadedInBackgroundPage <= PAGE_LIMIT_LOAD_IN_BACKGROUND() && result == RESULT_OK) {
                     try {
-                        result = performLoad(LOAD_IN_BACKGROUND);
+                        result = performEventsLoad(LOAD_IN_BACKGROUND);
                     } catch (IOException | JSONException exp) {
                     }
                     LocalBroadcastManager.getInstance(mContext).sendBroadcast(new Intent(LOAD_IN_BACKGROUND_NOTIFICATION));
@@ -403,7 +404,7 @@ public class EventItemsModel {
         if (eventItem == null) {
             eventItem = mEventLocalDataSource.getByEventId(eventId);
         }
-        Uri.Builder uriBuilder = createUriBuilder(API_REQUEST_GET_STATS);
+        Uri.Builder uriBuilder = createApiUriBuilder(API_REQUEST_GET_STATS);
         uriBuilder.appendQueryParameter("id", Integer.toString(eventId));
         Uri uri = uriBuilder.build();
         String query = uri.toString();
@@ -419,32 +420,26 @@ public class EventItemsModel {
         return result;
     }
 
-    int performUpdateLike(int eventId) throws IOException, JSONException {
-        Integer result = RESULT_OK;
-        Uri.Builder uriBuilder = createUriBuilder(API_REQUEST_UPDATE_LIKE);
-        uriBuilder.appendQueryParameter("id", Integer.toString(eventId));
-        uriBuilder.appendQueryParameter("key", "jljklj");
-        Uri uri = uriBuilder.build();
-        String query = uri.toString();
-        DefaultHttpClient httpClient = new DefaultHttpClient();
-        HttpGet httpGet = new HttpGet(query);
-        HttpResponse httpResponse = httpClient.execute(httpGet);
-        HttpEntity httpEntity = httpResponse.getEntity();
-        String jsonString = EntityUtils.toString(httpEntity);
-        JSONObject jsonRootObject = new JSONObject(jsonString);
-        return result;
+    int performEventUpdateLike(int eventId) throws IOException, JSONException {
+        ArrayList<NameValuePair> parameters = new ArrayList<>();
+        parameters.add(new BasicNameValuePair("key", "78GlLJhL"));
+        return performPostApiCall(API_REQUEST_UPDATE_LIKE, eventId, parameters);
     }
 
-    int performUpdateView(int eventId) throws IOException, JSONException {
+    int performEventUpdateView(int eventId) throws IOException, JSONException {
+        return performPostApiCall(API_REQUEST_UPDATE_VIEW, eventId, null);
+    }
+
+    private int performPostApiCall(String api, int eventId, @Nullable ArrayList<NameValuePair> parameters) throws IOException, JSONException {
         Integer result = RESULT_OK;
-        Uri.Builder uriBuilder = createUriBuilder(API_REQUEST_UPDATE_VIEW);
-        Uri uri = uriBuilder.build();
-        String query = uri.toString();
         DefaultHttpClient httpClient = new DefaultHttpClient();
-        ArrayList<NameValuePair> postParameters = new ArrayList<>();
-        postParameters.add(new BasicNameValuePair("id", Integer.toString(eventId)));
-        HttpPost httpPost = new HttpPost(query);
-        httpPost.setEntity(new UrlEncodedFormEntity(postParameters));
+        ArrayList<NameValuePair> fullParameters = new ArrayList<>();
+        fullParameters.add(new BasicNameValuePair("id", Integer.toString(eventId)));
+        if (parameters != null && parameters.size() > 0) {
+            fullParameters.addAll(parameters);
+        }
+        HttpPost httpPost = new HttpPost(getApiQuery(api));
+        httpPost.setEntity(new UrlEncodedFormEntity(fullParameters));
         HttpResponse httpResponse = httpClient.execute(httpPost);
         HttpEntity httpEntity = httpResponse.getEntity();
         String jsonString = EntityUtils.toString(httpEntity);
@@ -456,14 +451,18 @@ public class EventItemsModel {
         return result;
     }
 
-    private Uri.Builder createUriBuilder(String apiMethod) {
+    private Uri.Builder createApiUriBuilder(String apiMethod) {
         return new Uri.Builder()
                 .scheme("http")
                 .authority(SITE_NAME)
                 .path(apiMethod);
     }
 
-    int performLoad(String loadingType) throws IOException, JSONException {
+    private String getApiQuery(String apiMethod) {
+        return createApiUriBuilder(apiMethod).build().toString();
+    }
+
+    int performEventsLoad(String loadingType) throws IOException, JSONException {
 
         Integer result = RESULT_OK;
 
@@ -489,7 +488,7 @@ public class EventItemsModel {
         ArrayList<EventItem> eventList = new ArrayList<>();
 
         if (NowApplication.getState() == NowApplication.APP_STATE.ONLINE) {
-            Uri.Builder uriBuilder = createUriBuilder(API_REQUEST_GET_EVENTS);
+            Uri.Builder uriBuilder = createApiUriBuilder(API_REQUEST_GET_EVENTS);
             if (requestNewEvents || loadInBackground) {
                 EventItem lastEventItem = requestNewEvents ? mEventItems.get(mEventItems.size() - 1) : mLastAddedInBackgroundEventItem;
                 if (lastEventItem != null) {

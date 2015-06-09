@@ -350,15 +350,16 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                 break;
 
             case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_GET_STATS:
-            case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_LIKE:
 
                 updateEventLikesAndViews();
 
                 break;
 
+            case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_LIKE:
             case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_UPDATE_VIEW:
 
                 initEventApiExecutor(EventApiExecutor.METHOD_GET_STATS);
+
                 break;
 
             default:

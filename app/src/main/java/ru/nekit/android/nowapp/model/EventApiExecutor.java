@@ -46,13 +46,13 @@ public class EventApiExecutor extends AsyncTaskLoader<ApiCallResult> {
 
                 case METHOD_LIKE:
 
-                    result = model.performUpdateLike(eventId);
+                    result = model.performEventUpdateLike(eventId);
 
                     break;
 
                 case METHOD_UPDATE_VIEW:
 
-                    result = model.performUpdateView(eventId);
+                    result = model.performEventUpdateView(eventId);
 
                     break;
             }
