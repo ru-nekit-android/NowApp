@@ -103,7 +103,7 @@ public class SplashScreenActivity extends ActionBarActivity implements LoaderMan
     }
 
     private void initFirstTimeLoader() {
-        getSupportLoaderManager().initLoader(LOADER_ID, null, this);
+        getSupportLoaderManager().initLoader(LOADER_ID, new Bundle(), this);
     }
 
     @Override
