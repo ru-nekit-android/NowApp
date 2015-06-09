@@ -152,9 +152,8 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         mAllowUpdateFloatingActionButtonPosition = true;
     }
 
-    public static EventDetailFragment getInstance(EventItem eventItem) {
+    public static EventDetailFragment getInstance() {
         EventDetailFragment fragment = new EventDetailFragment();
-        fragment.setEventItem(eventItem);
         return fragment;
     }
 

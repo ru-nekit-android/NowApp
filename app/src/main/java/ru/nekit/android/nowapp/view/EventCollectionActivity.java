@@ -12,7 +12,6 @@ import android.support.v7.app.AppCompatDialog;
 import android.support.v7.widget.Toolbar;
 import android.text.method.LinkMovementMethod;
 import android.view.KeyEvent;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
@@ -64,7 +63,6 @@ public class EventCollectionActivity extends AppCompatActivity implements IEvent
             mOfflineView.setVisibility(View.VISIBLE);
         }
     }
-
 
 
     @Override
@@ -125,10 +123,9 @@ public class EventCollectionActivity extends AppCompatActivity implements IEvent
     @Override
     public void onEventItemSelect(EventItem eventItem) {
         if (mEventDetailFragment == null) {
-            mEventDetailFragment = EventDetailFragment.getInstance(eventItem);
-        } else {
-            mEventDetailFragment.updateEventItem(eventItem);
+            mEventDetailFragment = EventDetailFragment.getInstance();
         }
+        mEventDetailFragment.setEventItem(eventItem);
         if (!mEventDetailFragment.isAdded()) {
             getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left, R.anim.enter_from_left, R.anim.exit_to_right).addToBackStack(null).replace(R.id.event_place_holder, mEventDetailFragment, EventDetailFragment.TAG).commit();
         }
