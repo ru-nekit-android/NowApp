@@ -261,6 +261,11 @@ public class EventItemsModel {
         return sInstance;
     }
 
+    public static synchronized EventItemsModel getInstance() {
+        assert sInstance != null;
+        return sInstance;
+    }
+
     public static long getCurrentTimeTimestamp(Context context, boolean usePrecision) {
         Calendar calendar = Calendar.getInstance();
         int minutes = calendar.get(Calendar.MINUTE);
