@@ -441,7 +441,7 @@ public class EventItemsModel {
                 .path(apiMethod);
     }
 
-    int performLoad(String loadingType) {
+    int performLoad(String loadingType) throws IOException, JSONException {
 
         Integer result = RESULT_OK;
 
@@ -488,70 +488,54 @@ public class EventItemsModel {
             Uri uri = uriBuilder.build();
             String query = uri.toString();
 
-            try {
-                DefaultHttpClient httpClient = new DefaultHttpClient();
-                HttpGet httpGet = new HttpGet(query);
-                HttpResponse httpResponse = httpClient.execute(httpGet);
-                HttpEntity httpEntity = httpResponse.getEntity();
-                String jsonString = EntityUtils.toString(httpEntity);
+            DefaultHttpClient httpClient = new DefaultHttpClient();
+            HttpGet httpGet = new HttpGet(query);
+            HttpResponse httpResponse = httpClient.execute(httpGet);
+            HttpEntity httpEntity = httpResponse.getEntity();
+            String jsonString = EntityUtils.toString(httpEntity);
 
-                try {
-                    JSONObject jsonRootObject = new JSONObject(jsonString);
+            JSONObject jsonRootObject = new JSONObject(jsonString);
 
-                    String response = jsonRootObject.getString("response");
-                    mAvailableEventCount = jsonRootObject.getInt("events_count");
+            String response = jsonRootObject.getString("response");
+            mAvailableEventCount = jsonRootObject.getInt("events_count");
 
-                    if ("ok".equals(response)) {
-                        JSONArray eventJsonArray = jsonRootObject.getJSONArray(TAG_EVENTS);
-                        for (int i = 0; i < eventJsonArray.length(); i++) {
-                            JSONObject jsonEventItem = eventJsonArray.getJSONObject(i);
+            if ("ok".equals(response)) {
+                JSONArray eventJsonArray = jsonRootObject.getJSONArray(TAG_EVENTS);
+                for (int i = 0; i < eventJsonArray.length(); i++) {
+                    JSONObject jsonEventItem = eventJsonArray.getJSONObject(i);
 
-                            EventItem eventItem = new EventItem();
-                            eventItem.date = jsonEventItem.optLong(EventFieldNameDictionary.DATE, 0);
-                            eventItem.eventDescription = jsonEventItem.optString(EventFieldNameDictionary.EVENT_DESCRIPTION);
-                            eventItem.placeName = jsonEventItem.optString(EventFieldNameDictionary.PLACE_NAME);
-                            eventItem.placeId = jsonEventItem.optInt(EventFieldNameDictionary.PLACE_ID);
-                            eventItem.id = jsonEventItem.optInt(EventFieldNameDictionary.ID);
-                            eventItem.category = jsonEventItem.optString(EventFieldNameDictionary.EVENT_CATEGORY);
-                            eventItem.entrance = jsonEventItem.optString(EventFieldNameDictionary.ENTRANCE);
-                            eventItem.address = jsonEventItem.optString(EventFieldNameDictionary.ADDRESS);
-                            eventItem.phone = jsonEventItem.optString(EventFieldNameDictionary.PHONE);
-                            eventItem.site = jsonEventItem.optString(EventFieldNameDictionary.SITE);
-                            eventItem.email = jsonEventItem.optString(EventFieldNameDictionary.EMAIL);
-                            eventItem.lat = jsonEventItem.optDouble(EventFieldNameDictionary.EVENT_GEO_POSITION_LATITUDE);
-                            eventItem.lng = jsonEventItem.optDouble(EventFieldNameDictionary.EVENT_GEO_POSITION_LONGITUDE);
-                            eventItem.name = jsonEventItem.optString(EventFieldNameDictionary.NAME);
-                            eventItem.startAt = jsonEventItem.optLong(EventFieldNameDictionary.START_AT);
-                            eventItem.endAt = jsonEventItem.optLong(EventFieldNameDictionary.END_AT);
-                            eventItem.posterThumb = jsonEventItem.optString(EventFieldNameDictionary.POSTER_THUMB);
-                            eventItem.posterBlur = jsonEventItem.optString(EventFieldNameDictionary.POSTER_BLUR);
-                            eventItem.posterOriginal = jsonEventItem.optString(EventFieldNameDictionary.POSTER_ORIGINAL);
-                            eventItem.logoOriginal = jsonEventItem.optString(EventFieldNameDictionary.LOGO_ORIGINAL);
-                            eventItem.logoThumb = jsonEventItem.optString(EventFieldNameDictionary.LOGO_THUMB);
-                            eventItem.allNightParty = jsonEventItem.optBoolean(EventFieldNameDictionary.ALL_NIGHT_PARTY) ? 1 : 0;
-                            //
-                            eventItem.likeCount = jsonEventItem.optInt(EventFieldNameDictionary.LIKE_COUNT);
-                            eventItem.viewCount = jsonEventItem.optInt(EventFieldNameDictionary.VIEW_COUNT);
+                    EventItem eventItem = new EventItem();
+                    eventItem.date = jsonEventItem.optLong(EventFieldNameDictionary.DATE, 0);
+                    eventItem.eventDescription = jsonEventItem.optString(EventFieldNameDictionary.EVENT_DESCRIPTION);
+                    eventItem.placeName = jsonEventItem.optString(EventFieldNameDictionary.PLACE_NAME);
+                    eventItem.placeId = jsonEventItem.optInt(EventFieldNameDictionary.PLACE_ID);
+                    eventItem.id = jsonEventItem.optInt(EventFieldNameDictionary.ID);
+                    eventItem.category = jsonEventItem.optString(EventFieldNameDictionary.EVENT_CATEGORY);
+                    eventItem.entrance = jsonEventItem.optString(EventFieldNameDictionary.ENTRANCE);
+                    eventItem.address = jsonEventItem.optString(EventFieldNameDictionary.ADDRESS);
+                    eventItem.phone = jsonEventItem.optString(EventFieldNameDictionary.PHONE);
+                    eventItem.site = jsonEventItem.optString(EventFieldNameDictionary.SITE);
+                    eventItem.email = jsonEventItem.optString(EventFieldNameDictionary.EMAIL);
+                    eventItem.lat = jsonEventItem.optDouble(EventFieldNameDictionary.EVENT_GEO_POSITION_LATITUDE);
+                    eventItem.lng = jsonEventItem.optDouble(EventFieldNameDictionary.EVENT_GEO_POSITION_LONGITUDE);
+                    eventItem.name = jsonEventItem.optString(EventFieldNameDictionary.NAME);
+                    eventItem.startAt = jsonEventItem.optLong(EventFieldNameDictionary.START_AT);
+                    eventItem.endAt = jsonEventItem.optLong(EventFieldNameDictionary.END_AT);
+                    eventItem.posterThumb = jsonEventItem.optString(EventFieldNameDictionary.POSTER_THUMB);
+                    eventItem.posterBlur = jsonEventItem.optString(EventFieldNameDictionary.POSTER_BLUR);
+                    eventItem.posterOriginal = jsonEventItem.optString(EventFieldNameDictionary.POSTER_ORIGINAL);
+                    eventItem.logoOriginal = jsonEventItem.optString(EventFieldNameDictionary.LOGO_ORIGINAL);
+                    eventItem.logoThumb = jsonEventItem.optString(EventFieldNameDictionary.LOGO_THUMB);
+                    eventItem.allNightParty = jsonEventItem.optBoolean(EventFieldNameDictionary.ALL_NIGHT_PARTY) ? 1 : 0;
+                    //
+                    eventItem.likeCount = jsonEventItem.optInt(EventFieldNameDictionary.LIKE_COUNT);
+                    eventItem.viewCount = jsonEventItem.optInt(EventFieldNameDictionary.VIEW_COUNT);
 
-                            eventList.add(eventItem);
+                    eventList.add(eventItem);
 
-                        }
-                    } else {
-                        //error
-                    }
-                } catch (JSONException exp) {
-                    result = -1;
-                    exp.printStackTrace();
                 }
-            } catch (UnsupportedEncodingException exp) {
-                result = -1;
-                exp.printStackTrace();
-            } catch (ClientProtocolException exp) {
-                result = -1;
-                exp.printStackTrace();
-            } catch (IOException exp) {
-                result = -1;
-                exp.printStackTrace();
+            } else {
+                //error
             }
             if (eventList.size() > 0) {
                 if (requestNewEvents) {
