@@ -4,6 +4,10 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.content.AsyncTaskLoader;
 
+import org.json.JSONException;
+
+import java.io.IOException;
+
 import ru.nekit.android.nowapp.NowApplication;
 
 /**
@@ -20,7 +24,11 @@ public class EventItemsLoader extends AsyncTaskLoader<Integer> {
 
     @Override
     public Integer loadInBackground() {
-        return NowApplication.getEventModel().performLoad(mArgs == null ? null : mArgs.getString(EventItemsModel.LOADING_TYPE));
+        try {
+            return NowApplication.getEventModel().performLoad(mArgs.getString(EventItemsModel.LOADING_TYPE));
+        } catch (IOException | JSONException exp) {
+            return EventItemsModel.RESULT_BAD;
+        }
     }
 
 }
