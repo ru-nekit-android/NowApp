@@ -124,7 +124,7 @@ public class EventLocalDataSource {
         return eventList;
     }
 
-    public ArrayList<EventItem> getByEventIDs(ArrayList<Integer> ids) {
+    public ArrayList<EventItem> getByEventIds(ArrayList<Integer> ids) {
         ArrayList<EventItem> eventItems = new ArrayList<>();
         if (ids.size() > 0) {
             Cursor cursor = database.query(EventSQLiteHelper.TABLE_NAME,
@@ -140,7 +140,7 @@ public class EventLocalDataSource {
         return eventItems;
     }
 
-    public EventItem getByEventID(int id) {
+    public EventItem getByEventId(int id) {
         EventItem eventItem = null;
         Cursor cursor = database.query(EventSQLiteHelper.TABLE_NAME,
                 ALL_COLUMNS, EventSQLiteHelper._ID + "=" + id, null, null, null, null);
