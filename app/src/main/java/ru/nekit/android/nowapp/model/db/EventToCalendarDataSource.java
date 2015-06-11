@@ -73,7 +73,7 @@ public class EventToCalendarDataSource {
 
     public void removeLinkByEventID(long ID) {
         String idString = String.valueOf(ID);
-        database.delete(EventSQLiteHelper.TABLE_NAME, String.format("%s = %s", EventSQLiteHelper.EVENT_ID, idString), null);
+        database.delete(EventSQLiteHelper.EVENT_TABLE_NAME, String.format("%s = %s", EventSQLiteHelper.EVENT_ID, idString), null);
     }
 
     public EventToCalendarLink getLinkByEventID(long ID) {

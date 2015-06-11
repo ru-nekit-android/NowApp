@@ -44,6 +44,7 @@ import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.VTAG;
 import ru.nekit.android.nowapp.model.db.EventLocalDataSource;
+import ru.nekit.android.nowapp.model.db.EventStatsLocalDataSource;
 import ru.nekit.android.nowapp.model.db.EventToCalendarDataSource;
 import ru.nekit.android.nowapp.model.vo.EventToCalendarLink;
 
@@ -54,6 +55,8 @@ public class EventItemsModel {
 
     public static final int RESULT_OK = 0;
     public static final int RESULT_BAD = -1;
+    private static final int LIKED_CONFIRMED = 2;
+    private static final int LIKED_NOT_CONFIRMED = 1;
     public static final int DATA_IS_EMPTY = 1;
     public static final String LOAD_IN_BACKGROUND_NOTIFICATION = "ru.nekit.android.nowapp.load_in_background_result";
     public static final String LOADING_TYPE = "loading_type";
@@ -74,7 +77,7 @@ public class EventItemsModel {
     private static final String API_REQUEST_UPDATE_VIEW = API_ROOT + ".update.view";
 
     private static final String DATABASE_NAME = "nowapp.db";
-    private static final int DATABASE_VERSION = 70;
+    private static final int DATABASE_VERSION = 8;
 
     private boolean FEATURE_LOAD_IN_BACKGROUND() {
         return mContext.getResources().getBoolean(R.bool.feature_load_in_background);
@@ -99,6 +102,8 @@ public class EventItemsModel {
     private final Context mContext;
     private final ArrayList<EventItem> mEventItems;
     private final EventLocalDataSource mEventLocalDataSource;
+    private final EventStatsLocalDataSource mEventStatsLocalDataSource;
+
     private final Runnable mBackgroundLoadTask;
     private final EventToCalendarDataSource mEventToCalendarDataSource;
 
@@ -141,6 +146,7 @@ public class EventItemsModel {
         CATEGORY_TYPE_COLOR.put("category_education", context.getResources().getColor(R.color.event_category_education));
 
         mEventLocalDataSource = new EventLocalDataSource(context, DATABASE_NAME, DATABASE_VERSION);
+        mEventStatsLocalDataSource = new EventStatsLocalDataSource(context, DATABASE_NAME, DATABASE_VERSION);
         mEventToCalendarDataSource = new EventToCalendarDataSource(context, DATABASE_NAME, DATABASE_VERSION);
 
         mBackgroundLoadTask = new Runnable() {
@@ -159,6 +165,7 @@ public class EventItemsModel {
         };
 
         mEventLocalDataSource.openForWrite();
+        mEventStatsLocalDataSource.openForWrite();
         mEventToCalendarDataSource.openForWrite();
 
         ArrayList<EventItem> allEvents = mEventLocalDataSource.getAllEvents();
@@ -369,11 +376,6 @@ public class EventItemsModel {
         setEvents(sortByStartTime(allEvents));
     }
 
-    private void insertEventToLocalDataSource(EventItem eventItem) {
-        mEventLocalDataSource.createOrUpdateEvent(eventItem);
-    }
-
-
     private void loadInBackground() {
         if (FEATURE_LOAD_IN_BACKGROUND()) {
             if (mBackgroundThread != null && mBackgroundThread.isAlive()) {
@@ -400,10 +402,6 @@ public class EventItemsModel {
 
     int performGetStats(int eventId) throws IOException, JSONException {
         Integer result = RESULT_OK;
-        EventItem eventItem = getEventItemByID(eventId);
-        if (eventItem == null) {
-            eventItem = mEventLocalDataSource.getByEventId(eventId);
-        }
         Uri.Builder uriBuilder = createApiUriBuilder(API_REQUEST_GET_STATS);
         uriBuilder.appendQueryParameter("id", Integer.toString(eventId));
         Uri uri = uriBuilder.build();
@@ -414,16 +412,29 @@ public class EventItemsModel {
         HttpEntity httpEntity = httpResponse.getEntity();
         String jsonString = EntityUtils.toString(httpEntity);
         JSONObject jsonRootObject = new JSONObject(jsonString);
-        eventItem.likeCount = jsonRootObject.getInt(EventFieldNameDictionary.LIKE_COUNT);
-        eventItem.viewCount = jsonRootObject.getInt(EventFieldNameDictionary.VIEW_COUNT);
-        mEventLocalDataSource.createOrUpdateEvent(eventItem);
+        EventItemStats eventItemStats = getEventItemStatsById(eventId);
+        if (eventItemStats == null) {
+            eventItemStats = new EventItemStats();
+            eventItemStats.id = eventId;
+        }
+        eventItemStats.likeCount = jsonRootObject.getInt(EventFieldNameDictionary.LIKE_COUNT);
+        eventItemStats.viewCount = jsonRootObject.getInt(EventFieldNameDictionary.VIEW_COUNT);
+        mEventStatsLocalDataSource.createOrUpdateEventStats(eventItemStats);
         return result;
     }
 
     int performEventUpdateLike(int eventId) throws IOException, JSONException {
         ArrayList<NameValuePair> parameters = new ArrayList<>();
         parameters.add(new BasicNameValuePair("key", "78GlLJhL"));
-        return performPostApiCall(API_REQUEST_UPDATE_LIKE, eventId, parameters);
+        EventItemStats eventItemStats = getEventItemStatsById(eventId);
+        eventItemStats.myLikeStatus = LIKED_NOT_CONFIRMED;
+        if (NowApplication.getState() == NowApplication.APP_STATE.ONLINE) {
+            if (performPostApiCall(API_REQUEST_UPDATE_LIKE, eventId, parameters) == RESULT_OK) {
+                eventItemStats.myLikeStatus = LIKED_CONFIRMED;
+            }
+        }
+        mEventStatsLocalDataSource.createOrUpdateEventStats(eventItemStats);
+        return RESULT_OK;
     }
 
     int performEventUpdateView(int eventId) throws IOException, JSONException {
@@ -486,6 +497,7 @@ public class EventItemsModel {
         boolean refreshEvents = REFRESH_EVENTS.equals(loadingType) || loadingType == null;
 
         ArrayList<EventItem> eventList = new ArrayList<>();
+        //ArrayList<EventItemStats> eventStatsList = new ArrayList<>();
 
         if (NowApplication.getState() == NowApplication.APP_STATE.ONLINE) {
             Uri.Builder uriBuilder = createApiUriBuilder(API_REQUEST_GET_EVENTS);
@@ -526,6 +538,7 @@ public class EventItemsModel {
                     JSONObject jsonEventItem = eventJsonArray.getJSONObject(i);
 
                     EventItem eventItem = new EventItem();
+                    //EventItemStats eventItemStats = new EventItemStats();
                     eventItem.date = jsonEventItem.optLong(EventFieldNameDictionary.DATE, 0);
                     eventItem.eventDescription = jsonEventItem.optString(EventFieldNameDictionary.EVENT_DESCRIPTION);
                     eventItem.placeName = jsonEventItem.optString(EventFieldNameDictionary.PLACE_NAME);
@@ -549,10 +562,11 @@ public class EventItemsModel {
                     eventItem.logoThumb = jsonEventItem.optString(EventFieldNameDictionary.LOGO_THUMB);
                     eventItem.allNightParty = jsonEventItem.optBoolean(EventFieldNameDictionary.ALL_NIGHT_PARTY) ? 1 : 0;
                     //
-                    eventItem.likeCount = jsonEventItem.optInt(EventFieldNameDictionary.LIKE_COUNT);
-                    eventItem.viewCount = jsonEventItem.optInt(EventFieldNameDictionary.VIEW_COUNT);
+                    //eventItemStats.likeCount = jsonEventItem.optInt(EventFieldNameDictionary.LIKE_COUNT);
+                    //eventItemStats.viewCount = jsonEventItem.optInt(EventFieldNameDictionary.VIEW_COUNT);
 
                     eventList.add(eventItem);
+                    //eventStatsList.add(eventItemStats);
 
                 }
             } else {
@@ -580,8 +594,11 @@ public class EventItemsModel {
                         loadInBackground();
                     }
                     for (int i = 0; i < eventList.size(); i++) {
-                        insertEventToLocalDataSource(eventList.get(i));
+                        mEventLocalDataSource.createOrUpdateEvent(eventList.get(i));
                     }
+                    //for (int i = 0; i < eventStatsList.size(); i++) {
+                    //mEventStatsLocalDataSource.createOrUpdateEventStats(eventStatsList.get(i));
+                    //}
                     NowApplication.updateDataTimestamp();
                 }
                 mDataIsActual = true;
@@ -593,7 +610,6 @@ public class EventItemsModel {
             setEventsFromLocalDataSource(mEventLocalDataSource.getAllEvents());
             mAvailableEventCount = getEventItems().size();
         }
-
         return result;
     }
 
@@ -647,8 +663,8 @@ public class EventItemsModel {
         return result;
     }
 
-    public EventItem getEventItemById(int id) {
-        return mEventLocalDataSource.getByEventId(id);
+    public EventItemStats getEventItemStatsById(int id) {
+        return mEventStatsLocalDataSource.getByEventId(id);
     }
 
     private class EventNameComparator implements Comparator<EventItem> {

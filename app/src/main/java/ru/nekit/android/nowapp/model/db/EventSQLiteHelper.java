@@ -13,26 +13,36 @@ import ru.nekit.android.nowapp.model.EventFieldNameDictionary;
 public class EventSQLiteHelper extends SQLiteOpenHelper implements BaseColumns {
 
 
-    public static final String TABLE_NAME = "events";
+    public static final String EVENT_TABLE_NAME = "events";
     public static final String FTS_TABLE_NAME = "events_fts";
     public static final String FTS_ENGINE = "fts4";
-
     public static final String EVENT_TO_CALENDAR_LINK_TABLE_NAME = "event_to_calendar_link";
+    public static final String EVENT_STATS_TABLE_NAME = "event_stats";
 
     public static final String EVENT_ID = EventSQLiteHelper._ID;
     public static final String CALENDAR_EVENT_ID = "calendar_event" + EventSQLiteHelper._ID;
-
-    private static final String EVENT_TO_CALENDAR_LINK_DATABASE_CREATE = "CREATE TABLE "
-            + EVENT_TO_CALENDAR_LINK_TABLE_NAME + " ("
-            + EVENT_ID + " INTEGER UNIQUE, "
-            + CALENDAR_EVENT_ID + " INTEGER"
-            + ");";
+    public static final String MY_LIKE_STATUS = "my_like_status";
 
     static final String FTS_EVENT_START_TIME_ALIAS = "event_start_time_alias";
     static final String FTS_EVENT_CATEGORY_KEYWORD = "event_category_keyword";
     static final String FTS_EVENT_START_TIME = "event_start_time";
-    private static final String DATABASE_CREATE = "CREATE TABLE "
-            + TABLE_NAME + " ("
+
+    private static final String EVENT_TO_CALENDAR_LINK_TABLE_CREATE = "CREATE TABLE "
+            + EVENT_TO_CALENDAR_LINK_TABLE_NAME + " ("
+            + EVENT_ID + " INTEGER NOT NULL, "
+            + CALENDAR_EVENT_ID + " INTEGER"
+            + ");";
+
+    private static final String EVENT_STATS_TABLE_CREATE = "CREATE TABLE "
+            + EVENT_STATS_TABLE_NAME + " ("
+            + EVENT_ID + " INTEGER UNIQUE NOT NULL, "
+            + EventFieldNameDictionary.LIKE_COUNT + " INTEGER, "
+            + EventFieldNameDictionary.VIEW_COUNT + " INTEGER, "
+            + MY_LIKE_STATUS + " INTEGER"
+            + ");";
+
+    private static final String EVENT_TABLE_CREATE = "CREATE TABLE "
+            + EVENT_TABLE_NAME + " ("
             + _ID + " INTEGER PRIMARY KEY, "
             + EventFieldNameDictionary.ADDRESS + " TEXT NOT NULL, "
             + EventFieldNameDictionary.ALL_NIGHT_PARTY + " INTEGER DEFAULT 0, "
@@ -54,11 +64,9 @@ public class EventSQLiteHelper extends SQLiteOpenHelper implements BaseColumns {
             + EventFieldNameDictionary.PLACE_NAME + " TEXT, "
             + EventFieldNameDictionary.POSTER_BLUR + " TEXT, "
             + EventFieldNameDictionary.POSTER_ORIGINAL + " TEXT, "
-            + EventFieldNameDictionary.POSTER_THUMB + " TEXT, "
-            + EventFieldNameDictionary.LIKE_COUNT + " INTEGER, "
-            + EventFieldNameDictionary.VIEW_COUNT + " INTEGER"
+            + EventFieldNameDictionary.POSTER_THUMB + " TEXT"
             + ");";
-    private static final String DATABASE_CREATE_FTS = "CREATE VIRTUAL TABLE " + FTS_TABLE_NAME +
+    private static final String EVENT_FTS_TABLE_CREATE = "CREATE VIRTUAL TABLE " + FTS_TABLE_NAME +
             " USING " + FTS_ENGINE + "(" + _ID + " integer unique, "
             + EventFieldNameDictionary.NAME + ", "
             + EventFieldNameDictionary.EVENT_DESCRIPTION + " TEXT, "
@@ -83,16 +91,18 @@ public class EventSQLiteHelper extends SQLiteOpenHelper implements BaseColumns {
 
     @Override
     public void onCreate(SQLiteDatabase database) {
-        database.execSQL(DATABASE_CREATE);
-        database.execSQL(DATABASE_CREATE_FTS);
-        database.execSQL(EVENT_TO_CALENDAR_LINK_DATABASE_CREATE);
+        database.execSQL(EVENT_TABLE_CREATE);
+        database.execSQL(EVENT_FTS_TABLE_CREATE);
+        database.execSQL(EVENT_TO_CALENDAR_LINK_TABLE_CREATE);
+        database.execSQL(EVENT_STATS_TABLE_CREATE);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase database, int oldVersion, int newVersion) {
-        database.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
+        database.execSQL("DROP TABLE IF EXISTS " + EVENT_TABLE_NAME);
         database.execSQL("DROP TABLE IF EXISTS " + FTS_TABLE_NAME);
         database.execSQL("DROP TABLE IF EXISTS " + EVENT_TO_CALENDAR_LINK_TABLE_NAME);
+        database.execSQL("DROP TABLE IF EXISTS " + EVENT_STATS_TABLE_NAME);
         onCreate(database);
     }
 

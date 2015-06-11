@@ -43,8 +43,6 @@ public class EventLocalDataSource {
                     EventFieldNameDictionary.POSTER_BLUR,
                     EventFieldNameDictionary.POSTER_ORIGINAL,
                     EventFieldNameDictionary.POSTER_THUMB,
-                    EventFieldNameDictionary.VIEW_COUNT,
-                    EventFieldNameDictionary.LIKE_COUNT
             };
     private static String[] FTS_SEARCH_ORDER = {
             EventSQLiteHelper.FTS_EVENT_CATEGORY_KEYWORD,
@@ -91,9 +89,7 @@ public class EventLocalDataSource {
         contentValues.put(EventFieldNameDictionary.POSTER_BLUR, eventItem.posterBlur);
         contentValues.put(EventFieldNameDictionary.POSTER_ORIGINAL, eventItem.posterOriginal);
         contentValues.put(EventFieldNameDictionary.POSTER_THUMB, eventItem.posterThumb);
-        contentValues.put(EventFieldNameDictionary.VIEW_COUNT, eventItem.viewCount);
-        contentValues.put(EventFieldNameDictionary.LIKE_COUNT, eventItem.likeCount);
-        database.insertWithOnConflict(EventSQLiteHelper.TABLE_NAME, EventSQLiteHelper._ID, contentValues, SQLiteDatabase.CONFLICT_REPLACE);
+        database.insertWithOnConflict(EventSQLiteHelper.EVENT_TABLE_NAME, EventSQLiteHelper._ID, contentValues, SQLiteDatabase.CONFLICT_REPLACE);
         ContentValues contentValuesFTS = new ContentValues();
         contentValuesFTS.put(EventSQLiteHelper._ID, eventItem.id);
         contentValuesFTS.put(EventFieldNameDictionary.NAME, normalizeForSearch(eventItem.name));
@@ -112,7 +108,7 @@ public class EventLocalDataSource {
 
     public ArrayList<EventItem> getAllEvents() {
         ArrayList<EventItem> eventList = new ArrayList<>();
-        Cursor cursor = database.query(EventSQLiteHelper.TABLE_NAME,
+        Cursor cursor = database.query(EventSQLiteHelper.EVENT_TABLE_NAME,
                 ALL_COLUMNS, null, null, null, null, null);
         cursor.moveToFirst();
         while (!cursor.isAfterLast()) {
@@ -127,7 +123,7 @@ public class EventLocalDataSource {
     public ArrayList<EventItem> getByEventIds(ArrayList<Integer> ids) {
         ArrayList<EventItem> eventItems = new ArrayList<>();
         if (ids.size() > 0) {
-            Cursor cursor = database.query(EventSQLiteHelper.TABLE_NAME,
+            Cursor cursor = database.query(EventSQLiteHelper.EVENT_TABLE_NAME,
                     ALL_COLUMNS, EventSQLiteHelper._ID + " IN (" + TextUtils.join(",", ids) + ")", null, null, null, null);
             cursor.moveToFirst();
             while (!cursor.isAfterLast()) {
@@ -142,7 +138,7 @@ public class EventLocalDataSource {
 
     public EventItem getByEventId(int id) {
         EventItem eventItem = null;
-        Cursor cursor = database.query(EventSQLiteHelper.TABLE_NAME,
+        Cursor cursor = database.query(EventSQLiteHelper.EVENT_TABLE_NAME,
                 ALL_COLUMNS, EventSQLiteHelper._ID + "=" + id, null, null, null, null);
         cursor.moveToFirst();
         if (!cursor.isAfterLast()) {
@@ -176,8 +172,6 @@ public class EventLocalDataSource {
         eventItem.posterBlur = cursor.getString(cursor.getColumnIndex(EventFieldNameDictionary.POSTER_BLUR));
         eventItem.posterOriginal = cursor.getString(cursor.getColumnIndex(EventFieldNameDictionary.POSTER_ORIGINAL));
         eventItem.posterThumb = cursor.getString(cursor.getColumnIndex(EventFieldNameDictionary.POSTER_THUMB));
-        eventItem.viewCount = cursor.getInt(cursor.getColumnIndex(EventFieldNameDictionary.VIEW_COUNT));
-        eventItem.likeCount = cursor.getInt(cursor.getColumnIndex(EventFieldNameDictionary.LIKE_COUNT));
         return eventItem;
     }
 
@@ -190,7 +184,7 @@ public class EventLocalDataSource {
             queryList.add(EventSQLiteHelper._ID + " IN (" +
                     "SELECT " + EventSQLiteHelper._ID + " FROM " + EventSQLiteHelper.FTS_TABLE_NAME + " WHERE " + field + " MATCH '" + query + "') ");
         }
-        Cursor cursor = database.rawQuery("SELECT * FROM " + EventSQLiteHelper.TABLE_NAME + " WHERE " + TextUtils.join(" OR ", queryList) + ";", null);
+        Cursor cursor = database.rawQuery("SELECT * FROM " + EventSQLiteHelper.EVENT_TABLE_NAME + " WHERE " + TextUtils.join(" OR ", queryList) + ";", null);
         if (cursor != null) {
             cursor.moveToFirst();
             while (!cursor.isAfterLast()) {
@@ -207,12 +201,12 @@ public class EventLocalDataSource {
     }
 
     public void removeEventByID(int id) {
-        database.delete(EventSQLiteHelper.TABLE_NAME, String.format("%s = %s", EventSQLiteHelper._ID, id), null);
+        database.delete(EventSQLiteHelper.EVENT_TABLE_NAME, String.format("%s = %s", EventSQLiteHelper._ID, id), null);
         database.delete(EventSQLiteHelper.FTS_TABLE_NAME, String.format("%s = %s", EventSQLiteHelper._ID, id), null);
     }
 
     public void clear() {
-        database.delete(EventSQLiteHelper.TABLE_NAME, null, null);
+        database.delete(EventSQLiteHelper.EVENT_TABLE_NAME, null, null);
         database.delete(EventSQLiteHelper.FTS_TABLE_NAME, null, null);
     }
 }

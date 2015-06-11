@@ -8,6 +8,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.TypedArray;
 import android.graphics.Color;
+import android.graphics.LightingColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.location.LocationManager;
@@ -23,6 +24,9 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v4.util.Pair;
+import android.support.v4.view.ViewCompat;
+import android.support.v4.view.animation.FastOutSlowInInterpolator;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.AppCompatDialog;
@@ -43,7 +47,6 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
@@ -69,12 +72,14 @@ import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 import java.text.DateFormatSymbols;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.EventApiExecutor;
 import ru.nekit.android.nowapp.model.EventItem;
+import ru.nekit.android.nowapp.model.EventItemStats;
 import ru.nekit.android.nowapp.model.EventItemsModel;
 import ru.nekit.android.nowapp.model.EventToCalendarLoader;
 import ru.nekit.android.nowapp.model.vo.EventToCalendarLink;
@@ -113,7 +118,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     private IEventItemPosterSelectListener mEventItemPosterSelectListener;
     private ProgressWheel mProgressWheel;
     private GeoPoint mEventLocationPoint;
-    private RelativeLayout mMapViewContainer;
+    private View mMapViewContainer;
     private ImageView mPosterThumbView;
     private boolean mPosterViewIsEmpty;
     private BroadcastReceiver mChangeApplicationStateReceiver;
@@ -123,33 +128,19 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     private TextView mDescriptionView;
     private TextView mViewsView;
     private TextView mLikesView;
+    private ImageView mViewsIcon;
+    private ImageView mLikesIcon;
     private Button mPhoneButton;
     private Button mSiteButton;
     private FloatingActionButton mFloatingActionButton;
     private LayoutInflater mInflater;
-    private SearchView mSearchView;
     private CoordinatorLayout mRootLayout;
-    private boolean mAllowUpdateFloatingActionButtonPosition;
-    private final ViewTreeObserver.OnGlobalLayoutListener floatingActionButtonLayoutListener = new ViewTreeObserver.OnGlobalLayoutListener() {
-
-        @Override
-        public void onGlobalLayout() {
-            updateFloatingActionButtonPosition();
-        }
-
-    };
+    private final FloatingActionButtonBehavior mFloatingActionButtonBehavior;
     private EventToCalendarLink mEventToCalendarLink;
-
-    private ViewTreeObserver.OnScrollChangedListener scrollListener = new ViewTreeObserver.OnScrollChangedListener() {
-
-        @Override
-        public void onScrollChanged() {
-            updateFloatingActionButtonPosition();
-        }
-    };
+    private View mLikeContainer;
 
     public EventDetailFragment() {
-        mAllowUpdateFloatingActionButtonPosition = true;
+        mFloatingActionButtonBehavior = new FloatingActionButtonBehavior();
     }
 
     public static EventDetailFragment getInstance() {
@@ -163,32 +154,6 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
     private long LOCATION_MIN_UPDATE_TIME() {
         return getActivity().getResources().getInteger(R.integer.location_min_update_time);
-    }
-
-    private boolean updateFloatingActionButtonPosition() {
-        View bottomView = mMapViewContainer;
-        if (mPhoneButton.getVisibility() == View.VISIBLE) {
-            bottomView = mPhoneButton;
-        } else if (mSiteButton.getVisibility() == View.VISIBLE) {
-            bottomView = mSiteButton;
-        }
-        float appWorkAreaHeight = mRootLayout.getHeight();
-        int[] appWorkAreaCords = new int[2];
-        mRootLayout.getLocationOnScreen(appWorkAreaCords);
-        float appHeight = appWorkAreaCords[1] + appWorkAreaHeight;
-        int fabHeight = mFloatingActionButton.getHeight();
-        int[] bottomViewCords = new int[2];
-        bottomView.getLocationOnScreen(bottomViewCords);
-        float bottomViewBottom = bottomViewCords[1];
-        if (mAllowUpdateFloatingActionButtonPosition) {
-            if (appHeight < bottomViewBottom) {
-                mFloatingActionButton.setY(appWorkAreaHeight - fabHeight);
-            } else {
-                mFloatingActionButton.setY(appWorkAreaHeight - (appHeight - bottomViewBottom) - fabHeight);
-            }
-        }
-        mDescriptionView.setPadding(0, 0, 0, fabHeight / 3 * 2);
-        return appHeight < bottomViewBottom;
     }
 
     @Override
@@ -218,8 +183,15 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     @Override
     public void onResume() {
         super.onResume();
+
+        Bundle arg = getArguments();
         FragmentActivity activity = getActivity();
-        ((AppCompatActivity) activity).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        ActionBar actionBar = ((AppCompatActivity) activity).getSupportActionBar();
+
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
+
         applyApplicationState();
         NowApplication.registerForAppChangeStateNotification(mChangeApplicationStateReceiver);
 
@@ -228,17 +200,18 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         gpsLocationProvider.setLocationUpdateMinDistance(LOCATION_MIN_UPDATE_DISTANCE());
         myLocationOverLay.enableMyLocation(gpsLocationProvider);
         myLocationOverLay.setDrawAccuracyEnabled(true);
-        mFloatingActionButton.getViewTreeObserver().addOnGlobalLayoutListener(floatingActionButtonLayoutListener);
-        mScrollView.getViewTreeObserver().addOnScrollChangedListener(scrollListener);
+
         initEventToCalendarLoader(EventToCalendarLoader.CHECK);
-        Bundle arg = getArguments();
         if (arg.getBoolean(KEY_SELECTED, false)) {
             initEventApiExecutor(EventApiExecutor.METHOD_UPDATE_VIEW);
         } else {
             initEventApiExecutor(EventApiExecutor.METHOD_GET_STATS);
         }
         arg.putBoolean(KEY_SELECTED, false);
-        updateFloatingActionButtonPosition();
+
+        mFloatingActionButtonBehavior.activate();
+        mFloatingActionButtonBehavior.validatePosition();
+
         updateEventLikesAndViews();
     }
 
@@ -319,32 +292,30 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                 }
                 if (messageId != 0) {
                     final CoordinatorLayout.LayoutParams fabLayoutParams = (CoordinatorLayout.LayoutParams) mFloatingActionButton.getLayoutParams();
-                    final CoordinatorLayout.Behavior behavior = fabLayoutParams.getBehavior();
-                    if (!updateFloatingActionButtonPosition()) {
-                        fabLayoutParams.setBehavior(new CoordinatorLayout.Behavior() {
-                        });
+                    if (mFloatingActionButtonBehavior.validatePosition()) {
+                        mFloatingActionButtonBehavior.setAllowMoveOnScroll(false);
+                        mFloatingActionButtonBehavior.setAllowMoveOnSnackbarShow(true);
                     } else {
-                        mAllowUpdateFloatingActionButtonPosition = false;
+                        mFloatingActionButtonBehavior.setAllowMoveOnSnackbarShow(false);
                     }
                     Snackbar snackbar = Snackbar.make(mFloatingActionButton, messageId, Snackbar.LENGTH_LONG);
+                    snackbar.setActionTextColor(EventItemsModel.getCategoryColor(mEventItem.category));
                     if (calendarResult.first == EventToCalendarLoader.ADD) {
                         snackbar.setAction(R.string.open_calendar_message, new View.OnClickListener() {
                             @Override
-                            public void onClick(View v) {
+                            public void onClick(View view) {
                                 openCalendarApplication();
                             }
                         });
                     }
                     snackbar.show();
-                    updateFloatingActionButtonPosition();
                     mFloatingActionButton.postDelayed(new Runnable() {
                         @Override
                         public void run() {
-                            mAllowUpdateFloatingActionButtonPosition = true;
-                            fabLayoutParams.setBehavior(behavior);
-                            updateFloatingActionButtonPosition();
+                            mFloatingActionButtonBehavior.setAllowMoveOnScroll(true);
+                            mFloatingActionButtonBehavior.validatePosition();
                         }
-                    }, 3200);
+                    }, 3250);
                 }
 
                 break;
@@ -369,8 +340,29 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     }
 
     private void updateEventLikesAndViews() {
-        mViewsView.setText(Integer.toString(mEventItem.viewCount));
-        mLikesView.setText(Integer.toString(mEventItem.likeCount));
+        Context context = getActivity();
+        EventItemStats eventItemStats = EventItemsModel.getInstance().getEventItemStatsById(mEventItem.id);
+        boolean isMyLike;
+        if (eventItemStats == null) {
+            mViewsView.setText(Integer.toString(0));
+            mLikesView.setText(Integer.toString(0));
+            isMyLike = false;
+        } else {
+            isMyLike = eventItemStats.myLikeStatus != 0;
+            mViewsView.setText(Integer.toString(eventItemStats.viewCount));
+            mLikesView.setText(Integer.toString(eventItemStats.likeCount));
+        }
+        mFloatingActionButton.setEnabled(!isMyLike);
+        int normalColor = context.getResources().getColor(R.color.event_stats_normal);
+        int activeColor = context.getResources().getColor(R.color.event_stats_active);
+        int likeColor = isMyLike ? activeColor : normalColor;
+        mViewsIcon.getDrawable().setColorFilter(new LightingColorFilter(normalColor, normalColor));
+        mViewsIcon.setImageDrawable(mViewsIcon.getDrawable());
+        mLikesIcon.getDrawable().setColorFilter(new LightingColorFilter(likeColor, likeColor));
+        mLikesIcon.setImageDrawable(mLikesIcon.getDrawable());
+        mLikeContainer.setBackgroundResource(isMyLike ? R.drawable.event_stats_bacground : 0);
+        mLikesView.setTextColor(likeColor);
+        mFloatingActionButton.setImageDrawable(context.getResources().getDrawable(isMyLike ? R.drawable.ic_favorite_white : R.drawable.ic_favorite_border));
     }
 
     private void setMenuItVisible(int id, boolean visible, Menu menu) {
@@ -394,8 +386,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     public void onPause() {
         super.onPause();
         NowApplication.unregisterForAppChangeStateNotification(mChangeApplicationStateReceiver);
-        mFloatingActionButton.getViewTreeObserver().removeGlobalOnLayoutListener(floatingActionButtonLayoutListener);
-        mScrollView.getViewTreeObserver().removeOnScrollChangedListener(scrollListener);
+        mFloatingActionButtonBehavior.deactivate();
         myLocationOverLay.disableMyLocation();
     }
 
@@ -438,9 +429,9 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        mSearchView = (SearchView) getViewFromRoot(R.id.search_view);
-        assert mSearchView != null;
-        mSearchView.setVisibility(View.GONE);
+        SearchView searchView = (SearchView) getViewFromRoot(R.id.search_view);
+        assert searchView != null;
+        searchView.setVisibility(View.GONE);
     }
 
     private View getViewFromRoot(int id) {
@@ -532,7 +523,6 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
                 @Override
                 public boolean onResourceReady(GlideDrawable resource, String model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
-
                     return false;
                 }
             }).into(logoView);
@@ -629,14 +619,19 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
         createEventPlaceTextBlock(context, placeNameView, mEventItem.placeName, mEventItem.address);
 
-        mMapViewContainer = (RelativeLayout) view.findViewById(R.id.map_view_container);
+        mMapViewContainer = view.findViewById(R.id.map_view_container);
 
         //TODO: do not work
         mScrollView.scrollTo(0, 0);
 
         mFloatingActionButton = (FloatingActionButton) view.findViewById(R.id.fab_event);
+        CoordinatorLayout.LayoutParams fabLayoutParams = (CoordinatorLayout.LayoutParams) mFloatingActionButton.getLayoutParams();
+        fabLayoutParams.setBehavior(mFloatingActionButtonBehavior);
         mFloatingActionButton.setOnClickListener(this);
 
+        mViewsIcon = (ImageView) view.findViewById(R.id.event_view_icon);
+        mLikesIcon = (ImageView) view.findViewById(R.id.event_like_icon);
+        mLikeContainer = view.findViewById(R.id.event_like_container);
         return view;
     }
 
@@ -763,9 +758,11 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         Intent intent;
         switch (view.getId()) {
             case R.id.phone_button:
+
                 intent = new Intent(Intent.ACTION_CALL);
                 intent.setData(Uri.parse("tel:" + mEventItem.phone));
                 startActivity(intent);
+
                 break;
 
             case R.id.site_button:
@@ -773,11 +770,11 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                 intent = new Intent(Intent.ACTION_VIEW);
                 intent.setData(Uri.parse(mEventItem.site));
                 startActivity(intent);
+
                 break;
 
             case R.id.place_group:
 
-                //mMapView.getController().setZoom(MAX_ZOOM);
                 mMapView.getController().animateTo(mEventLocationPoint);
                 checkZoomButtons();
 
@@ -822,6 +819,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
             case R.id.fab_event:
 
+                showAddToCalendarDialog();
                 initEventApiExecutor(EventApiExecutor.METHOD_LIKE);
 
                 break;
@@ -829,6 +827,33 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
             default:
                 break;
         }
+    }
+
+    private void showAddToCalendarDialog() {
+        Context context = getActivity();
+        AlertDialog.Builder builder;
+        AppCompatDialog dialog;
+        View dialogContentView = mInflater.inflate(R.layout.dialog_content, null, false);
+        View dialogTitleView = mInflater.inflate(R.layout.dialog_title, null, false);
+        TextView dialogTextView = (TextView) dialogContentView.findViewById(R.id.text_view);
+        dialogTextView.setTextAppearance(context, R.style.DialogContent);
+        TextView dialogTitleTextView = (TextView) dialogTitleView.findViewById(R.id.text_view);
+        dialogTitleTextView.setTextAppearance(context, R.style.DialogTitle);
+        builder = new AlertDialog.Builder(context, R.style.DialogTheme);
+        builder.setCancelable(true)
+                .setView(dialogContentView)
+                .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        initEventToCalendarLoader(EventToCalendarLoader.ADD);
+                    }
+                }).setNegativeButton(R.string.no, null)
+                .setCustomTitle(dialogTitleView);
+        builder.setInverseBackgroundForced(true);
+        dialogTitleTextView.setText(R.string.add_to_calendar_title);
+        dialogTextView.setText(R.string.add_to_calendar_dialog_message);
+        dialog = builder.create();
+        dialog.show();
     }
 
     private void showGPSDisabledDialog() {
@@ -859,5 +884,113 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         dialogTextView.setText(R.string.gps_switch_on_ask);
         dialog = builder.create();
         dialog.show();
+    }
+
+    class FloatingActionButtonBehavior extends FloatingActionButton.Behavior {
+
+        private float mTranslationY;
+        private boolean mAllowMoveOnScroll, mAllowMoveOnSnackbarShow;
+
+        private final ViewTreeObserver.OnGlobalLayoutListener floatingActionButtonLayoutListener = new ViewTreeObserver.OnGlobalLayoutListener() {
+
+            @Override
+            public void onGlobalLayout() {
+                validatePosition();
+            }
+
+        };
+
+        private ViewTreeObserver.OnScrollChangedListener scrollListener = new ViewTreeObserver.OnScrollChangedListener() {
+
+            @Override
+            public void onScrollChanged() {
+                validatePosition();
+            }
+        };
+
+
+        public FloatingActionButtonBehavior() {
+            mAllowMoveOnScroll = true;
+            mAllowMoveOnSnackbarShow = true;
+        }
+
+        public boolean onDependentViewChanged(CoordinatorLayout parent, FloatingActionButton child, View dependency) {
+            updateFabTranslationForSnackbar(parent, child, dependency);
+            return false;
+        }
+
+        private void updateFabTranslationForSnackbar(CoordinatorLayout parent, FloatingActionButton fab, View snackbar) {
+            if (mAllowMoveOnSnackbarShow) {
+                float translationY = this.getFabTranslationYForSnackbar(parent, fab);
+                if (translationY != this.mTranslationY) {
+                    ViewCompat.animate(fab).cancel();
+                    if (Math.abs(translationY - this.mTranslationY) == (float) snackbar.getHeight()) {
+                        ViewCompat.animate(fab).translationY(translationY).setInterpolator(new FastOutSlowInInterpolator()).setListener(null);
+                    } else {
+                        ViewCompat.setTranslationY(fab, translationY);
+                    }
+                    this.mTranslationY = translationY;
+                }
+            }
+        }
+
+        private float getFabTranslationYForSnackbar(CoordinatorLayout parent, FloatingActionButton fab) {
+            float minOffset = 0.0F;
+            List dependencies = parent.getDependencies(fab);
+            int i = 0;
+
+            for (int z = dependencies.size(); i < z; ++i) {
+                View view = (View) dependencies.get(i);
+                if (view instanceof Snackbar.SnackbarLayout && parent.doViewsOverlap(fab, view)) {
+                    minOffset = Math.min(minOffset, ViewCompat.getTranslationY(view) - (float) view.getHeight());
+                }
+            }
+
+            return minOffset;
+        }
+
+        public void activate() {
+            mFloatingActionButton.getViewTreeObserver().addOnGlobalLayoutListener(floatingActionButtonLayoutListener);
+            mScrollView.getViewTreeObserver().addOnScrollChangedListener(scrollListener);
+        }
+
+        public void deactivate() {
+            mFloatingActionButton.getViewTreeObserver().removeGlobalOnLayoutListener(floatingActionButtonLayoutListener);
+            mScrollView.getViewTreeObserver().removeOnScrollChangedListener(scrollListener);
+        }
+
+        public boolean validatePosition() {
+            View bottomView = mMapViewContainer;
+            if (mPhoneButton.getVisibility() == View.VISIBLE) {
+                bottomView = mPhoneButton;
+            } else if (mSiteButton.getVisibility() == View.VISIBLE) {
+                bottomView = mSiteButton;
+            }
+            float appWorkAreaHeight = mRootLayout.getHeight();
+            int[] appWorkAreaCords = new int[2];
+            mRootLayout.getLocationOnScreen(appWorkAreaCords);
+            float appHeight = appWorkAreaCords[1] + appWorkAreaHeight;
+            int fabHeight = mFloatingActionButton.getHeight();
+            int[] bottomViewCords = new int[2];
+            bottomView.getLocationOnScreen(bottomViewCords);
+            float bottomViewBottom = bottomViewCords[1];
+            if (mAllowMoveOnScroll) {
+                if (appHeight < bottomViewBottom) {
+                    mFloatingActionButton.setY(appWorkAreaHeight - fabHeight);
+                } else {
+                    mFloatingActionButton.setY(appWorkAreaHeight - (appHeight - bottomViewBottom) - fabHeight);
+                }
+            }
+            mDescriptionView.setPadding(0, 0, 0, fabHeight / 3 * 2);
+            return appHeight < bottomViewBottom;
+        }
+
+        public void setAllowMoveOnScroll(boolean value) {
+            mAllowMoveOnScroll = value;
+        }
+
+        public void setAllowMoveOnSnackbarShow(boolean value) {
+            mAllowMoveOnSnackbarShow = value;
+        }
     }
 }
