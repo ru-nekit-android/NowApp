@@ -70,26 +70,54 @@
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:layout_marginLeft="@dimen/normal_space"
+                            android:layout_marginStart="@dimen/normal_space"
                             android:layout_marginTop="@dimen/normal_space"
+                            android:gravity="center_vertical"
                             android:orientation="horizontal">
+
+                            <ImageView
+                                android:id="@+id/event_view_icon"
+                                android:layout_width="@dimen/event_stats_icon_size"
+                                android:layout_height="@dimen/event_stats_icon_size"
+                                android:src="@drawable/ic_view" />
 
                             <com.devspark.robototextview.widget.RobotoTextView
                                 android:id="@+id/event_views"
                                 style="@style/StatsText"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:paddingLeft="@dimen/large_space"
-                                android:paddingRight="@dimen/large_space" />
+                                android:paddingLeft="@dimen/small_space" />
 
-                            <com.devspark.robototextview.widget.RobotoTextView
-                                android:id="@+id/event_likes"
-                                style="@style/StatsText"
+                            <Space
+                                android:layout_width="@dimen/big_space"
+                                android:layout_height="0dp" />
+
+                            <LinearLayout
+                                android:id="@+id/event_like_container"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:paddingLeft="@dimen/large_space"
-                                android:paddingRight="@dimen/large_space" />
-                        </LinearLayout>
+                                android:gravity="center_vertical"
+                                android:paddingLeft="4dp"
+                                android:paddingRight="4dp"
+                                android:orientation="horizontal">
 
+                                <ImageView
+                                    android:id="@+id/event_like_icon"
+                                    android:layout_width="@dimen/event_stats_icon_size"
+                                    android:layout_height="@dimen/event_stats_icon_size"
+                                    android:src="@drawable/ic_favorite" />
+
+                                <com.devspark.robototextview.widget.RobotoTextView
+                                    android:id="@+id/event_likes"
+                                    style="@style/StatsText"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:paddingLeft="@dimen/small_space" />
+
+                            </LinearLayout>
+
+                        </LinearLayout>
 
                     </LinearLayout>
 
@@ -309,6 +337,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|right|end"
+        android:src="@drawable/ic_favorite_border"
         app:borderWidth="0dp"
         tools:ignore="RtlHardcoded" />
 </android.support.design.widget.CoordinatorLayout>
