@@ -16,5 +16,6 @@
     <dimen name="event_category_view_shift">2dp</dimen>
     <dimen name="logo_max_width">64dp</dimen>
     <dimen name="logo_max_height">48dp</dimen>
+    <dimen name="event_stats_icon_size">14dp</dimen>
 
 </resources>

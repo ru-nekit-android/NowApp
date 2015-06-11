@@ -16,4 +16,8 @@
     <color name="action_button_stroke">#FFAAAAAA</color>
     <color name="action_button_fill">#FFFFFFFF</color>
     <color name="event_poster_stub_background">#FFD9E1E5</color>
+    <color name="event_stats_normal">#FF696969</color>
+    <color name="event_stats_active">#FFFFFFFF</color>
+    <color name="event_stats_background_active">#FF1169A0</color>
+
 </resources>
