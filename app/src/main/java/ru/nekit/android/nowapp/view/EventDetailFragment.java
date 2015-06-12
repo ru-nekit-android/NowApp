@@ -627,6 +627,10 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         mFloatingActionButton = (FloatingActionButton) view.findViewById(R.id.fab_event);
         CoordinatorLayout.LayoutParams fabLayoutParams = (CoordinatorLayout.LayoutParams) mFloatingActionButton.getLayoutParams();
         fabLayoutParams.setBehavior(mFloatingActionButtonBehavior);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            fabLayoutParams.setMargins(0, 0, 0, 0);
+            mFloatingActionButton.setLayoutParams(fabLayoutParams);
+        }
         mFloatingActionButton.setOnClickListener(this);
 
         mViewsIcon = (ImageView) view.findViewById(R.id.event_view_icon);

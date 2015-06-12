@@ -222,9 +222,19 @@
     </style>
 
     <style name="StatsText">
-        <item name="android:textSize">18sp</item>
-        <item name="typeface">roboto_regular</item>
+        <item name="android:textSize">20sp</item>
+        <item name="typeface">roboto_light</item>
         <item name="android:textColor">@color/event_stats_normal</item>
+    </style>
+
+    <style name="FabStyle">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_margin">16dp</item>
+        <item name="android:layout_gravity">bottom|end</item>
+        <item name="borderWidth">0dp</item>
+        <item name="elevation">@dimen/fab_elevation</item>
+        <item name="pressedTranslationZ">12dp</item>
     </style>
 
 </resources>

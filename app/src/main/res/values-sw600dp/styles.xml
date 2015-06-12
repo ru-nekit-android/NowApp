@@ -8,7 +8,7 @@
     <style name="DialogTheme" parent="DialogThemeBase" />
 
     <style name="EventName">
-        <item name="maxTextSize">48sp</item>
+        <item name="maxTextSize">72sp</item>
         <item name="minTextSize">10sp</item>
         <item name="android:paddingBottom">4dp</item>
         <item name="android:paddingRight">4dp</item>
@@ -147,6 +147,12 @@
     <style name="MapActionButton">
         <item name="android:layout_height">50dp</item>
         <item name="android:layout_width">50dp</item>
+    </style>
+
+    <style name="StatsText">
+        <item name="android:textSize">24sp</item>
+        <item name="typeface">roboto_light</item>
+        <item name="android:textColor">@color/event_stats_normal</item>
     </style>
 
 </resources>

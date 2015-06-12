@@ -1,5 +1,4 @@
 <ru.nekit.android.nowapp.widget.SoftKeyboardListenerLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/root_layout"
     android:layout_width="match_parent"
@@ -34,14 +33,8 @@
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab_events"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true"
-
-        android:src="@drawable/ic_search"
-        app:borderWidth="0dp" />
+        style="@style/FabStyle"
+        android:src="@drawable/ic_search" />
 
 </ru.nekit.android.nowapp.widget.SoftKeyboardListenerLayout>
 

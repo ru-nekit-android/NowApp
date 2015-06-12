@@ -1,14 +1,14 @@
 package ru.nekit.android.nowapp.widget;
 
 import android.content.Context;
+import android.support.design.widget.CoordinatorLayout;
 import android.util.AttributeSet;
-import android.widget.RelativeLayout;
 
 /**
  * Created by chuvac on 22.05.15.
  */
 
-public class SoftKeyboardListenerLayout extends RelativeLayout {
+public class SoftKeyboardListenerLayout extends CoordinatorLayout {
 
 
     private OnSoftKeyboardListener onSoftKeyboardListener;

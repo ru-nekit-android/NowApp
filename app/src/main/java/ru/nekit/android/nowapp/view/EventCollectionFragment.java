@@ -6,9 +6,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
@@ -358,6 +360,11 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         });
 
         mFloatingActionButton = (FloatingActionButton) view.findViewById(R.id.fab_events);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            CoordinatorLayout.LayoutParams p = (CoordinatorLayout.LayoutParams) mFloatingActionButton.getLayoutParams();
+            p.setMargins(0, 0, 0, 0);
+            mFloatingActionButton.setLayoutParams(p);
+        }
         mFloatingActionButton.setOnClickListener(this);
 
         mSearchStatus = (TextView) view.findViewById(R.id.search_status);

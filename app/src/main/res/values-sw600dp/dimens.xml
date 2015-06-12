@@ -16,11 +16,11 @@
     <dimen name="small_space">4dp</dimen>
     <dimen name="normal_space">8dp</dimen>
     <dimen name="big_space">16dp</dimen>
-    <dimen name="event_name_height">200dp</dimen>
+    <dimen name="event_name_height">160dp</dimen>
     <dimen name="large_space">24dp</dimen>
     <dimen name="logo_max_width">96dp</dimen>
     <dimen name="logo_max_height">54dp</dimen>
-    <dimen name="event_stats_icon_size">14dp</dimen>
+    <dimen name="event_stats_icon_size">16dp</dimen>
     <item name="event_name_line_spacing_multiplier" format="float" type="dimen">0.8</item>
     <item name="event_item_view_height_ratio" format="float" type="dimen">1.0</item>
 

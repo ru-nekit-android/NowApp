@@ -3,8 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/root_layout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:fitsSystemWindows="true">
+    android:layout_height="match_parent">
 
     <ScrollView
         android:id="@+id/scroll_view"
@@ -68,8 +67,10 @@
                             android:layout_marginStart="@dimen/normal_space" />
 
                         <LinearLayout
+                            android:id="@+id/event_stats_container"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:layout_marginBottom="@dimen/normal_space"
                             android:layout_marginLeft="@dimen/normal_space"
                             android:layout_marginStart="@dimen/normal_space"
                             android:layout_marginTop="@dimen/normal_space"
@@ -87,10 +88,11 @@
                                 style="@style/StatsText"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:paddingLeft="@dimen/small_space" />
+                                android:paddingLeft="@dimen/small_space"
+                                android:paddingRight="@dimen/small_space" />
 
                             <Space
-                                android:layout_width="@dimen/big_space"
+                                android:layout_width="@dimen/normal_space"
                                 android:layout_height="0dp" />
 
                             <LinearLayout
@@ -98,9 +100,11 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:gravity="center_vertical"
+                                android:orientation="horizontal"
+                                android:paddingBottom="0dp"
                                 android:paddingLeft="4dp"
                                 android:paddingRight="4dp"
-                                android:orientation="horizontal">
+                                android:paddingTop="0dp">
 
                                 <ImageView
                                     android:id="@+id/event_like_icon"
@@ -334,12 +338,7 @@
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab_event"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|right|end"
-        android:src="@drawable/ic_favorite_border"
-        app:borderWidth="0dp"
-        tools:ignore="RtlHardcoded" />
+        style="@style/FabStyle" />
 </android.support.design.widget.CoordinatorLayout>
 
 
