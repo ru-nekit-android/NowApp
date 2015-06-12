@@ -55,8 +55,8 @@ public class EventItemsModel {
 
     public static final int RESULT_OK = 0;
     public static final int RESULT_BAD = -1;
-    private static final int LIKED_CONFIRMED = 2;
-    private static final int LIKED_NOT_CONFIRMED = 1;
+    public static final int LIKED_CONFIRMED = 2;
+    public static final int LIKED_NOT_CONFIRMED = 1;
     public static final int DATA_IS_EMPTY = 1;
     public static final String LOAD_IN_BACKGROUND_NOTIFICATION = "ru.nekit.android.nowapp.load_in_background_result";
     public static final String LOADING_TYPE = "loading_type";
@@ -402,31 +402,33 @@ public class EventItemsModel {
 
     int performGetStats(int eventId) throws IOException, JSONException {
         Integer result = RESULT_OK;
-        Uri.Builder uriBuilder = createApiUriBuilder(API_REQUEST_GET_STATS);
-        uriBuilder.appendQueryParameter("id", Integer.toString(eventId));
-        Uri uri = uriBuilder.build();
-        String query = uri.toString();
-        DefaultHttpClient httpClient = new DefaultHttpClient();
-        HttpGet httpGet = new HttpGet(query);
-        HttpResponse httpResponse = httpClient.execute(httpGet);
-        HttpEntity httpEntity = httpResponse.getEntity();
-        String jsonString = EntityUtils.toString(httpEntity);
-        JSONObject jsonRootObject = new JSONObject(jsonString);
-        EventItemStats eventItemStats = getEventItemStatsById(eventId);
-        if (eventItemStats == null) {
-            eventItemStats = new EventItemStats();
-            eventItemStats.id = eventId;
+        EventItem eventItem = getEventItemByID(eventId);
+        EventItemStats eventItemStats = getOrCreateEventItemStatsByEventId(eventId);
+        if (NowApplication.getState() == NowApplication.APP_STATE.ONLINE) {
+            Uri.Builder uriBuilder = createApiUriBuilder(API_REQUEST_GET_STATS);
+            uriBuilder.appendQueryParameter("id", Integer.toString(eventId));
+            Uri uri = uriBuilder.build();
+            String query = uri.toString();
+            DefaultHttpClient httpClient = new DefaultHttpClient();
+            HttpGet httpGet = new HttpGet(query);
+            HttpResponse httpResponse = httpClient.execute(httpGet);
+            HttpEntity httpEntity = httpResponse.getEntity();
+            String jsonString = EntityUtils.toString(httpEntity);
+            JSONObject jsonRootObject = new JSONObject(jsonString);
+            eventItemStats.likeCount = jsonRootObject.getInt(EventFieldNameDictionary.LIKE_COUNT);
+            eventItemStats.viewCount = jsonRootObject.getInt(EventFieldNameDictionary.VIEW_COUNT);
         }
-        eventItemStats.likeCount = jsonRootObject.getInt(EventFieldNameDictionary.LIKE_COUNT);
-        eventItemStats.viewCount = jsonRootObject.getInt(EventFieldNameDictionary.VIEW_COUNT);
         mEventStatsLocalDataSource.createOrUpdateEventStats(eventItemStats);
+        if (eventItem != null) {
+            eventItem.stats = eventItemStats;
+        }
         return result;
     }
 
     int performEventUpdateLike(int eventId) throws IOException, JSONException {
         ArrayList<NameValuePair> parameters = new ArrayList<>();
         parameters.add(new BasicNameValuePair("key", "78GlLJhL"));
-        EventItemStats eventItemStats = getEventItemStatsById(eventId);
+        EventItemStats eventItemStats = getOrCreateEventItemStatsByEventId(eventId);
         eventItemStats.myLikeStatus = LIKED_NOT_CONFIRMED;
         if (NowApplication.getState() == NowApplication.APP_STATE.ONLINE) {
             if (performPostApiCall(API_REQUEST_UPDATE_LIKE, eventId, parameters) == RESULT_OK) {
@@ -497,7 +499,6 @@ public class EventItemsModel {
         boolean refreshEvents = REFRESH_EVENTS.equals(loadingType) || loadingType == null;
 
         ArrayList<EventItem> eventList = new ArrayList<>();
-        //ArrayList<EventItemStats> eventStatsList = new ArrayList<>();
 
         if (NowApplication.getState() == NowApplication.APP_STATE.ONLINE) {
             Uri.Builder uriBuilder = createApiUriBuilder(API_REQUEST_GET_EVENTS);
@@ -536,9 +537,7 @@ public class EventItemsModel {
                 JSONArray eventJsonArray = jsonRootObject.getJSONArray(TAG_EVENTS);
                 for (int i = 0; i < eventJsonArray.length(); i++) {
                     JSONObject jsonEventItem = eventJsonArray.getJSONObject(i);
-
                     EventItem eventItem = new EventItem();
-                    //EventItemStats eventItemStats = new EventItemStats();
                     eventItem.date = jsonEventItem.optLong(EventFieldNameDictionary.DATE, 0);
                     eventItem.eventDescription = jsonEventItem.optString(EventFieldNameDictionary.EVENT_DESCRIPTION);
                     eventItem.placeName = jsonEventItem.optString(EventFieldNameDictionary.PLACE_NAME);
@@ -561,54 +560,44 @@ public class EventItemsModel {
                     eventItem.logoOriginal = jsonEventItem.optString(EventFieldNameDictionary.LOGO_ORIGINAL);
                     eventItem.logoThumb = jsonEventItem.optString(EventFieldNameDictionary.LOGO_THUMB);
                     eventItem.allNightParty = jsonEventItem.optBoolean(EventFieldNameDictionary.ALL_NIGHT_PARTY) ? 1 : 0;
-                    //
-                    //eventItemStats.likeCount = jsonEventItem.optInt(EventFieldNameDictionary.LIKE_COUNT);
-                    //eventItemStats.viewCount = jsonEventItem.optInt(EventFieldNameDictionary.VIEW_COUNT);
-
                     eventList.add(eventItem);
-                    //eventStatsList.add(eventItemStats);
-
+                }
+                if (eventList.size() > 0) {
+                    if (requestNewEvents) {
+                        addEvents(eventList);
+                        mCurrentPage++;
+                    } else if (refreshEvents) {
+                        setEvents(eventList);
+                        mReachEndOfDataList = false;
+                        mCurrentPage = 1;
+                        mLoadedInBackgroundPage = 1;
+                    } else if (loadInBackground) {
+                        mLoadedInBackgroundPage++;
+                    }
+                    if (refreshEvents || loadInBackground) {
+                        mLastAddedInBackgroundEventItem = eventList.get(eventList.size() - 1);
+                        if (refreshEvents && mEventsCountPerPage == 0) {
+                            mEventsCountPerPage = eventList.size();
+                        }
+                        if (mLoadedInBackgroundPage == 1) {
+                            mEventLocalDataSource.clear();
+                            loadInBackground();
+                        }
+                        for (int i = 0; i < eventList.size(); i++) {
+                            EventItem eventItem = eventList.get(i);
+                            mEventLocalDataSource.createOrUpdateEvent(eventItem);
+                        }
+                        NowApplication.updateDataTimestamp();
+                    }
+                    mDataIsActual = true;
+                } else {
+                    mReachEndOfDataList = !loadInBackground;
+                    result = DATA_IS_EMPTY;
                 }
             } else {
-                //error
+                setEventsFromLocalDataSource(mEventLocalDataSource.getAllEvents());
+                mAvailableEventCount = getEventItems().size();
             }
-            if (eventList.size() > 0) {
-                if (requestNewEvents) {
-                    addEvents(eventList);
-                    mCurrentPage++;
-                } else if (refreshEvents) {
-                    setEvents(eventList);
-                    mReachEndOfDataList = false;
-                    mCurrentPage = 1;
-                    mLoadedInBackgroundPage = 1;
-                } else if (loadInBackground) {
-                    mLoadedInBackgroundPage++;
-                }
-                if (refreshEvents || loadInBackground) {
-                    mLastAddedInBackgroundEventItem = eventList.get(eventList.size() - 1);
-                    if (refreshEvents && mEventsCountPerPage == 0) {
-                        mEventsCountPerPage = eventList.size();
-                    }
-                    if (mLoadedInBackgroundPage == 1) {
-                        mEventLocalDataSource.clear();
-                        loadInBackground();
-                    }
-                    for (int i = 0; i < eventList.size(); i++) {
-                        mEventLocalDataSource.createOrUpdateEvent(eventList.get(i));
-                    }
-                    //for (int i = 0; i < eventStatsList.size(); i++) {
-                    //mEventStatsLocalDataSource.createOrUpdateEventStats(eventStatsList.get(i));
-                    //}
-                    NowApplication.updateDataTimestamp();
-                }
-                mDataIsActual = true;
-            } else {
-                mReachEndOfDataList = !loadInBackground;
-                result = DATA_IS_EMPTY;
-            }
-        } else {
-            setEventsFromLocalDataSource(mEventLocalDataSource.getAllEvents());
-            mAvailableEventCount = getEventItems().size();
         }
         return result;
     }
@@ -663,8 +652,14 @@ public class EventItemsModel {
         return result;
     }
 
-    public EventItemStats getEventItemStatsById(int id) {
-        return mEventStatsLocalDataSource.getByEventId(id);
+    public EventItemStats getOrCreateEventItemStatsByEventId(int id) {
+        EventItemStats eventItemStats = mEventStatsLocalDataSource.getByEventId(id);
+        if (eventItemStats == null) {
+            eventItemStats = new EventItemStats();
+            eventItemStats.id = id;
+            mEventStatsLocalDataSource.createOrUpdateEventStats(eventItemStats);
+        }
+        return eventItemStats;
     }
 
     private class EventNameComparator implements Comparator<EventItem> {

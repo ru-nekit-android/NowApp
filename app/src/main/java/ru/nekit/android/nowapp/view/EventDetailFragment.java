@@ -6,6 +6,8 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.LightingColorFilter;
@@ -13,6 +15,7 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.location.LocationManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.CalendarContract;
 import android.provider.Settings;
@@ -202,8 +205,14 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         myLocationOverLay.setDrawAccuracyEnabled(true);
 
         initEventToCalendarLoader(EventToCalendarLoader.CHECK);
-        if (arg.getBoolean(KEY_SELECTED, false)) {
-            initEventApiExecutor(EventApiExecutor.METHOD_UPDATE_VIEW);
+
+        boolean eventItemSelected = arg.getBoolean(KEY_SELECTED, false);
+        if (eventItemSelected) {
+            if (NowApplication.getState() == NowApplication.APP_STATE.ONLINE) {
+                initEventApiExecutor(EventApiExecutor.METHOD_UPDATE_VIEW);
+            } else {
+                initEventApiExecutor(EventApiExecutor.METHOD_GET_STATS);
+            }
         } else {
             initEventApiExecutor(EventApiExecutor.METHOD_GET_STATS);
         }
@@ -212,7 +221,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         mFloatingActionButtonBehavior.activate();
         mFloatingActionButtonBehavior.validatePosition();
 
-        updateEventLikesAndViews();
+        updateEventStats(!eventItemSelected);
     }
 
     private void initEventApiExecutor(int method) {
@@ -279,90 +288,86 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
     @Override
     public void onLoadFinished(Loader loader, Object result) {
-        switch (loader.getId()) {
-            case CALENDAR_LOADER_ID:
+        if (isResumed()) {
+            switch (loader.getId()) {
+                case CALENDAR_LOADER_ID:
 
-                Pair<Integer, EventToCalendarLink> calendarResult = (Pair<Integer, EventToCalendarLink>) result;
-                mEventToCalendarLink = calendarResult.second;
-                int messageId = 0;
-                if (calendarResult.first == EventToCalendarLoader.ADD) {
-                    messageId = R.string.add_to_calendar_message;
-                } else if (calendarResult.first == EventToCalendarLoader.REMOVE) {
-                    messageId = R.string.remove_from_calendar_message;
-                }
-                if (messageId != 0) {
-                    final CoordinatorLayout.LayoutParams fabLayoutParams = (CoordinatorLayout.LayoutParams) mFloatingActionButton.getLayoutParams();
-                    if (mFloatingActionButtonBehavior.validatePosition()) {
-                        mFloatingActionButtonBehavior.setAllowMoveOnScroll(false);
-                        mFloatingActionButtonBehavior.setAllowMoveOnSnackbarShow(true);
-                    } else {
-                        mFloatingActionButtonBehavior.setAllowMoveOnSnackbarShow(false);
-                    }
-                    Snackbar snackbar = Snackbar.make(mFloatingActionButton, messageId, Snackbar.LENGTH_LONG);
-                    snackbar.setActionTextColor(EventItemsModel.getCategoryColor(mEventItem.category));
+                    Pair<Integer, EventToCalendarLink> calendarResult = (Pair<Integer, EventToCalendarLink>) result;
+                    mEventToCalendarLink = calendarResult.second;
+                    int messageId = 0;
                     if (calendarResult.first == EventToCalendarLoader.ADD) {
-                        snackbar.setAction(R.string.open_calendar_message, new View.OnClickListener() {
-                            @Override
-                            public void onClick(View view) {
-                                openCalendarApplication();
-                            }
-                        });
+                        messageId = R.string.add_to_calendar_message;
+                    } else if (calendarResult.first == EventToCalendarLoader.REMOVE) {
+                        messageId = R.string.remove_from_calendar_message;
                     }
-                    snackbar.show();
-                    mFloatingActionButton.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            mFloatingActionButtonBehavior.setAllowMoveOnScroll(true);
-                            mFloatingActionButtonBehavior.validatePosition();
+                    if (messageId != 0) {
+                        if (mFloatingActionButtonBehavior.validatePosition()) {
+                            mFloatingActionButtonBehavior.setAllowMoveOnScroll(false);
+                            mFloatingActionButtonBehavior.setAllowMoveOnSnackbarShow(true);
+                        } else {
+                            mFloatingActionButtonBehavior.setAllowMoveOnSnackbarShow(false);
                         }
-                    }, 3250);
-                }
+                        Snackbar snackbar = Snackbar.make(mFloatingActionButton, messageId, Snackbar.LENGTH_LONG);
+                        snackbar.setActionTextColor(EventItemsModel.getCategoryColor(mEventItem.category));
+                        if (calendarResult.first == EventToCalendarLoader.ADD) {
+                            snackbar.setAction(R.string.open_calendar_message, new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
+                                    openCalendarApplication();
+                                }
+                            });
+                        }
+                        snackbar.show();
+                        mFloatingActionButton.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                mFloatingActionButtonBehavior.setAllowMoveOnScroll(true);
+                                mFloatingActionButtonBehavior.validatePosition();
+                            }
+                        }, 3250);
+                    }
 
-                break;
+                    break;
 
-            case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_GET_STATS:
+                case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_GET_STATS:
 
-                updateEventLikesAndViews();
+                    updateEventStats(true);
 
-                break;
+                    break;
 
-            case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_LIKE:
-            case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_UPDATE_VIEW:
+                case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_LIKE:
+                case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_UPDATE_VIEW:
 
-                initEventApiExecutor(EventApiExecutor.METHOD_GET_STATS);
+                    initEventApiExecutor(EventApiExecutor.METHOD_GET_STATS);
 
-                break;
+                    break;
 
-            default:
-                break;
+                default:
+                    break;
 
+            }
         }
     }
 
-    private void updateEventLikesAndViews() {
-        Context context = getActivity();
-        EventItemStats eventItemStats = EventItemsModel.getInstance().getEventItemStatsById(mEventItem.id);
-        boolean isMyLike;
-        if (eventItemStats == null) {
-            mViewsView.setText(Integer.toString(0));
-            mLikesView.setText(Integer.toString(0));
-            isMyLike = false;
-        } else {
-            isMyLike = eventItemStats.myLikeStatus != 0;
-            mViewsView.setText(Integer.toString(eventItemStats.viewCount));
-            mLikesView.setText(Integer.toString(eventItemStats.likeCount));
+    private void updateEventStats(boolean confirmed) {
+        Resources resources = getActivity().getResources();
+        EventItemStats eventItemStats = confirmed ? mEventItem.stats : EventItemsModel.getInstance().getOrCreateEventItemStatsByEventId(mEventItem.id);
+        boolean myLike = eventItemStats != null && eventItemStats.myLikeStatus != 0;
+        if (eventItemStats != null) {
+            mViewsView.setText(Integer.toString(eventItemStats.getViewCount(NowApplication.getState() == NowApplication.APP_STATE.ONLINE, confirmed)));
+            mLikesView.setText(Integer.toString(eventItemStats.getLikeCount()));
         }
-        mFloatingActionButton.setEnabled(!isMyLike);
-        int normalColor = context.getResources().getColor(R.color.event_stats_normal);
-        int activeColor = context.getResources().getColor(R.color.event_stats_active);
-        int likeColor = isMyLike ? activeColor : normalColor;
+        mFloatingActionButton.setEnabled(!myLike);
+        int normalColor = resources.getColor(R.color.event_stats_normal);
+        int activeColor = resources.getColor(R.color.event_stats_active);
+        int likeColor = myLike ? activeColor : normalColor;
         mViewsIcon.getDrawable().setColorFilter(new LightingColorFilter(normalColor, normalColor));
         mViewsIcon.setImageDrawable(mViewsIcon.getDrawable());
         mLikesIcon.getDrawable().setColorFilter(new LightingColorFilter(likeColor, likeColor));
         mLikesIcon.setImageDrawable(mLikesIcon.getDrawable());
-        mLikeContainer.setBackgroundResource(isMyLike ? R.drawable.event_stats_bacground : 0);
+        mLikeContainer.setBackgroundResource(myLike ? R.drawable.event_stats_bacground : 0);
         mLikesView.setTextColor(likeColor);
-        mFloatingActionButton.setImageDrawable(context.getResources().getDrawable(isMyLike ? R.drawable.ic_favorite_white : R.drawable.ic_favorite_border));
+        mFloatingActionButton.setImageDrawable(resources.getDrawable(myLike ? R.drawable.ic_favorite_white : R.drawable.ic_favorite_border));
     }
 
     private void setMenuItVisible(int id, boolean visible, Menu menu) {
@@ -625,6 +630,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         mScrollView.scrollTo(0, 0);
 
         mFloatingActionButton = (FloatingActionButton) view.findViewById(R.id.fab_event);
+        mFloatingActionButton.setBackgroundTintList(ColorStateList.valueOf(EventItemsModel.getCategoryColor(mEventItem.category)));
         CoordinatorLayout.LayoutParams fabLayoutParams = (CoordinatorLayout.LayoutParams) mFloatingActionButton.getLayoutParams();
         fabLayoutParams.setBehavior(mFloatingActionButtonBehavior);
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
@@ -823,8 +829,11 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
             case R.id.fab_event:
 
-                showAddToCalendarDialog();
-                initEventApiExecutor(EventApiExecutor.METHOD_LIKE);
+                EventItemStats eventItemStats = mEventItem.stats;
+                if (eventItemStats.myLikeStatus == 0) {
+                    showAddToCalendarDialog();
+                    initEventApiExecutor(EventApiExecutor.METHOD_LIKE);
+                }
 
                 break;
 
@@ -854,7 +863,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                 }).setNegativeButton(R.string.no, null)
                 .setCustomTitle(dialogTitleView);
         builder.setInverseBackgroundForced(true);
-        dialogTitleTextView.setText(R.string.add_to_calendar_title);
+        dialogTitleTextView.setText(R.string.add_to_calendar_dialog_title);
         dialogTextView.setText(R.string.add_to_calendar_dialog_message);
         dialog = builder.create();
         dialog.show();
@@ -974,18 +983,19 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
             int[] appWorkAreaCords = new int[2];
             mRootLayout.getLocationOnScreen(appWorkAreaCords);
             float appHeight = appWorkAreaCords[1] + appWorkAreaHeight;
+            int space = Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP ? 0 : getActivity().getResources().getDimensionPixelOffset(R.dimen.large_space);
             int fabHeight = mFloatingActionButton.getHeight();
             int[] bottomViewCords = new int[2];
             bottomView.getLocationOnScreen(bottomViewCords);
             float bottomViewBottom = bottomViewCords[1];
             if (mAllowMoveOnScroll) {
                 if (appHeight < bottomViewBottom) {
-                    mFloatingActionButton.setY(appWorkAreaHeight - fabHeight);
+                    mFloatingActionButton.setY(appWorkAreaHeight - fabHeight - space);
                 } else {
-                    mFloatingActionButton.setY(appWorkAreaHeight - (appHeight - bottomViewBottom) - fabHeight);
+                    mFloatingActionButton.setY(appWorkAreaHeight - (appHeight - bottomViewBottom) - fabHeight - space);
                 }
             }
-            mDescriptionView.setPadding(0, 0, 0, fabHeight / 3 * 2);
+            mDescriptionView.setPadding(0, 0, 0, (fabHeight + space) / 3 * 2);
             return appHeight < bottomViewBottom;
         }
 

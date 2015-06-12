@@ -39,6 +39,7 @@ public class EventItem implements Parcelable {
     public int allNightParty;
     public double lat;
     public double lng;
+    public EventItemStats stats;
 
     public EventItem() {
     }
