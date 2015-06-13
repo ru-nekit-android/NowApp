@@ -8,7 +8,7 @@
     <style name="DialogTheme" parent="DialogThemeBase" />
 
     <style name="EventName">
-        <item name="maxTextSize">72sp</item>
+        <item name="maxTextSize">36sp</item>
         <item name="minTextSize">10sp</item>
         <item name="android:paddingBottom">4dp</item>
         <item name="android:paddingRight">4dp</item>
@@ -20,7 +20,7 @@
     </style>
 
     <style name="EventName.Detail">
-        <item name="maxTextSize">36sp</item>
+        <item name="maxTextSize">64sp</item>
         <item name="minTextSize">10sp</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
@@ -150,7 +150,7 @@
     </style>
 
     <style name="StatsText">
-        <item name="android:textSize">24sp</item>
+        <item name="android:textSize">22sp</item>
         <item name="typeface">roboto_light</item>
         <item name="android:textColor">@color/event_stats_normal</item>
     </style>

@@ -40,8 +40,8 @@
     <string name="enterance_title">\"ВХОД:\"</string>
     <string name="share_title">Поделиться</string>
     <string name="add_to_calendar_title">Добавить в календарь</string>
-    <string name="add_to_calendar_dialog_title">Добавить в календарь?</string>
-    <string name="add_to_calendar_dialog_message">Добавленное событие в дальнейшем можно просмотреть в системном календаре.</string>
+    <string name="add_to_calendar_dialog_title">В календарь</string>
+    <string name="add_to_calendar_dialog_message">Вы хотите добавить событие в календарь?</string>
     <string name="remove_from_calendar_title">Удалить из календаря</string>
     <string name="show_in_calendar_title">Показать в календаре</string>
     <string name="add_to_calendar_message">Событие добавлено в календарь!</string>

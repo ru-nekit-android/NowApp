@@ -288,7 +288,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_below="@+id/place_group"
-                        android:background="@drawable/bottom_shadow" />
+                        android:background="@drawable/shadow_img" />
 
                     <LinearLayout
                         android:id="@+id/place_group"

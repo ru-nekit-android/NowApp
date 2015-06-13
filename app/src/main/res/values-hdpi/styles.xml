@@ -52,7 +52,7 @@
     </style>
 
     <style name="EventName.Detail">
-        <item name="maxTextSize">36sp</item>
+        <item name="maxTextSize">64sp</item>
         <item name="minTextSize">10sp</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
