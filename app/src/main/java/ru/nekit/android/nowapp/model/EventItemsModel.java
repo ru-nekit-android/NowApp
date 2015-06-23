@@ -400,7 +400,7 @@ public class EventItemsModel {
         return mEventLocalDataSource.fullTextSearch(queryResult);
     }
 
-    int performGetStats(int eventId) throws IOException, JSONException {
+    int performObtainEventStats(int eventId) throws IOException, JSONException {
         Integer result = RESULT_OK;
         EventItem eventItem = getEventItemByID(eventId);
         EventItemStats eventItemStats = getOrCreateEventItemStatsByEventId(eventId);
@@ -425,7 +425,7 @@ public class EventItemsModel {
         return result;
     }
 
-    int performEventUpdateLike(int eventId) throws IOException, JSONException {
+    int performUpdateEventLike(int eventId) throws IOException, JSONException {
         ArrayList<NameValuePair> parameters = new ArrayList<>();
         parameters.add(new BasicNameValuePair("key", "78GlLJhL"));
         EventItemStats eventItemStats = getOrCreateEventItemStatsByEventId(eventId);
@@ -439,7 +439,7 @@ public class EventItemsModel {
         return RESULT_OK;
     }
 
-    int performEventUpdateView(int eventId) throws IOException, JSONException {
+    int performUpdateEventView(int eventId) throws IOException, JSONException {
         return performPostApiCall(API_REQUEST_UPDATE_VIEW, eventId, null);
     }
 

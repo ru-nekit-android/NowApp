@@ -19,7 +19,7 @@ public class EventApiExecutor extends AsyncTaskLoader<ApiCallResult> {
     public static final String KEY_EVENT_ITEM_ID = "event_item_id_key";
     public static final String KEY_METHOD = "method_key";
 
-    public static final int METHOD_GET_STATS = 1;
+    public static final int METHOD_OBTAIN_STATS = 1;
     public static final int METHOD_LIKE = 2;
     public static final int METHOD_UPDATE_VIEW = 3;
 
@@ -38,21 +38,21 @@ public class EventApiExecutor extends AsyncTaskLoader<ApiCallResult> {
         EventItemsModel model = NowApplication.getEventModel();
         try {
             switch (method) {
-                case METHOD_GET_STATS:
+                case METHOD_OBTAIN_STATS:
 
-                    result = model.performGetStats(eventId);
+                    result = model.performObtainEventStats(eventId);
 
                     break;
 
                 case METHOD_LIKE:
 
-                    result = model.performEventUpdateLike(eventId);
+                    result = model.performUpdateEventLike(eventId);
 
                     break;
 
                 case METHOD_UPDATE_VIEW:
 
-                    result = model.performEventUpdateView(eventId);
+                    result = model.performUpdateEventView(eventId);
 
                     break;
             }
