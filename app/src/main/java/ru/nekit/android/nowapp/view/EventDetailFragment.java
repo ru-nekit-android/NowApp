@@ -147,8 +147,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     }
 
     public static EventDetailFragment getInstance() {
-        EventDetailFragment fragment = new EventDetailFragment();
-        return fragment;
+        return new EventDetailFragment();
     }
 
     private float LOCATION_MIN_UPDATE_DISTANCE() {
@@ -211,10 +210,10 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
             if (NowApplication.getState() == NowApplication.APP_STATE.ONLINE) {
                 initEventApiExecutor(EventApiExecutor.METHOD_UPDATE_VIEW);
             } else {
-                initEventApiExecutor(EventApiExecutor.METHOD_GET_STATS);
+                initEventApiExecutor(EventApiExecutor.METHOD_OBTAIN_STATS);
             }
         } else {
-            initEventApiExecutor(EventApiExecutor.METHOD_GET_STATS);
+            initEventApiExecutor(EventApiExecutor.METHOD_OBTAIN_STATS);
         }
         arg.putBoolean(KEY_SELECTED, false);
 
@@ -263,7 +262,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
                 break;
 
-            case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_GET_STATS:
+            case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_OBTAIN_STATS:
             case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_UPDATE_VIEW:
             case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_LIKE:
 
@@ -301,11 +300,11 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                         messageId = R.string.remove_from_calendar_message;
                     }
                     if (messageId != 0) {
-                        if (mFloatingActionButtonBehavior.validatePosition()) {
-                            mFloatingActionButtonBehavior.setAllowMoveOnScroll(false);
-                            mFloatingActionButtonBehavior.setAllowMoveOnSnackbarShow(true);
+                        if (mFloatingActionButtonBehavior.doBottomViewOverlap()) {
+                            mFloatingActionButtonBehavior.allowMoveOnScroll(false);
+                            mFloatingActionButtonBehavior.allowMoveOnSnackbarShow(true);
                         } else {
-                            mFloatingActionButtonBehavior.setAllowMoveOnSnackbarShow(false);
+                            mFloatingActionButtonBehavior.allowMoveOnSnackbarShow(false);
                         }
                         Snackbar snackbar = Snackbar.make(mFloatingActionButton, messageId, Snackbar.LENGTH_LONG);
                         snackbar.setActionTextColor(EventItemsModel.getCategoryColor(mEventItem.category));
@@ -321,7 +320,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                         mFloatingActionButton.postDelayed(new Runnable() {
                             @Override
                             public void run() {
-                                mFloatingActionButtonBehavior.setAllowMoveOnScroll(true);
+                                mFloatingActionButtonBehavior.allowMoveOnScroll(true);
                                 mFloatingActionButtonBehavior.validatePosition();
                             }
                         }, 3250);
@@ -329,7 +328,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
                     break;
 
-                case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_GET_STATS:
+                case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_OBTAIN_STATS:
 
                     updateEventStats(true);
 
@@ -338,7 +337,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                 case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_LIKE:
                 case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_UPDATE_VIEW:
 
-                    initEventApiExecutor(EventApiExecutor.METHOD_GET_STATS);
+                    initEventApiExecutor(EventApiExecutor.METHOD_OBTAIN_STATS);
 
                     break;
 
@@ -921,7 +920,6 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
             }
         };
 
-
         public FloatingActionButtonBehavior() {
             mAllowMoveOnScroll = true;
             mAllowMoveOnSnackbarShow = true;
@@ -940,7 +938,13 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                     if (Math.abs(translationY - this.mTranslationY) == (float) snackbar.getHeight()) {
                         ViewCompat.animate(fab).translationY(translationY).setInterpolator(new FastOutSlowInInterpolator()).setListener(null);
                     } else {
-                        ViewCompat.setTranslationY(fab, translationY);
+                        if (doBottomViewOverlap(false)) {
+                            ViewCompat.setTranslationY(fab, translationY);
+                        } else {
+                            if (getAppHeight() - getBottomViewBottom() + translationY < 0) {
+                                ViewCompat.setTranslationY(fab, translationY);
+                            }
+                        }
                     }
                     this.mTranslationY = translationY;
                 }
@@ -972,22 +976,12 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
             mScrollView.getViewTreeObserver().removeOnScrollChangedListener(scrollListener);
         }
 
-        public boolean validatePosition() {
-            View bottomView = mMapViewContainer;
-            if (mPhoneButton.getVisibility() == View.VISIBLE) {
-                bottomView = mPhoneButton;
-            } else if (mSiteButton.getVisibility() == View.VISIBLE) {
-                bottomView = mSiteButton;
-            }
+        private void validatePosition() {
             float appWorkAreaHeight = mRootLayout.getHeight();
-            int[] appWorkAreaCords = new int[2];
-            mRootLayout.getLocationOnScreen(appWorkAreaCords);
-            float appHeight = appWorkAreaCords[1] + appWorkAreaHeight;
+            float appHeight = getAppHeight();
             int space = Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP ? 0 : getActivity().getResources().getDimensionPixelOffset(R.dimen.large_space);
             int fabHeight = mFloatingActionButton.getHeight();
-            int[] bottomViewCords = new int[2];
-            bottomView.getLocationOnScreen(bottomViewCords);
-            float bottomViewBottom = bottomViewCords[1];
+            float bottomViewBottom = getBottomViewBottom();
             if (mAllowMoveOnScroll) {
                 if (appHeight < bottomViewBottom) {
                     mFloatingActionButton.setY(appWorkAreaHeight - fabHeight - space);
@@ -996,14 +990,40 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                 }
             }
             mDescriptionView.setPadding(0, 0, 0, (fabHeight + space) / 3 * 2);
-            return appHeight < bottomViewBottom;
         }
 
-        public void setAllowMoveOnScroll(boolean value) {
+        private float getAppHeight() {
+            float appWorkAreaHeight = mRootLayout.getHeight();
+            int[] appWorkAreaCords = new int[2];
+            mRootLayout.getLocationOnScreen(appWorkAreaCords);
+            return appWorkAreaCords[1] + appWorkAreaHeight;
+        }
+
+        private float getBottomViewBottom() {
+            View bottomView = mMapViewContainer;
+            if (mPhoneButton.getVisibility() == View.VISIBLE) {
+                bottomView = mPhoneButton;
+            } else if (mSiteButton.getVisibility() == View.VISIBLE) {
+                bottomView = mSiteButton;
+            }
+            int[] bottomViewCords = new int[2];
+            bottomView.getLocationOnScreen(bottomViewCords);
+            return bottomViewCords[1];
+        }
+
+        public boolean doBottomViewOverlap() {
+            return doBottomViewOverlap(true);
+        }
+
+        private boolean doBottomViewOverlap(boolean withSnackBar) {
+            return getAppHeight() < getBottomViewBottom() + (withSnackBar ? 1 : 0) * getActivity().getResources().getDimensionPixelOffset(R.dimen.snack_bar_height);
+        }
+
+        public void allowMoveOnScroll(boolean value) {
             mAllowMoveOnScroll = value;
         }
 
-        public void setAllowMoveOnSnackbarShow(boolean value) {
+        public void allowMoveOnSnackbarShow(boolean value) {
             mAllowMoveOnSnackbarShow = value;
         }
     }

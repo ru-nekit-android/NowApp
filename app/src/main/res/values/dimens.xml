@@ -25,6 +25,7 @@
     <dimen name="event_stats_icon_size">14dp</dimen>
     <item name="event_name_line_spacing_multiplier" format="float" type="dimen">0.8</item>
     <item name="event_item_view_height_ratio" format="float" type="dimen">0.86</item>
+    <dimen name="snack_bar_height" type="dimen">48dp</dimen>
 
 
 </resources>
