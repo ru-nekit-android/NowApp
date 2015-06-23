@@ -150,7 +150,10 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 for (int i = firstVisibleItem; i <= lastVisibleItem; i++) {
                     EventCollectionItemViewHolder eventCollectionItemViewHolder = (EventCollectionItemViewHolder) mRecyclerView.findViewHolderForAdapterPosition(i);
                     if (eventCollectionItemViewHolder != null) {
-                        setStartTimeForEvent(getItem(i).eventItem, eventCollectionItemViewHolder);
+                        EventItemWrapper eventItemWrapper = getItem(i);
+                        if (eventItemWrapper != null) {
+                            setStartTimeForEvent(eventItemWrapper.eventItem, eventCollectionItemViewHolder);
+                        }
                     }
                 }
             }
@@ -291,7 +294,8 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     @Override
     public long getItemId(int position) {
-        return getItemViewType(position) == LOADING ? -1 : getItem(position).eventItem.id;
+        EventItemWrapper eventItemWrapper = getItem(position);
+        return getItemViewType(position) == LOADING ? -1 : eventItemWrapper == null ? -1 : eventItemWrapper.eventItem.id;
     }
 
     private void addToLoadingList(final EventItemWrapper eventItemWrapper, final ImageView viewTarget) {
@@ -383,7 +387,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 if (viewHolder.getClass() == EventCollectionItemViewHolder.class) {
                     EventCollectionItemViewHolder eventCollectionItemViewHolder = (EventCollectionItemViewHolder) mRecyclerView.findViewHolderForAdapterPosition(i);
                     EventItemWrapper eventItemWrapper = getItem(i);
-                    if (!eventItemWrapper.posterLoaded) {
+                    if (eventItemWrapper != null && !eventItemWrapper.posterLoaded) {
                         addToLoadingList(getItem(i), eventCollectionItemViewHolder.getPosterThumbView());
                     }
                 }
@@ -456,7 +460,10 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
         @Override
         public void onClick(View view) {
-            mItemClickListener.onEventItemSelect(getItem(getAdapterPosition()).eventItem);
+            EventItemWrapper eventItemWrapper = getItem(getAdapterPosition());
+            if (eventItemWrapper != null) {
+                mItemClickListener.onEventItemSelect(eventItemWrapper.eventItem);
+            }
         }
     }
 
