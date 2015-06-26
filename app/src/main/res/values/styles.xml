@@ -230,11 +230,20 @@
     <style name="FabStyle">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_margin">16dp</item>
+        <item name="android:layout_margin">@dimen/fab_compat_margin</item>
         <item name="android:layout_gravity">bottom|end</item>
         <item name="borderWidth">0dp</item>
         <item name="elevation">@dimen/fab_elevation</item>
         <item name="pressedTranslationZ">12dp</item>
+    </style>
+
+    <style name="AdvertText">
+        <item name="android:textColor">@android:color/black</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textSize">@dimen/advert_text</item>
     </style>
 
 </resources>

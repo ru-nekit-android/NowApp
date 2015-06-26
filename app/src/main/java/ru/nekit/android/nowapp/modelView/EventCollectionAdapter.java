@@ -27,12 +27,12 @@ import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
 import ru.nekit.android.nowapp.R;
-import ru.nekit.android.nowapp.model.EventItem;
-import ru.nekit.android.nowapp.model.EventItemsModel;
-import ru.nekit.android.nowapp.modelView.listeners.IEventItemSelectListener;
+import ru.nekit.android.nowapp.model.vo.Event;
+import ru.nekit.android.nowapp.model.EventsModel;
+import ru.nekit.android.nowapp.modelView.listeners.IEventSelectListener;
 
-import static ru.nekit.android.nowapp.model.EventItemsModel.getCategoryDrawable;
-import static ru.nekit.android.nowapp.model.EventItemsModel.getCurrentDateTimestamp;
+import static ru.nekit.android.nowapp.model.EventsModel.getCategoryDrawable;
+import static ru.nekit.android.nowapp.model.EventsModel.getCurrentDateTimestamp;
 
 /**
  * Created by chuvac on 12.03.15.
@@ -48,11 +48,11 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     private final Context mContext;
     private final ArrayList<EventItemWrapper> mEventItems;
     private final ArrayList<Target> mLoadingList;
-    private final EventItemsModel mEventModel;
+    private final EventsModel mEventModel;
     private final int mItemHeight, mColumns, mMargin;
     private RecyclerView mRecyclerView;
     private RecyclerView.OnScrollListener mScrollListener;
-    private IEventItemSelectListener mItemClickListener;
+    private IEventSelectListener mItemClickListener;
     private boolean mImmediateImageLoading;
     private OnLoadMorelListener mLoadMoreListener;
     private Timer mTimer;
@@ -60,7 +60,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     private int mLoadMoreCount;
     private EventItemWrapper mLoadingItem;
 
-    public EventCollectionAdapter(Context context, EventItemsModel model, int columns) {
+    public EventCollectionAdapter(Context context, EventsModel model, int columns) {
         mContext = context;
         mInflater = LayoutInflater.from(context);
         mColumns = columns;
@@ -83,7 +83,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         return displaymetrics.widthPixels;
     }
 
-    public void setOnItemClickListener(IEventItemSelectListener listener) {
+    public void setOnItemClickListener(IEventSelectListener listener) {
         mItemClickListener = listener;
     }
 
@@ -116,7 +116,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 }
             }
         };
-        recyclerView.setOnScrollListener(mScrollListener);
+        recyclerView.addOnScrollListener(mScrollListener);
 
         mHandler = new Handler(Looper.getMainLooper());
         mTimer = new Timer();
@@ -152,7 +152,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                     if (eventCollectionItemViewHolder != null) {
                         EventItemWrapper eventItemWrapper = getItem(i);
                         if (eventItemWrapper != null) {
-                            setStartTimeForEvent(eventItemWrapper.eventItem, eventCollectionItemViewHolder);
+                            setStartTimeForEvent(eventItemWrapper.event, eventCollectionItemViewHolder);
                         }
                     }
                 }
@@ -165,14 +165,16 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     }
 
     public void unregisterRecyclerView(RecyclerView recyclerView) {
+        if (mScrollListener != null) {
+            recyclerView.removeOnScrollListener(mScrollListener);
+        }
         mScrollListener = null;
-        recyclerView.setOnScrollListener(null);
         mTimer.cancel();
         mTimer = null;
         mHandler = null;
     }
 
-    public void addItems(ArrayList<EventItem> eventItems) {
+    public void addItems(ArrayList<Event> events) {
         int fistItemIndex = mEventItems.size();
         boolean hasLoading = false;
         if (isLoading()) {
@@ -180,7 +182,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             fistItemIndex--;
             removeLoading();
         }
-        if (setItems(eventItems, true)) {
+        if (setItems(events, true)) {
             for (int i = fistItemIndex; i < mEventItems.size(); i++) {
                 notifyItemInserted(i);
             }
@@ -190,15 +192,15 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         }
     }
 
-    private boolean setItems(ArrayList<EventItem> eventItems, boolean addState) {
+    private boolean setItems(ArrayList<Event> events, boolean addState) {
         if (!addState) {
             mEventItems.clear();
         }
-        if (eventItems != null && eventItems.size() > 0) {
-            for (EventItem eventItem : eventItems) {
-                long dateDelta = eventItem.date - getCurrentDateTimestamp(mContext, true);
-                if (dateDelta >= 0 && eventItem.endAt > EventItemsModel.getCurrentTimeTimestamp(mContext, true) || dateDelta > 1) {
-                    mEventItems.add(new EventItemWrapper(eventItem));
+        if (events != null && events.size() > 0) {
+            for (Event event : events) {
+                long dateDelta = event.date - getCurrentDateTimestamp(mContext, true);
+                if (dateDelta >= 0 && event.endAt > EventsModel.getCurrentTimeTimestamp(mContext, true) || dateDelta > 1) {
+                    mEventItems.add(new EventItemWrapper(event));
                 }
             }
             if (!addState) {
@@ -211,9 +213,9 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         return false;
     }
 
-    public boolean setItems(ArrayList<EventItem> eventItems) {
+    public boolean setItems(ArrayList<Event> events) {
 
-        return setItems(eventItems, false);
+        return setItems(events, false);
     }
 
     public void clearItems() {
@@ -251,15 +253,15 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             }
             final EventCollectionItemViewHolder eventCollectionItemViewHolder = (EventCollectionItemViewHolder) viewHolder;
             final EventItemWrapper eventItemWrapper = mEventItems.get(position);
-            final EventItem eventItem = eventItemWrapper.eventItem;
-            final String eventName = eventItem.name.toUpperCase();
+            final Event event = eventItemWrapper.event;
+            final String eventName = event.name.toUpperCase();
             if (eventItemWrapper.cachedName == null) {
                 ArrayList<String> eventNameArray = ru.nekit.android.nowapp.utils.StringUtil.wrapText(eventName);
                 eventItemWrapper.cachedNameLineCount = eventNameArray.size();
                 eventItemWrapper.cachedName = TextUtils.join("\n", eventNameArray);
             }
             final TextView eventNameView = eventCollectionItemViewHolder.getNameView();
-            eventCollectionItemViewHolder.getPlaceView().setText(eventItem.placeName);
+            eventCollectionItemViewHolder.getPlaceView().setText(event.placeName);
             if (eventNameView.getLineCount() != eventItemWrapper.cachedNameLineCount) {
                 eventNameView.setLines(eventItemWrapper.cachedNameLineCount);
             }
@@ -270,8 +272,8 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             } else {
                 eventCollectionItemViewHolder.getPosterThumbView().setImageDrawable(null);
             }
-            setStartTimeForEvent(eventItem, eventCollectionItemViewHolder);
-            int categoryDrawableId = getCategoryDrawable(eventItem.category);
+            setStartTimeForEvent(event, eventCollectionItemViewHolder);
+            int categoryDrawableId = getCategoryDrawable(event.category);
             if (categoryDrawableId != 0) {
                 eventCollectionItemViewHolder.getCatalogIcon().setImageDrawable(mContext.getResources().getDrawable(categoryDrawableId));
             }
@@ -281,8 +283,8 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         }
     }
 
-    private void setStartTimeForEvent(EventItem eventItem, EventCollectionItemViewHolder eventCollectionItemViewHolder) {
-        String startTimeAliasString = EventItemsModel.getStartTimeAlias(mContext, eventItem);
+    private void setStartTimeForEvent(Event event, EventCollectionItemViewHolder eventCollectionItemViewHolder) {
+        String startTimeAliasString = EventsModel.getStartTimeAlias(mContext, event);
         TextView startItemView = eventCollectionItemViewHolder.getStartEventView();
         if (startTimeAliasString == null) {
             startItemView.setVisibility(View.INVISIBLE);
@@ -295,11 +297,11 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     @Override
     public long getItemId(int position) {
         EventItemWrapper eventItemWrapper = getItem(position);
-        return getItemViewType(position) == LOADING ? -1 : eventItemWrapper == null ? -1 : eventItemWrapper.eventItem.id;
+        return getItemViewType(position) == LOADING ? -1 : eventItemWrapper == null ? -1 : eventItemWrapper.event.id;
     }
 
     private void addToLoadingList(final EventItemWrapper eventItemWrapper, final ImageView viewTarget) {
-        mLoadingList.add(Glide.with(mContext).load(eventItemWrapper.eventItem.posterBlur).centerCrop().dontAnimate().listener(new RequestListener<String, GlideDrawable>() {
+        mLoadingList.add(Glide.with(mContext).load(eventItemWrapper.event.posterBlur).centerCrop().dontAnimate().listener(new RequestListener<String, GlideDrawable>() {
 
             @Override
             public boolean onException(Exception exp, String model, Target<GlideDrawable> target, boolean isFirstResource) {
@@ -405,14 +407,14 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         public String cachedName;
         public int cachedNameLineCount;
         public boolean posterLoaded;
-        private EventItem eventItem;
+        private Event event;
         private boolean isLoadingItem = false;
 
-        EventItemWrapper(EventItem eventItem) {
+        EventItemWrapper(Event event) {
             cachedName = null;
             cachedNameLineCount = 0;
             posterLoaded = false;
-            this.eventItem = eventItem;
+            this.event = event;
         }
 
         EventItemWrapper(boolean loading) {
@@ -462,7 +464,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         public void onClick(View view) {
             EventItemWrapper eventItemWrapper = getItem(getAdapterPosition());
             if (eventItemWrapper != null) {
-                mItemClickListener.onEventItemSelect(eventItemWrapper.eventItem);
+                mItemClickListener.onEventItemSelect(eventItemWrapper.event);
             }
         }
     }

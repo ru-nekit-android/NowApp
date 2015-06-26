@@ -11,7 +11,7 @@ import android.util.DisplayMetrics;
 
 import java.util.concurrent.TimeUnit;
 
-import ru.nekit.android.nowapp.model.EventItemsModel;
+import ru.nekit.android.nowapp.model.EventsModel;
 import ru.nekit.android.nowapp.utils.ConnectionUtil;
 import ru.nekit.android.nowapp.utils.ConnectivityReceiver;
 
@@ -30,7 +30,7 @@ public class NowApplication extends Application implements ConnectivityReceiver.
     private static final String LAST_UPDATE_TIME_KEY = "last_update_time_key";
     private static NowApplication instance;
     private static APP_STATE mState;
-    private static EventItemsModel mEventModel;
+    private static EventsModel mEventModel;
     private static SharedPreferences mSharedPreferences;
     private static ConnectivityReceiver mConnectivityReceiver;
     public NowApplication() {
@@ -42,7 +42,7 @@ public class NowApplication extends Application implements ConnectivityReceiver.
         mSharedPreferences.edit().putLong(LAST_UPDATE_TIME_KEY, System.currentTimeMillis()).apply();
     }
 
-    public static EventItemsModel getEventModel() {
+    public static EventsModel getEventModel() {
         return mEventModel;
     }
 
@@ -89,7 +89,9 @@ public class NowApplication extends Application implements ConnectivityReceiver.
     @Override
     public void onCreate() {
 
-        mEventModel = EventItemsModel.getInstance(this);
+        super.onCreate();
+
+        mEventModel = EventsModel.getInstance(this);
         mSharedPreferences = getSharedPreferences("nowapp", Context.MODE_PRIVATE);
         mConnectivityReceiver = new ConnectivityReceiver(this);
         mConnectivityReceiver.setOnNetworkAvailableListener(this);

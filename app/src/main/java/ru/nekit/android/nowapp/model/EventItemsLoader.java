@@ -25,9 +25,9 @@ public class EventItemsLoader extends AsyncTaskLoader<Integer> {
     @Override
     public Integer loadInBackground() {
         try {
-            return NowApplication.getEventModel().performEventsLoad(mArgs.getString(EventItemsModel.LOADING_TYPE));
+            return NowApplication.getEventModel().performEventsLoad(mArgs.getString(EventsModel.LOADING_TYPE));
         } catch (IOException | JSONException exp) {
-            return EventItemsModel.RESULT_BAD;
+            return EventsModel.RESULT_BAD;
         }
     }
 

@@ -27,8 +27,18 @@ public class EventFieldNameDictionary {
     public static final String LOGO_THUMB = "logoThumb";
     public static final String LOGO_ORIGINAL = "logoOriginal";
     public static final String ALL_NIGHT_PARTY = "all_night_party";
-    //Internal part
-    public static final String LIKE_COUNT = "likes";
-    public static final String VIEW_COUNT = "views";
+    public static final String LIKES = "likes";
+    public static final String VIEWS = "views";
 
+    public static class ADVERT {
+        public static final String EVENT_ID = "eventId";
+        public static final String START_AT = EventFieldNameDictionary.START_AT;
+        public static final String LOGO_THUMB = EventFieldNameDictionary.LOGO_THUMB;
+        public static final String LINK = "link";
+        public static final String NAME = EventFieldNameDictionary.NAME;
+        public static final String PLACE_NAME = EventFieldNameDictionary.PLACE_NAME;
+        public static final String SHOW_CHANCE_LOW = "showChanceLow";
+        public static final String SHOW_CHANCE_HIGH = "showChanceHigh";
+        public static final String AD_TYPE = "adType";
+    }
 }

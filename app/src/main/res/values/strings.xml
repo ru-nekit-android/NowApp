@@ -47,6 +47,7 @@
     <string name="add_to_calendar_message">Событие добавлено в календарь!</string>
     <string name="remove_from_calendar_message">Событие удалено из календаря!</string>
     <string name="open_calendar_message">Открыть</string>
+    <string name="attention_short">А</string>
 
     <string-array name="day_of_week">
         <item>ВС</item>

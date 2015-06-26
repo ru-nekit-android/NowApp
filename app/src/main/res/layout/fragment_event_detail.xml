@@ -11,113 +11,149 @@
         android:layout_height="match_parent"
         tools:context="ru.nekit.android.nowapp.view.EventDetailFragment">
 
-        <FrameLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
             <LinearLayout
+                android:id="@+id/advert_block"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingBottom="@dimen/small_space"
+                android:paddingTop="@dimen/small_space"
+                android:visibility="gone">
+
+                <ImageView
+                    android:id="@+id/advert_icon_view"
+                    android:layout_width="@dimen/advert_block_icon_width"
+                    android:layout_height="@dimen/advert_block_icon_height"
+                    android:paddingRight="@dimen/small_space" />
+
+                <com.devspark.robototextview.widget.RobotoTextView
+                    android:id="@+id/advert_text_view"
+                    style="@style/AdvertText"
+                    android:paddingLeft="@dimen/small_space"
+                    android:paddingRight="@dimen/small_space" />
+
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/divide_line" />
+
+            <FrameLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/large_space"
-                    android:layout_marginRight="@dimen/large_space"
-                    android:layout_marginTop="@dimen/large_space"
-                    android:baselineAligned="false"
-                    android:orientation="horizontal">
-
-                    <FrameLayout
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginEnd="@dimen/normal_space"
-                        android:layout_marginRight="@dimen/normal_space"
-                        android:layout_weight="2">
-
-                        <com.pnikosis.materialishprogress.ProgressWheel
-                            android:id="@+id/progress_wheel"
-                            style="@style/ProgressWheel"
-                            android:layout_width="@dimen/progress_wheel_size"
-                            android:layout_height="@dimen/progress_wheel_size"
-                            android:layout_gravity="center"
-                            app:matProg_barColor="@color/primary_color"
-                            app:matProg_progressIndeterminate="true" />
-
-                        <ImageView
-                            android:id="@+id/poster_thumb_view"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:layout_gravity="center_vertical" />
-                    </FrameLayout>
+                    android:orientation="vertical">
 
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="3"
-                        android:orientation="vertical">
+                        android:layout_marginLeft="@dimen/large_space"
+                        android:layout_marginRight="@dimen/large_space"
+                        android:layout_marginTop="@dimen/large_space"
+                        android:baselineAligned="false"
+                        android:orientation="horizontal">
 
-                        <ru.nekit.android.nowapp.widget.AutoResizeTextView
-                            android:id="@+id/title_view"
-                            style="@style/EventName.Detail"
-                            android:layout_width="match_parent"
-                            android:layout_height="@dimen/event_name_height"
-                            android:layout_marginLeft="@dimen/normal_space"
-                            android:layout_marginStart="@dimen/normal_space" />
+                        <FrameLayout
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginEnd="@dimen/normal_space"
+                            android:layout_marginRight="@dimen/normal_space"
+                            android:layout_weight="2">
 
-                        <LinearLayout
-                            android:id="@+id/event_stats_container"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="@dimen/normal_space"
-                            android:layout_marginLeft="@dimen/normal_space"
-                            android:layout_marginStart="@dimen/normal_space"
-                            android:layout_marginTop="@dimen/normal_space"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
+                            <com.pnikosis.materialishprogress.ProgressWheel
+                                android:id="@+id/progress_wheel"
+                                style="@style/ProgressWheel"
+                                android:layout_width="@dimen/progress_wheel_size"
+                                android:layout_height="@dimen/progress_wheel_size"
+                                android:layout_gravity="center"
+                                app:matProg_barColor="@color/primary_color"
+                                app:matProg_progressIndeterminate="true" />
 
                             <ImageView
-                                android:id="@+id/event_view_icon"
-                                android:layout_width="@dimen/event_stats_icon_size"
-                                android:layout_height="@dimen/event_stats_icon_size"
-                                android:src="@drawable/ic_view" />
+                                android:id="@+id/poster_thumb_view"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:layout_gravity="center_vertical" />
+                        </FrameLayout>
 
-                            <com.devspark.robototextview.widget.RobotoTextView
-                                android:id="@+id/event_views"
-                                style="@style/StatsText"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:paddingLeft="@dimen/small_space"
-                                android:paddingRight="@dimen/small_space" />
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="3"
+                            android:orientation="vertical">
 
-                            <Space
-                                android:layout_width="@dimen/normal_space"
-                                android:layout_height="0dp" />
+                            <ru.nekit.android.nowapp.widget.AutoResizeTextView
+                                android:id="@+id/title_view"
+                                style="@style/EventName.Detail"
+                                android:layout_width="match_parent"
+                                android:layout_height="@dimen/event_name_height"
+                                android:layout_marginLeft="@dimen/normal_space"
+                                android:layout_marginStart="@dimen/normal_space" />
 
                             <LinearLayout
-                                android:id="@+id/event_like_container"
-                                android:layout_width="wrap_content"
+                                android:id="@+id/event_stats_container"
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
+                                android:layout_marginBottom="@dimen/normal_space"
+                                android:layout_marginLeft="@dimen/normal_space"
+                                android:layout_marginStart="@dimen/normal_space"
+                                android:layout_marginTop="@dimen/normal_space"
                                 android:gravity="center_vertical"
-                                android:orientation="horizontal"
-                                android:paddingBottom="0dp"
-                                android:paddingLeft="4dp"
-                                android:paddingRight="4dp"
-                                android:paddingTop="0dp">
+                                android:orientation="horizontal">
 
                                 <ImageView
-                                    android:id="@+id/event_like_icon"
+                                    android:id="@+id/event_view_icon"
                                     android:layout_width="@dimen/event_stats_icon_size"
                                     android:layout_height="@dimen/event_stats_icon_size"
-                                    android:src="@drawable/ic_favorite" />
+                                    android:src="@drawable/ic_view" />
 
                                 <com.devspark.robototextview.widget.RobotoTextView
-                                    android:id="@+id/event_likes"
+                                    android:id="@+id/event_views"
                                     style="@style/StatsText"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:paddingLeft="@dimen/small_space" />
+                                    android:paddingLeft="@dimen/small_space"
+                                    android:paddingRight="@dimen/small_space" />
+
+                                <Space
+                                    android:layout_width="@dimen/normal_space"
+                                    android:layout_height="0dp" />
+
+                                <LinearLayout
+                                    android:id="@+id/event_like_container"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="center_vertical"
+                                    android:orientation="horizontal"
+                                    android:paddingBottom="0dp"
+                                    android:paddingLeft="4dp"
+                                    android:paddingRight="4dp"
+                                    android:paddingTop="0dp">
+
+                                    <ImageView
+                                        android:id="@+id/event_like_icon"
+                                        android:layout_width="@dimen/event_stats_icon_size"
+                                        android:layout_height="@dimen/event_stats_icon_size"
+                                        android:src="@drawable/ic_favorite" />
+
+                                    <com.devspark.robototextview.widget.RobotoTextView
+                                        android:id="@+id/event_likes"
+                                        style="@style/StatsText"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:paddingLeft="@dimen/small_space" />
+
+                                </LinearLayout>
 
                             </LinearLayout>
 
@@ -125,214 +161,214 @@
 
                     </LinearLayout>
 
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/information_layout"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="center_vertical"
-                    android:layout_marginBottom="@dimen/small_space"
-                    android:layout_marginLeft="@dimen/large_space"
-                    android:layout_marginRight="@dimen/large_space"
-                    android:layout_marginTop="@dimen/normal_space"
-                    android:orientation="horizontal">
-
-                    <RelativeLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="2">
-
-                        <com.devspark.robototextview.widget.RobotoTextView
-                            android:id="@+id/day_date_view"
-                            style="@style/DayText"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_alignParentLeft="true"
-                            android:layout_alignParentStart="true"
-                            android:layout_toLeftOf="@+id/month_view"
-                            android:layout_toStartOf="@+id/month_view" />
-
-                        <com.devspark.robototextview.widget.RobotoTextView
-                            android:id="@+id/month_view"
-                            style="@style/MonthText"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_above="@+id/day_of_week_view"
-                            android:layout_alignParentEnd="true"
-                            android:layout_alignParentRight="true"
-                            android:layout_marginEnd="@dimen/normal_space"
-                            android:layout_marginRight="@dimen/normal_space" />
-
-                        <com.devspark.robototextview.widget.RobotoTextView
-                            android:id="@+id/day_of_week_view"
-                            style="@style/DayOfWeekText"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_alignBaseline="@+id/day_date_view"
-                            android:layout_alignBottom="@+id/day_date_view"
-                            android:layout_alignLeft="@+id/month_view"
-                            android:layout_alignStart="@+id/month_view"
-                            android:layout_marginEnd="@dimen/normal_space"
-                            android:layout_marginRight="@dimen/normal_space" />
-
-                    </RelativeLayout>
-
-                    <View
-                        android:layout_width="1dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginBottom="@dimen/normal_space"
-                        android:layout_marginTop="@dimen/normal_space"
-                        android:background="@color/divide_line" />
-
-                    <com.devspark.robototextview.widget.RobotoTextView
-                        android:id="@+id/time_view"
-                        style="@style/TimeText"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1.5" />
-
-                    <View
-                        android:layout_width="1dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginBottom="@dimen/normal_space"
-                        android:layout_marginTop="@dimen/normal_space"
-                        android:background="@color/divide_line" />
-
-                    <com.devspark.robototextview.widget.RobotoTextView
-                        android:id="@+id/entrance_view"
-                        style="@style/EntranceBlock"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1.5" />
-
-                </LinearLayout>
-
-                <com.devspark.robototextview.widget.RobotoTextView
-                    android:id="@+id/description_view"
-                    style="@style/EventDescription"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="@dimen/large_space"
-                    android:layout_marginLeft="@dimen/large_space"
-                    android:layout_marginRight="@dimen/large_space" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-
-                    <com.devspark.robototextview.widget.RobotoButton
-                        android:id="@+id/phone_button"
-                        style="@style/ActionButton"
-                        android:layout_width="match_parent"
-                        android:paddingLeft="@dimen/large_space"
-                        android:paddingRight="@dimen/large_space" />
-
-                    <com.devspark.robototextview.widget.RobotoButton
-                        android:id="@+id/site_button"
-                        style="@style/ActionButton"
-                        android:layout_width="match_parent"
-                        android:paddingLeft="@dimen/large_space"
-                        android:paddingRight="@dimen/large_space" />
-
-                </LinearLayout>
-
-                <RelativeLayout
-                    android:id="@+id/map_view_container"
-                    android:layout_width="match_parent"
-                    android:layout_height="200dp">
-
-                    <org.osmdroid.views.MapView
-                        android:id="@+id/map_view"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent" />
-
-                    <View
-                        android:id="@+id/map_scroll_fake_view"
+                    <LinearLayout
+                        android:id="@+id/information_layout"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginBottom="@dimen/small_space"
                         android:layout_marginLeft="@dimen/large_space"
                         android:layout_marginRight="@dimen/large_space"
-                        android:src="@android:color/transparent" />
-
-                    <Button
-                        android:id="@+id/my_location"
-                        style="@style/MapActionButton"
-                        android:layout_alignParentEnd="true"
-                        android:layout_alignParentRight="true"
-                        android:layout_below="@+id/place_group"
-                        android:layout_marginEnd="@dimen/normal_space"
-                        android:layout_marginRight="@dimen/normal_space"
                         android:layout_marginTop="@dimen/normal_space"
-                        android:background="@drawable/my_location" />
+                        android:orientation="horizontal">
 
-                    <Button
-                        android:id="@+id/zoom_plus"
-                        style="@style/MapActionButton"
-                        android:layout_above="@+id/zoom_minus"
-                        android:layout_alignEnd="@+id/my_location"
-                        android:layout_alignRight="@+id/my_location"
-                        android:background="@drawable/zoom_plus" />
-
-                    <Button
-                        android:id="@+id/zoom_minus"
-                        style="@style/MapActionButton"
-                        android:layout_alignEnd="@+id/my_location"
-                        android:layout_alignParentBottom="true"
-                        android:layout_alignRight="@+id/my_location"
-                        android:layout_marginBottom="@dimen/normal_space"
-                        android:background="@drawable/zoom_minus" />
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_below="@+id/place_group"
-                        android:background="@drawable/shadow_img" />
-
-                    <LinearLayout
-                        android:id="@+id/place_group"
-                        android:layout_width="match_parent"
-                        android:layout_height="@dimen/logo_max_height"
-                        android:background="@drawable/action_button_background"
-                        android:gravity="center_vertical"
-                        android:paddingLeft="@dimen/large_space"
-                        android:paddingRight="@dimen/large_space">
-
-                        <ImageView
-                            android:id="@+id/logo_view"
-                            android:layout_width="@dimen/logo_max_width"
+                        <RelativeLayout
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:maxWidth="@dimen/logo_max_width"
-                            android:paddingBottom="@dimen/small_space"
-                            android:paddingEnd="@dimen/normal_space"
-                            android:paddingRight="@dimen/normal_space"
-                            android:paddingTop="@dimen/small_space"
-                            android:scaleType="fitCenter" />
+                            android:layout_weight="2">
 
-                        <ru.nekit.android.nowapp.widget.AutoResizeTextView
-                            android:id="@+id/place_name_view"
-                            style="@style/Place_TextBlock"
-                            android:layout_width="match_parent"
+                            <com.devspark.robototextview.widget.RobotoTextView
+                                android:id="@+id/day_date_view"
+                                style="@style/DayText"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_alignParentLeft="true"
+                                android:layout_alignParentStart="true"
+                                android:layout_toLeftOf="@+id/month_view"
+                                android:layout_toStartOf="@+id/month_view" />
+
+                            <com.devspark.robototextview.widget.RobotoTextView
+                                android:id="@+id/month_view"
+                                style="@style/MonthText"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_above="@+id/day_of_week_view"
+                                android:layout_alignParentEnd="true"
+                                android:layout_alignParentRight="true"
+                                android:layout_marginEnd="@dimen/normal_space"
+                                android:layout_marginRight="@dimen/normal_space" />
+
+                            <com.devspark.robototextview.widget.RobotoTextView
+                                android:id="@+id/day_of_week_view"
+                                style="@style/DayOfWeekText"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_alignBaseline="@+id/day_date_view"
+                                android:layout_alignBottom="@+id/day_date_view"
+                                android:layout_alignLeft="@+id/month_view"
+                                android:layout_alignStart="@+id/month_view"
+                                android:layout_marginEnd="@dimen/normal_space"
+                                android:layout_marginRight="@dimen/normal_space" />
+
+                        </RelativeLayout>
+
+                        <View
+                            android:layout_width="1dp"
                             android:layout_height="match_parent"
-                            android:paddingBottom="@dimen/small_space"
-                            android:paddingTop="@dimen/small_space" />
+                            android:layout_marginBottom="@dimen/normal_space"
+                            android:layout_marginTop="@dimen/normal_space"
+                            android:background="@color/divide_line" />
+
+                        <com.devspark.robototextview.widget.RobotoTextView
+                            android:id="@+id/time_view"
+                            style="@style/TimeText"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1.5" />
+
+                        <View
+                            android:layout_width="1dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginBottom="@dimen/normal_space"
+                            android:layout_marginTop="@dimen/normal_space"
+                            android:background="@color/divide_line" />
+
+                        <com.devspark.robototextview.widget.RobotoTextView
+                            android:id="@+id/entrance_view"
+                            style="@style/EntranceBlock"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1.5" />
 
                     </LinearLayout>
 
-                </RelativeLayout>
+                    <com.devspark.robototextview.widget.RobotoTextView
+                        android:id="@+id/description_view"
+                        style="@style/EventDescription"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="@dimen/large_space"
+                        android:layout_marginLeft="@dimen/large_space"
+                        android:layout_marginRight="@dimen/large_space" />
 
-            </LinearLayout>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
 
-            <ImageView
-                android:id="@+id/category_type_view"
-                android:layout_width="@dimen/event_category_big_view_size"
-                android:layout_height="@dimen/event_category_big_view_size"
-                android:layout_gravity="end"
-                android:scaleType="fitXY"
-                android:src="@drawable/event_category_education_big" />
+                        <com.devspark.robototextview.widget.RobotoButton
+                            android:id="@+id/phone_button"
+                            style="@style/ActionButton"
+                            android:layout_width="match_parent"
+                            android:paddingLeft="@dimen/large_space"
+                            android:paddingRight="@dimen/large_space" />
 
-        </FrameLayout>
+                        <com.devspark.robototextview.widget.RobotoButton
+                            android:id="@+id/site_button"
+                            style="@style/ActionButton"
+                            android:layout_width="match_parent"
+                            android:paddingLeft="@dimen/large_space"
+                            android:paddingRight="@dimen/large_space" />
+
+                    </LinearLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/map_view_container"
+                        android:layout_width="match_parent"
+                        android:layout_height="200dp">
+
+                        <org.osmdroid.views.MapView
+                            android:id="@+id/map_view"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent" />
+
+                        <View
+                            android:id="@+id/map_scroll_fake_view"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_marginLeft="@dimen/large_space"
+                            android:layout_marginRight="@dimen/large_space"
+                            android:src="@android:color/transparent" />
+
+                        <Button
+                            android:id="@+id/my_location"
+                            style="@style/MapActionButton"
+                            android:layout_alignParentEnd="true"
+                            android:layout_alignParentRight="true"
+                            android:layout_below="@+id/place_group"
+                            android:layout_marginEnd="@dimen/normal_space"
+                            android:layout_marginRight="@dimen/normal_space"
+                            android:layout_marginTop="@dimen/normal_space"
+                            android:background="@drawable/my_location" />
+
+                        <Button
+                            android:id="@+id/zoom_plus"
+                            style="@style/MapActionButton"
+                            android:layout_above="@+id/zoom_minus"
+                            android:layout_alignEnd="@+id/my_location"
+                            android:layout_alignRight="@+id/my_location"
+                            android:background="@drawable/zoom_plus" />
+
+                        <Button
+                            android:id="@+id/zoom_minus"
+                            style="@style/MapActionButton"
+                            android:layout_alignEnd="@+id/my_location"
+                            android:layout_alignParentBottom="true"
+                            android:layout_alignRight="@+id/my_location"
+                            android:layout_marginBottom="@dimen/normal_space"
+                            android:background="@drawable/zoom_minus" />
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@+id/place_group"
+                            android:background="@drawable/shadow_img" />
+
+                        <LinearLayout
+                            android:id="@+id/place_group"
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/logo_max_height"
+                            android:background="@drawable/action_button_background"
+                            android:gravity="center_vertical"
+                            android:paddingLeft="@dimen/large_space"
+                            android:paddingRight="@dimen/large_space">
+
+                            <ImageView
+                                android:id="@+id/logo_view"
+                                android:layout_width="@dimen/logo_max_width"
+                                android:layout_height="wrap_content"
+                                android:maxWidth="@dimen/logo_max_width"
+                                android:paddingBottom="@dimen/small_space"
+                                android:paddingEnd="@dimen/normal_space"
+                                android:paddingRight="@dimen/normal_space"
+                                android:paddingTop="@dimen/small_space"
+                                android:scaleType="fitCenter" />
+
+                            <ru.nekit.android.nowapp.widget.AutoResizeTextView
+                                android:id="@+id/place_name_view"
+                                style="@style/Place_TextBlock"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:paddingBottom="@dimen/small_space"
+                                android:paddingTop="@dimen/small_space" />
+
+                        </LinearLayout>
+
+                    </RelativeLayout>
+
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/category_type_view"
+                    android:layout_width="@dimen/event_category_big_view_size"
+                    android:layout_height="@dimen/event_category_big_view_size"
+                    android:layout_gravity="end"
+                    android:scaleType="fitXY"
+                    android:src="@drawable/event_category_education_big" />
+
+            </FrameLayout>
+
+        </LinearLayout>
 
     </ScrollView>
 

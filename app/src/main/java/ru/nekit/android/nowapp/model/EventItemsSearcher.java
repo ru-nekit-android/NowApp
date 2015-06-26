@@ -7,11 +7,12 @@ import android.support.v4.content.AsyncTaskLoader;
 import java.util.ArrayList;
 
 import ru.nekit.android.nowapp.NowApplication;
+import ru.nekit.android.nowapp.model.vo.Event;
 
 /**
  * Created by chuvac on 13.03.15.
  */
-public class EventItemsSearcher extends AsyncTaskLoader<ArrayList<EventItem>> {
+public class EventItemsSearcher extends AsyncTaskLoader<ArrayList<Event>> {
 
     public static final String KEY_EVENT_ITEMS_SEARCH = "event_items_search_key";
 
@@ -23,12 +24,12 @@ public class EventItemsSearcher extends AsyncTaskLoader<ArrayList<EventItem>> {
     }
 
     @Override
-    public ArrayList<EventItem> loadInBackground() {
+    public ArrayList<Event> loadInBackground() {
         return NowApplication.getEventModel().performSearch(mArgs.getString(KEY_EVENT_ITEMS_SEARCH));
     }
 
     @Override
-    public void deliverResult(ArrayList<EventItem> data) {
+    public void deliverResult(ArrayList<Event> data) {
         if (isReset()) {
             return;
         }

@@ -1,50 +1,46 @@
-package ru.nekit.android.nowapp.model;
+package ru.nekit.android.nowapp.model.vo;
 
+import android.app.usage.UsageEvents;
 import android.os.Parcel;
 import android.os.Parcelable;
 
 /**
  * Created by chuvac on 12.03.15.
  */
-public class EventItem implements Parcelable {
+public class Event extends EventBase implements Parcelable {
 
-    public static final Parcelable.Creator<EventItem> CREATOR = new Parcelable.Creator<EventItem>() {
-        public EventItem createFromParcel(Parcel source) {
-            return new EventItem(source);
+    public static final Parcelable.Creator<Event> CREATOR = new Parcelable.Creator<Event>() {
+        public Event createFromParcel(Parcel source) {
+            return new Event(source);
         }
 
-        public EventItem[] newArray(int size) {
-            return new EventItem[size];
+        public Event[] newArray(int size) {
+            return new Event[size];
         }
     };
     public int placeId;
-    public int id;
     public long date;
     public String eventDescription;
     public String category;
     public String entrance;
-    public String placeName;
     public String address;
     public String phone;
     public String site;
     public String email;
-    public String name;
-    public long startAt;
     public long endAt;
     public String posterThumb;
     public String posterBlur;
     public String posterOriginal;
-    public String logoThumb;
     public String logoOriginal;
     public int allNightParty;
     public double lat;
     public double lng;
-    public EventItemStats stats;
+    public EventStats stats;
 
-    public EventItem() {
+    public Event() {
     }
 
-    private EventItem(Parcel in) {
+    private Event(Parcel in) {
         this.placeId = in.readInt();
         this.id = in.readInt();
         this.date = in.readLong();

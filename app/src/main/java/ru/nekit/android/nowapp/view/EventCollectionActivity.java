@@ -18,13 +18,13 @@ import android.widget.TextView;
 
 import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
-import ru.nekit.android.nowapp.model.EventItem;
+import ru.nekit.android.nowapp.model.vo.Event;
 import ru.nekit.android.nowapp.modelView.listeners.IBackPressedListener;
-import ru.nekit.android.nowapp.modelView.listeners.IEventItemPosterSelectListener;
-import ru.nekit.android.nowapp.modelView.listeners.IEventItemSelectListener;
+import ru.nekit.android.nowapp.modelView.listeners.IEventPosterSelectListener;
+import ru.nekit.android.nowapp.modelView.listeners.IEventSelectListener;
 
 
-public class EventCollectionActivity extends AppCompatActivity implements IEventItemSelectListener, IEventItemPosterSelectListener {
+public class EventCollectionActivity extends AppCompatActivity implements IEventSelectListener, IEventPosterSelectListener {
 
     private EventDetailFragment mEventDetailFragment;
     private EventPosterViewFragment mEventPosterViewFragment;
@@ -121,11 +121,11 @@ public class EventCollectionActivity extends AppCompatActivity implements IEvent
     }
 
     @Override
-    public void onEventItemSelect(EventItem eventItem) {
+    public void onEventItemSelect(Event event) {
         if (mEventDetailFragment == null) {
             mEventDetailFragment = EventDetailFragment.getInstance();
         }
-        mEventDetailFragment.setEventItem(eventItem);
+        mEventDetailFragment.setEventItem(event);
         if (!mEventDetailFragment.isAdded()) {
             getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left, R.anim.enter_from_left, R.anim.exit_to_right).addToBackStack(null).replace(R.id.event_place_holder, mEventDetailFragment, EventDetailFragment.TAG).commit();
         }

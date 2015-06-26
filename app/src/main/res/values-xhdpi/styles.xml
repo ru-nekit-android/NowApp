@@ -48,7 +48,7 @@
     </style>
 
     <style name="EventStartTime">
-        <item name="android:textSize">14sp</item>
+        <item name="android:textSize">13sp</item>
         <item name="android:layout_height">@dimen/event_start_time_height</item>
         <item name="android:textColor">@android:color/white</item>
         <item name="typeface">roboto_light_italic</item>

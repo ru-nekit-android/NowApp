@@ -43,20 +43,20 @@ import java.util.ArrayList;
 
 import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
-import ru.nekit.android.nowapp.model.EventItem;
+import ru.nekit.android.nowapp.model.vo.Event;
 import ru.nekit.android.nowapp.model.EventItemsLoader;
-import ru.nekit.android.nowapp.model.EventItemsModel;
+import ru.nekit.android.nowapp.model.EventsModel;
 import ru.nekit.android.nowapp.model.EventItemsSearcher;
 import ru.nekit.android.nowapp.modelView.EventCollectionAdapter;
 import ru.nekit.android.nowapp.modelView.listeners.IBackPressedListener;
-import ru.nekit.android.nowapp.modelView.listeners.IEventItemSelectListener;
+import ru.nekit.android.nowapp.modelView.listeners.IEventSelectListener;
 import ru.nekit.android.nowapp.widget.FloatingActionButtonAnimator;
 import ru.nekit.android.nowapp.widget.ScrollingGridLayoutManager;
 import ru.nekit.android.nowapp.widget.SoftKeyboardListenerLayout;
 
 import static ru.nekit.android.nowapp.NowApplication.APP_STATE.ONLINE;
 
-public class EventCollectionFragment extends Fragment implements LoaderManager.LoaderCallbacks, IEventItemSelectListener, View.OnClickListener, SearchView.OnQueryTextListener, IBackPressedListener, TextView.OnEditorActionListener, SoftKeyboardListenerLayout.OnSoftKeyboardListener {
+public class EventCollectionFragment extends Fragment implements LoaderManager.LoaderCallbacks, IEventSelectListener, View.OnClickListener, SearchView.OnQueryTextListener, IBackPressedListener, TextView.OnEditorActionListener, SoftKeyboardListenerLayout.OnSoftKeyboardListener {
 
     public static final String TAG = "ru.nekit.android.event_collection_fragment";
 
@@ -71,7 +71,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         return getActivity().getResources().getBoolean(R.bool.feature_live_search);
     }
 
-    private EventItemsModel mEventModel;
+    private EventsModel mEventModel;
     private String mQueryWithResult;
     private String mQuery;
     private boolean mSearchResultIsPresent;
@@ -79,10 +79,10 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     private LOADING_STATE mLoadingState;
     private MODE mMode;
     private String mLoadingType;
-    private EventItem mWaitingForOpenItem;
+    private Event mWaitingForOpenItem;
     private boolean mKeyboardVisible;
     private EventCollectionAdapter mEventCollectionAdapter;
-    private IEventItemSelectListener mEventItemSelectListener;
+    private IEventSelectListener mEventItemSelectListener;
     private FloatingActionButtonAnimator mFloatingActionButtonAnimator;
     private RecyclerView mEventItemsView;
     private SwipeRefreshLayout mSwipeRefreshLayout;
@@ -100,20 +100,20 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     }
 
     @Override
-    public void onEventItemSelect(final EventItem eventItem) {
+    public void onEventItemSelect(final Event event) {
         if (mLoadingState == LOADING_STATE.LOADED) {
             if (searchViewVisible()) {
                 applyMode(MODE.NORMAL);
                 if (mKeyboardVisible) {
-                    mWaitingForOpenItem = eventItem;
+                    mWaitingForOpenItem = event;
                 } else {
                     mFloatingActionButtonAnimator.hide();
                     mEventItemsView.requestFocus();
-                    mEventItemSelectListener.onEventItemSelect(eventItem);
+                    mEventItemSelectListener.onEventItemSelect(event);
                 }
             } else {
                 mFloatingActionButtonAnimator.hide();
-                mEventItemSelectListener.onEventItemSelect(eventItem);
+                mEventItemSelectListener.onEventItemSelect(event);
             }
         } else {
             //strange behavior on usual user-case
@@ -151,7 +151,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                 if (action.equals(NowApplication.CHANGE_APPLICATION_STATE_NOTIFICATION)) {
                     applyApplicationState();
                     if (NowApplication.getState() == ONLINE) {
-                        mLoadingType = EventItemsModel.REFRESH_EVENTS;
+                        mLoadingType = EventsModel.REFRESH_EVENTS;
                         mEventItemsView.smoothScrollToPosition(0);
                         mSwipeRefreshLayout.postDelayed(new Runnable() {
                             @Override
@@ -163,12 +163,12 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                     } else {
                         performLoad();
                     }
-                } else if (action.equals(EventItemsModel.LOAD_IN_BACKGROUND_NOTIFICATION)) {
+                } else if (action.equals(EventsModel.LOAD_IN_BACKGROUND_NOTIFICATION)) {
                     if (mMode == MODE.SEARCH && mSearchResultIsPresent) {
                         performSearch(mQueryWithResult);
                     }
                     if (mMode == MODE.NORMAL) {
-                        mLoadingType = EventItemsModel.REQUEST_NEW_EVENTS;
+                        mLoadingType = EventsModel.REQUEST_NEW_EVENTS;
                         performLoad();
                     }
                 }
@@ -177,7 +177,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     }
 
     private void setEventsFromModel() {
-        mEventCollectionAdapter.setItems(mEventModel.getEventItems());
+        mEventCollectionAdapter.setItems(mEventModel.getEvents());
     }
 
     @Override
@@ -248,7 +248,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                             mSwipeRefreshLayout.setRefreshing(true);
                         }
                     });
-                    mLoadingType = EventItemsModel.REFRESH_EVENTS;
+                    mLoadingType = EventsModel.REFRESH_EVENTS;
                     setLoadingState(LOADING_STATE.LOADING);
                     performLoad();
                 }
@@ -273,24 +273,29 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        getViewFromRoot(R.id.now_title).setOnClickListener(this);
+        View nowTitle = getViewFromRoot(R.id.now_title);
+        if (nowTitle != null) {
+            nowTitle.setOnClickListener(this);
+        }
     }
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         mSearchView = (SearchView) getViewFromRoot(R.id.search_view);
-        mSearchView.setOnQueryTextListener(this);
-        mSearchView.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
+        if (mSearchView != null) {
+            mSearchView.setOnQueryTextListener(this);
+            mSearchView.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
 
-        mSearchViewEditText = (EditText) mSearchView.findViewById(android.support.v7.appcompat.R.id.search_src_text);
-        mSearchViewEditText.setOnEditorActionListener(this);
-        mSearchViewEditText.setHint(" " + getActivity().getString(R.string.search_hint));
-        setCursorDrawableColor(mSearchViewEditText);
+            mSearchViewEditText = (EditText) mSearchView.findViewById(android.support.v7.appcompat.R.id.search_src_text);
+            mSearchViewEditText.setOnEditorActionListener(this);
+            mSearchViewEditText.setHint(" " + getActivity().getString(R.string.search_hint));
+            setCursorDrawableColor(mSearchViewEditText);
 
-        ImageView searchCloseButton = (ImageView) mSearchView.findViewById(android.support.v7.appcompat.R.id.search_close_btn);
-        searchCloseButton.setAlpha(192);
-        searchCloseButton.setOnClickListener(this);
+            ImageView searchCloseButton = (ImageView) mSearchView.findViewById(android.support.v7.appcompat.R.id.search_close_btn);
+            searchCloseButton.setAlpha(192);
+            searchCloseButton.setOnClickListener(this);
+        }
     }
 
     public void setCursorDrawableColor(EditText editText) {
@@ -343,7 +348,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                mLoadingType = EventItemsModel.REFRESH_EVENTS;
+                mLoadingType = EventsModel.REFRESH_EVENTS;
                 setLoadingState(LOADING_STATE.LOADING);
                 performLoad();
             }
@@ -353,7 +358,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
             @Override
             public void onLoadMore() {
                 if (mMode == MODE.NORMAL || !mSearchResultIsPresent) {
-                    mLoadingType = EventItemsModel.REQUEST_NEW_EVENTS;
+                    mLoadingType = EventsModel.REQUEST_NEW_EVENTS;
                     setLoadingState(LOADING_STATE.LOADING);
                 }
             }
@@ -396,7 +401,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     }
 
     private void setLoadingState(LOADING_STATE state) {
-        boolean hideFAB = state == LOADING_STATE.LOADING && EventItemsModel.REFRESH_EVENTS.equals(mLoadingType);
+        boolean hideFAB = state == LOADING_STATE.LOADING && EventsModel.REFRESH_EVENTS.equals(mLoadingType);
         if (hideFAB) {
             mFloatingActionButtonAnimator.hide();
         } else {
@@ -407,7 +412,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         //mFloatingActionButton.setVisibility(hideFAB ? View.INVISIBLE : View.VISIBLE);
         if (mLoadingState == state) return;
         mLoadingState = state;
-        if (EventItemsModel.REQUEST_NEW_EVENTS.equals(mLoadingType)) {
+        if (EventsModel.REQUEST_NEW_EVENTS.equals(mLoadingType)) {
             switch (mLoadingState) {
                 case LOADING:
                     if (!mEventCollectionAdapter.isLoading()) {
@@ -444,7 +449,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     private void performLoad() {
         LoaderManager loaderManager = getLoaderManager();
         Bundle loaderArgs = new Bundle();
-        loaderArgs.putString(EventItemsModel.LOADING_TYPE, mLoadingType);
+        loaderArgs.putString(EventsModel.LOADING_TYPE, mLoadingType);
         final Loader loader = loaderManager.getLoader(LOADER_ID);
         if (loader != null) {
             loaderManager.restartLoader(LOADER_ID, loaderArgs, EventCollectionFragment.this);
@@ -457,10 +462,10 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         try {
-            mEventItemSelectListener = (IEventItemSelectListener) getActivity();
+            mEventItemSelectListener = (IEventSelectListener) getActivity();
         } catch (ClassCastException exp) {
             throw new ClassCastException(activity.toString()
-                    + " must implement OnSplashScreenCompleteListener");
+                    + " must implement IEventSelectListener");
         }
     }
 
@@ -514,12 +519,12 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                 case LOADER_ID:
 
                     int resultForLoad = (int) result;
-                    mLoadingType = EventItemsModel.REFRESH_EVENTS;
+                    mLoadingType = EventsModel.REFRESH_EVENTS;
                     mSwipeRefreshLayout.setRefreshing(false);
-                    if (resultForLoad == EventItemsModel.RESULT_OK) {
+                    if (resultForLoad == EventsModel.RESULT_OK) {
                         setEventsFromModel();
                         mCurrentPage = mEventModel.getCurrentPage();
-                    } else if (resultForLoad == EventItemsModel.DATA_IS_EMPTY) {
+                    } else if (resultForLoad == EventsModel.DATA_IS_EMPTY) {
                         //
                     } else {
                         Toast.makeText(getActivity(), Html.fromHtml(getResources().getString(R.string.error_while_data_loading)), Toast.LENGTH_LONG).show();
@@ -530,7 +535,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
 
                 case SEARCHER_ID:
 
-                    ArrayList<EventItem> resultForSearch = (ArrayList<EventItem>) result;
+                    ArrayList<Event> resultForSearch = (ArrayList<Event>) result;
                     mSearchResultIsPresent = resultForSearch.size() > 0;
                     mQueryWithResult = mSearchResultIsPresent ? mQuery : null;
                     mEventCollectionAdapter.setItems(resultForSearch);
@@ -554,7 +559,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
             case LOADER_ID:
 
                 setLoadingState(LOADING_STATE.LOADED);
-                mLoadingType = EventItemsModel.REFRESH_EVENTS;
+                mLoadingType = EventsModel.REFRESH_EVENTS;
                 mSwipeRefreshLayout.setRefreshing(false);
 
                 break;
@@ -590,7 +595,9 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
 
             @Override
             public void onAnimationEnd(Animator animation) {
-                titleContainer.setVisibility(searchVisible ? View.INVISIBLE : View.VISIBLE);
+                if (titleContainer != null) {
+                    titleContainer.setVisibility(searchVisible ? View.INVISIBLE : View.VISIBLE);
+                }
                 mSearchView.setVisibility(searchVisible ? View.VISIBLE : View.GONE);
                 animateFade(true, searchVisible ? mSearchView : titleContainer);
             }
