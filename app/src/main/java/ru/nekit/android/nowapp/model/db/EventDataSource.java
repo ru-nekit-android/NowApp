@@ -200,7 +200,7 @@ public class EventDataSource {
         eventSQLHelper.close();
     }
 
-    public void removeEventByID(int id) {
+    public void removeEventById(int id) {
         database.delete(EventSQLiteHelper.EVENT_TABLE_NAME, String.format("%s = %s", EventSQLiteHelper._ID, id), null);
         database.delete(EventSQLiteHelper.FTS_TABLE_NAME, String.format("%s = %s", EventSQLiteHelper._ID, id), null);
     }

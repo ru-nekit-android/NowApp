@@ -6,7 +6,6 @@
     android:orientation="vertical"
     tools:context="ru.nekit.android.nowapp.view.SplashScreenFragment">
 
-
     <ImageView
         android:id="@+id/imageView"
         style="@style/NowLogoOnSplashScreen"
@@ -17,13 +16,11 @@
         android:layout_gravity="center"
         android:src="@drawable/now_big" />
 
-
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-
         android:layout_below="@+id/imageView">
 
         <com.pnikosis.materialishprogress.ProgressWheel

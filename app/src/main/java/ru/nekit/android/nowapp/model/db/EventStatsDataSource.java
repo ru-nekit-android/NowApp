@@ -63,6 +63,10 @@ public class EventStatsDataSource {
         return eventStats;
     }
 
+    public void removeEventByEventId(int id) {
+    database.delete(EventSQLiteHelper.EVENT_STATS_TABLE_NAME, String.format("%s = %s", EventSQLiteHelper.EVENT_ID, id), null);
+    }
+
     public void clear() {
         database.delete(EventSQLiteHelper.EVENT_STATS_TABLE_NAME, null, null);
     }

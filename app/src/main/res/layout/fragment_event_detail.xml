@@ -20,30 +20,38 @@
                 android:id="@+id/advert_block"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingBottom="@dimen/small_space"
-                android:paddingTop="@dimen/small_space"
+                android:orientation="vertical"
                 android:visibility="gone">
 
-                <ImageView
-                    android:id="@+id/advert_icon_view"
-                    android:layout_width="@dimen/advert_block_icon_width"
-                    android:layout_height="@dimen/advert_block_icon_height"
-                    android:paddingRight="@dimen/small_space" />
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginBottom="@dimen/small_space"
+                    android:layout_marginTop="@dimen/small_space"
+                    android:gravity="center_vertical">
 
-                <com.devspark.robototextview.widget.RobotoTextView
-                    android:id="@+id/advert_text_view"
-                    style="@style/AdvertText"
-                    android:paddingLeft="@dimen/small_space"
-                    android:paddingRight="@dimen/small_space" />
+                    <ImageView
+                        android:id="@+id/advert_icon_view"
+                        android:layout_width="@dimen/advert_block_icon_width"
+                        android:layout_height="@dimen/advert_block_icon_height"
+                        android:layout_marginLeft="@dimen/small_space"
+                        android:layout_marginRight="@dimen/small_space" />
+
+                    <com.devspark.robototextview.widget.RobotoTextView
+                        android:id="@+id/advert_text_view"
+                        style="@style/AdvertText"
+                        android:paddingLeft="@dimen/small_space"
+                        android:paddingRight="@dimen/small_space" />
+
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/divide_line" />
 
             </LinearLayout>
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@color/divide_line" />
 
             <FrameLayout
                 android:layout_width="wrap_content"

@@ -1,6 +1,7 @@
 package ru.nekit.android.nowapp.view;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.ContentUris;
 import android.content.Context;
@@ -49,8 +50,11 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.view.animation.Animation;
+import android.view.animation.Transformation;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
@@ -83,7 +87,7 @@ import java.util.concurrent.TimeUnit;
 
 import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
-import ru.nekit.android.nowapp.model.ApiExecutor;
+import ru.nekit.android.nowapp.model.EventApiExecutor;
 import ru.nekit.android.nowapp.model.EventApiCallResult;
 import ru.nekit.android.nowapp.model.vo.Event;
 import ru.nekit.android.nowapp.model.vo.EventAdvert;
@@ -109,6 +113,8 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     private static final String KEY_EVENT_ITEM = "ru.nekit.android.event_item";
     private static final String KEY_SELECTED = "ru.nekit.android.selected";
     private static final int MAX_ZOOM = 19;
+    private final FloatingActionButtonBehavior mFloatingActionButtonBehavior;
+    private final Handler mHandler = new Handler(Looper.getMainLooper());
     private MapView mMapView;
     private final MapListener mMapListener = new MapListener() {
         @Override
@@ -145,10 +151,11 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     private FloatingActionButton mFloatingActionButton;
     private LayoutInflater mInflater;
     private CoordinatorLayout mRootLayout;
-    private final FloatingActionButtonBehavior mFloatingActionButtonBehavior;
     private EventToCalendarLink mEventToCalendarLink;
     private View mLikeContainer;
     private View mAdvertBlock;
+    private Timer mTimer;
+    private ProgressDialog mProgressDialog;
 
     public EventDetailFragment() {
         mFloatingActionButtonBehavior = new FloatingActionButtonBehavior();
@@ -213,32 +220,30 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
         initEventToCalendarLoader(EventToCalendarLoader.CHECK);
 
-        boolean eventItemSelected = arg.getBoolean(KEY_SELECTED, false);
-        if (eventItemSelected) {
+        boolean eventSelected = arg.getBoolean(KEY_SELECTED, false);
+        if (eventSelected) {
             if (NowApplication.getState() == NowApplication.APP_STATE.ONLINE) {
-                initEventApiExecutor(ApiExecutor.METHOD_UPDATE_VIEW, mEvent.id);
+                initEventApiExecutor(EventApiExecutor.METHOD_UPDATE_VIEWS, mEvent.id);
             } else {
-                initEventApiExecutor(ApiExecutor.METHOD_OBTAIN_STATS, mEvent.id);
+                initEventApiExecutor(EventApiExecutor.METHOD_OBTAIN_STATS, mEvent.id);
             }
         } else {
-            initEventApiExecutor(ApiExecutor.METHOD_OBTAIN_STATS, mEvent.id);
+            initEventApiExecutor(EventApiExecutor.METHOD_OBTAIN_STATS, mEvent.id);
         }
         arg.putBoolean(KEY_SELECTED, false);
 
         mFloatingActionButtonBehavior.activate();
         mFloatingActionButtonBehavior.validatePosition();
 
-        updateEventStats(!eventItemSelected);
+        updateEventStats(!eventSelected);
 
-        final Handler mHandler = new Handler(Looper.getMainLooper());
-        final Timer mTimer = new Timer();
+        mTimer = new Timer();
 
         mTimer.schedule(
                 new TimerTask() {
 
                     @Override
                     public void run() {
-
                         mHandler.post(new Runnable() {
                             public void run() {
                                 showAdvertBlock();
@@ -247,28 +252,51 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                         });
                     }
                 },
-                0,
-                TimeUnit.MINUTES.toMillis(SHOW_ADVERT_DELAY));
+                SHOW_ADVERT_DELAY);
     }
 
     private void showAdvertBlock() {
-        EventsModel model = EventsModel.getInstance();
-        mEventAdvert = model.getActualAdvert();
-        if (mEventAdvert != null) {
-            mAdvertBlock.setVisibility(View.VISIBLE);
-            ImageView advertIcon = (ImageView) mAdvertBlock.findViewById(R.id.advert_icon_view);
-            Glide.with(this).load(mEventAdvert.logoThumb).into(advertIcon);
-            TextView advertTextView = (TextView) mAdvertBlock.findViewById(R.id.advert_text_view);
-            String advertString = getActivity().getResources().getString(R.string.attention_short) + " " + EventsModel.getStartTimeAlias(getActivity(), mEventAdvert) + " " + mEventAdvert.placeName + " " + mEventAdvert.name;
-            advertTextView.setText(advertString);
-            mAdvertBlock.setOnClickListener(this);
+        if (isResumed()) {
+            mEventAdvert = EventsModel.getInstance().getActualAdvert();
+            if (mEventAdvert != null) {
+                expand(mAdvertBlock);
+                ImageView advertIcon = (ImageView) mAdvertBlock.findViewById(R.id.advert_icon_view);
+                Glide.with(this).load(mEventAdvert.logoThumb).into(advertIcon);
+                TextView advertTextView = (TextView) mAdvertBlock.findViewById(R.id.advert_text_view);
+                String advertString = getActivity().getResources().getString(R.string.attention_short) + " " + EventsModel.getStartTimeAlias(getActivity(), mEventAdvert) + " " + mEventAdvert.placeName + " " + mEventAdvert.name;
+                advertTextView.setText(advertString);
+                mAdvertBlock.setOnClickListener(this);
+            }
         }
+    }
+
+    private void expand(final View view) {
+        view.measure(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        final int targetHeight = view.getMeasuredHeight();
+        view.getLayoutParams().height = 0;
+        view.setVisibility(View.VISIBLE);
+        Animation animation = new Animation() {
+            @Override
+            protected void applyTransformation(float interpolatedTime, Transformation t) {
+                view.getLayoutParams().height = interpolatedTime == 1
+                        ? LinearLayout.LayoutParams.WRAP_CONTENT
+                        : (int) (targetHeight * interpolatedTime);
+                view.requestLayout();
+            }
+
+            @Override
+            public boolean willChangeBounds() {
+                return true;
+            }
+        };
+        animation.setDuration((int) (targetHeight / view.getContext().getResources().getDisplayMetrics().density) * 4);
+        view.startAnimation(animation);
     }
 
     private void initEventApiExecutor(int method, int eventId) {
         Bundle args = new Bundle();
-        args.putInt(ApiExecutor.KEY_METHOD, method);
-        args.putInt(ApiExecutor.KEY_EVENT_ITEM_ID, eventId);
+        args.putInt(EventApiExecutor.KEY_METHOD, method);
+        args.putInt(EventApiExecutor.KEY_EVENT_ITEM_ID, eventId);
         LoaderManager loaderManager = getActivity().getSupportLoaderManager();
         int id = API_EXECUTOR_GROUP_ID + method;
         final Loader<Integer> loader = loaderManager.getLoader(id);
@@ -304,14 +332,20 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
                 break;
 
-            case API_EXECUTOR_GROUP_ID + ApiExecutor.METHOD_OBTAIN_STATS:
-            case API_EXECUTOR_GROUP_ID + ApiExecutor.METHOD_UPDATE_VIEW:
-            case API_EXECUTOR_GROUP_ID + ApiExecutor.METHOD_LIKE:
-            case API_EXECUTOR_GROUP_ID + ApiExecutor.METHOD_OBTAIN_EVENT:
+            case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_OBTAIN_STATS:
+            case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_UPDATE_VIEWS:
+            case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_LIKE:
+            case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_OBTAIN_EVENT:
 
-                loader = new ApiExecutor(getActivity(), args);
+                loader = new EventApiExecutor(getActivity(), args);
+                if (id == API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_OBTAIN_EVENT) {
+                    mProgressDialog = showProgressDialog();
+                }
 
                 break;
+
+            default:
+
         }
         if (loader != null) {
             loader.forceLoad();
@@ -371,26 +405,29 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
                     break;
 
-                case API_EXECUTOR_GROUP_ID + ApiExecutor.METHOD_OBTAIN_STATS:
+                case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_OBTAIN_STATS:
 
                     updateEventStats(true);
 
                     break;
 
-                case API_EXECUTOR_GROUP_ID + ApiExecutor.METHOD_LIKE:
-                case API_EXECUTOR_GROUP_ID + ApiExecutor.METHOD_UPDATE_VIEW:
+                case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_LIKE:
+                case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_UPDATE_VIEWS:
 
-                    initEventApiExecutor(ApiExecutor.METHOD_OBTAIN_STATS, mEvent.id);
+                    initEventApiExecutor(EventApiExecutor.METHOD_OBTAIN_STATS, mEvent.id);
 
                     break;
 
-                case API_EXECUTOR_GROUP_ID + ApiExecutor.METHOD_OBTAIN_EVENT:
+                case API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_OBTAIN_EVENT:
 
                     final Event event = ((EventApiCallResult) result).event;
-                    new Handler().post(new Runnable() {
+                    mHandler.post(new Runnable() {
                         @Override
                         public void run() {
-                            mEventItemSelectListener.onEventItemSelect(event);
+                            mEventItemSelectListener.onEventSelect(event);
+                            if (mProgressDialog != null) {
+                                mProgressDialog.dismiss();
+                            }
                         }
                     });
 
@@ -405,12 +442,13 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
     private void updateEventStats(boolean confirmed) {
         Resources resources = getActivity().getResources();
-        EventStats eventStats = confirmed ? mEvent.stats : EventsModel.getInstance().obtainEventStatsByEventId(mEvent.id);
-        boolean myLike = eventStats != null && eventStats.myLikeStatus != 0;
-        if (eventStats != null) {
-            mViewsView.setText(eventStats.getViews(NowApplication.getState() == NowApplication.APP_STATE.ONLINE, confirmed));
-            mLikesView.setText(eventStats.getLikes());
+        EventStats eventStats = mEvent.stats;
+        if (eventStats == null) {
+            eventStats = EventsModel.getInstance().obtainEventStatsByEventId(mEvent.id);
         }
+        boolean myLike = eventStats.myLikeStatus != 0;
+        mViewsView.setText(eventStats.getViews(NowApplication.getState() == NowApplication.APP_STATE.ONLINE, confirmed));
+        mLikesView.setText(eventStats.getLikes());
         mFloatingActionButton.setEnabled(!myLike);
         int normalColor = resources.getColor(R.color.event_stats_normal);
         int activeColor = resources.getColor(R.color.event_stats_active);
@@ -447,6 +485,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         NowApplication.unregisterForAppChangeStateNotification(mChangeApplicationStateReceiver);
         mFloatingActionButtonBehavior.deactivate();
         myLocationOverLay.disableMyLocation();
+        mTimer.cancel();
     }
 
     private void createMap() {
@@ -884,14 +923,14 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                 EventStats eventStats = mEvent.stats;
                 if (eventStats.myLikeStatus == 0) {
                     showAddToCalendarDialog();
-                    initEventApiExecutor(ApiExecutor.METHOD_LIKE, mEvent.id);
+                    initEventApiExecutor(EventApiExecutor.METHOD_LIKE, mEvent.id);
                 }
 
                 break;
 
             case R.id.advert_block:
 
-                initEventApiExecutor(ApiExecutor.METHOD_OBTAIN_EVENT, mEventAdvert.eventId);
+                initEventApiExecutor(EventApiExecutor.METHOD_OBTAIN_EVENT, mEventAdvert.eventId);
 
                 break;
 
@@ -955,6 +994,17 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         dialogTextView.setText(R.string.gps_switch_on_ask);
         dialog = builder.create();
         dialog.show();
+    }
+
+    private ProgressDialog showProgressDialog() {
+        Context context = getActivity();
+        ProgressDialog progress = new ProgressDialog(context, ProgressDialog.THEME_HOLO_LIGHT);
+        progress.setCancelable(false);
+        progress.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progress.setIndeterminate(true);
+        progress.show();
+        progress.setMessage(context.getResources().getString(R.string.loading));
+        return progress;
     }
 
     class FloatingActionButtonBehavior extends FloatingActionButton.Behavior {

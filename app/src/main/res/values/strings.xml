@@ -3,8 +3,9 @@
     <string name="app_name">Сейчас</string>
     <string name="about_title">О программе</string>
 
-    <string name="going_right_now">уже идет!</string>
-    <string name="going_right_now_keywords">уже идет сейчас</string>
+    <string name="going_right_now">уже идёт!</string>
+    <string name="going_right_now_advert">сейчас идёт</string>
+    <string name="going_right_now_keywords">уже идёт сейчас</string>
     <string name="already_ended">уже закончилось!</string>
     <string name="entrance_title">"ВХОД:"</string>
     <string name="today">Сегодня</string>
@@ -48,6 +49,7 @@
     <string name="remove_from_calendar_message">Событие удалено из календаря!</string>
     <string name="open_calendar_message">Открыть</string>
     <string name="attention_short">А</string>
+    <string name="loading">Загрузка...</string>
 
     <string-array name="day_of_week">
         <item>ВС</item>

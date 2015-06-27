@@ -100,7 +100,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     }
 
     @Override
-    public void onEventItemSelect(final Event event) {
+    public void onEventSelect(final Event event) {
         if (mLoadingState == LOADING_STATE.LOADED) {
             if (searchViewVisible()) {
                 applyMode(MODE.NORMAL);
@@ -109,11 +109,11 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                 } else {
                     mFloatingActionButtonAnimator.hide();
                     mEventItemsView.requestFocus();
-                    mEventItemSelectListener.onEventItemSelect(event);
+                    mEventItemSelectListener.onEventSelect(event);
                 }
             } else {
                 mFloatingActionButtonAnimator.hide();
-                mEventItemSelectListener.onEventItemSelect(event);
+                mEventItemSelectListener.onEventSelect(event);
             }
         } else {
             //strange behavior on usual user-case
@@ -390,7 +390,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     public void onSoftKeyboardHidden() {
         if (mWaitingForOpenItem != null) {
             mFloatingActionButtonAnimator.hide();
-            mEventItemSelectListener.onEventItemSelect(mWaitingForOpenItem);
+            mEventItemSelectListener.onEventSelect(mWaitingForOpenItem);
             mWaitingForOpenItem = null;
         }
         mKeyboardVisible = false;

@@ -10,6 +10,4 @@
     <integer name="page_limit_load_in_background">10</integer>
     <integer name="location_min_update_distance">50</integer>
     <integer name="location_min_update_time">5000</integer>
-
-
 </resources>

@@ -11,6 +11,7 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.CalendarContract;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.util.Pair;
@@ -65,8 +66,8 @@ public class EventsModel {
 
     public static final int RESULT_OK = 0;
     public static final int RESULT_BAD = -1;
-    public static final int LIKED_CONFIRMED = 2;
-    public static final int LIKED_NOT_CONFIRMED = 1;
+    public static final int LIKE_CONFIRMED = 2;
+    public static final int LIKE_NOT_CONFIRMED = 1;
     public static final int DATA_IS_EMPTY = 1;
     public static final String LOAD_IN_BACKGROUND_NOTIFICATION = "ru.nekit.android.nowapp.load_in_background_result";
     public static final String LOADING_TYPE = "loading_type";
@@ -91,15 +92,6 @@ public class EventsModel {
 
     private static final String DATABASE_NAME = "nowapp.db";
     private static final int DATABASE_VERSION = 10;
-
-    private boolean FEATURE_LOAD_IN_BACKGROUND() {
-        return mContext.getResources().getBoolean(R.bool.feature_load_in_background);
-    }
-
-    private int PAGE_LIMIT_LOAD_IN_BACKGROUND() {
-        return mContext.getResources().getInteger(R.integer.page_limit_load_in_background);
-    }
-
     private static final HashMap<String, String> CATEGORY_TYPE_KEYWORDS = new HashMap<>();
     private static final HashMap<String, Integer> CATEGORY_TYPE = new HashMap<>();
     private static final HashMap<String, Integer> CATEGORY_TYPE_COLOR = new HashMap<>();
@@ -111,20 +103,16 @@ public class EventsModel {
         add(new Pair<>("вечером", EVENING_PERIOD));
     }};
     private static EventsModel sInstance;
-
     private final Context mContext;
     private final ArrayList<Event> mEvents;
     private final EventDataSource mEventDataSource;
     private final EventStatsDataSource mEventStatsDataSource;
     private final EventAdvertDataSource mEventAdvertDataSource;
-
     private final Runnable mBackgroundLoadTask;
     private final EventToCalendarDataSource mEventToCalendarDataSource;
-
     private int mAvailableEventCount;
     private int mCurrentPage;
     private boolean mReachEndOfDataList;
-
     private boolean mDataIsActual;
     private int mLoadedInBackgroundPage;
     private int mEventsCountPerPage;
@@ -187,42 +175,31 @@ public class EventsModel {
         ArrayList<Event> allEvents = mEventDataSource.getAllEvents();
         for (Event event : allEvents) {
             if (!eventIsActual(event)) {
-                mEventDataSource.removeEventByID(event.id);
-                mEventToCalendarDataSource.removeLinkByEventID(event.id);
+                mEventDataSource.removeEventById(event.id);
+                mEventStatsDataSource.removeEventByEventId(event.id);
+                mEventToCalendarDataSource.removeLinkByEventId(event.id);
             }
         }
 
         setEventsFromLocalDataSource(allEvents);
     }
 
-    private EventToCalendarLink addEventToCalendarLink(Event event, long calendarEventID) {
-        return mEventToCalendarDataSource.addLink(event.id, calendarEventID);
-    }
-
-    private void removeEventToCalendarLinkByEventId(long eventId) {
-        mEventToCalendarDataSource.removeLinkByEventID(eventId);
-    }
-
-    private EventToCalendarLink getEventToCalendarLinkByEventId(long eventId) {
-        return mEventToCalendarDataSource.getLinkByEventID(eventId);
-    }
-
     public static String getStartTimeAlias(Context context, EventAdvert eventAdvert) {
         long time = eventAdvert.startAt + getTimeZoneOffsetInSeconds();
         long startAt = time % TimeUnit.DAYS.toSeconds(1);
         long date = time - startAt;
-        return createEventStartTimeString(context, date, startAt, 0, false);
+        return createEventStartTimeString(context, date, startAt, 0, false, true);
     }
 
     public static String getStartTimeAlias(Context context, Event event) {
-        return createEventStartTimeString(context, event.date, event.startAt, event.endAt, false);
+        return createEventStartTimeString(context, event.date, event.startAt, event.endAt, false, false);
     }
 
     public static String getStartTimeKeywords(Context context, Event event) {
-        return createEventStartTimeString(context, event.date, event.startAt, event.endAt, true);
+        return createEventStartTimeString(context, event.date, event.startAt, event.endAt, true, false);
     }
 
-    private static String createEventStartTimeString(Context context, long date, long startAt, long endAt, boolean createKeywords) {
+    private static String createEventStartTimeString(Context context, long date, long startAt, long endAt, boolean createKeywords, boolean advert) {
         Resources resources = context.getResources();
         long currentTimeTimestamp = getCurrentTimeTimestamp(context, true);
         long startAfterSeconds = startAt - currentTimeTimestamp;
@@ -231,7 +208,7 @@ public class EventsModel {
         startAfterSeconds += dateDelta;
         if (startAfterSeconds <= 0) {
             if (endAt > currentTimeTimestamp || endAt == 0) {
-                startTimeAliasString = resources.getString(createKeywords ? R.string.going_right_now_keywords : R.string.going_right_now);
+                startTimeAliasString = resources.getString(createKeywords ? R.string.going_right_now_keywords : advert ? R.string.going_right_now_advert : R.string.going_right_now);
             } else {
                 startTimeAliasString = resources.getString(R.string.already_ended);
             }
@@ -338,6 +315,26 @@ public class EventsModel {
         return event.date + event.endAt - getTimeZoneOffsetInSeconds();
     }
 
+    private boolean FEATURE_LOAD_IN_BACKGROUND() {
+        return mContext.getResources().getBoolean(R.bool.feature_load_in_background);
+    }
+
+    private int PAGE_LIMIT_LOAD_IN_BACKGROUND() {
+        return mContext.getResources().getInteger(R.integer.page_limit_load_in_background);
+    }
+
+    private EventToCalendarLink addEventToCalendarLink(Event event, long calendarEventID) {
+        return mEventToCalendarDataSource.addLink(event.id, calendarEventID);
+    }
+
+    private void removeEventToCalendarLinkByEventId(long eventId) {
+        mEventToCalendarDataSource.removeLinkByEventId(eventId);
+    }
+
+    private EventToCalendarLink getEventToCalendarLinkByEventId(long eventId) {
+        return mEventToCalendarDataSource.getLinkByEventID(eventId);
+    }
+
     public void registerForLoadInBackgroundResultNotification(BroadcastReceiver receiver) {
         LocalBroadcastManager.getInstance(mContext).registerReceiver(receiver, new IntentFilter(LOAD_IN_BACKGROUND_NOTIFICATION));
     }
@@ -365,13 +362,13 @@ public class EventsModel {
         mEvents.addAll(events);
     }
 
+    public ArrayList<Event> getEvents() {
+        return mEvents;
+    }
+
     public void setEvents(ArrayList<Event> events) {
         mEvents.clear();
         mEvents.addAll(events);
-    }
-
-    public ArrayList<Event> getEvents() {
-        return mEvents;
     }
 
     public boolean dataIsActual() {
@@ -421,80 +418,94 @@ public class EventsModel {
         return mEventDataSource.fullTextSearch(queryResult);
     }
 
-    EventApiCallResult performObtainEventStats(int eventId) throws IOException, JSONException {
-        int result = RESULT_OK;
-        EventStats eventStats = obtainEventStatsByEventId(eventId);
-        /*if (NowApplication.getState() == NowApplication.APP_STATE.ONLINE) {
-            Uri.Builder uriBuilder = createApiUriBuilder(API_REQUEST_GET_STATS);
-            uriBuilder.appendQueryParameter("id", Integer.toString(eventId));
-            HttpURLConnection urlConnection = (HttpURLConnection) new URL(uriBuilder.build().toString()).openConnection();
-            int responseCode = urlConnection.getResponseCode();
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                String jsonString = readStream(urlConnection.getInputStream());
-                urlConnection.disconnect();
-                JSONObject jsonRootObject = new JSONObject(jsonString);
-                eventStats.likeCount = jsonRootObject.getInt(EventFieldNameDictionary.LIKES);
-                eventStats.viewCount = jsonRootObject.getInt(EventFieldNameDictionary.VIEWS);
-            }
-        }*/
-        Event event = getEventById(eventId);
-        if (event == null) {
-            event = mEventDataSource.getByEventId(eventId);
-        }
-        mEventStatsDataSource.createOrUpdateEventStats(eventStats);
-        if (event != null) {
-            event.stats = eventStats;
-        }
-        return new EventApiCallResult(result, event);
-    }
-
-    EventApiCallResult performObtainEvent(int eventId) throws IOException, JSONException {
+    EventApiCallResult performObtainEventStats(int eventId) {
         int result = RESULT_OK;
         Event event = null;
-        Uri.Builder uriBuilder = createApiUriBuilder(API_REQUEST_GET_EVENT);
-        uriBuilder.appendQueryParameter("id", Integer.toString(eventId));
-        HttpURLConnection urlConnection = (HttpURLConnection) new URL(uriBuilder.build().toString()).openConnection();
-        int responseCode = urlConnection.getResponseCode();
-        if (responseCode == HttpURLConnection.HTTP_OK) {
-            String jsonString = readStream(urlConnection.getInputStream());
-            urlConnection.disconnect();
-            JSONObject jsonRootObject = new JSONObject(jsonString);
-            String response = jsonRootObject.getString("response");
-            if ("ok".equals(response)) {
-                JSONObject eventJsonObject = jsonRootObject.getJSONObject("event");
-                event = createEventFromJson(eventJsonObject);
-                createEventStats(event.id, eventJsonObject.optInt(EventFieldNameDictionary.VIEWS), eventJsonObject.optInt(EventFieldNameDictionary.LIKES));
-                mEventDataSource.createOrUpdateEvent(event);
-                setEvents(sortByStartTime(mEventDataSource.getAllEvents()));
-            } else {
+        EventStats eventStats = obtainEventStatsByEventId(eventId);
+        if (NowApplication.getState() == NowApplication.APP_STATE.ONLINE) {
+            Uri.Builder uriBuilder = createApiUriBuilder(API_REQUEST_GET_STATS);
+            uriBuilder.appendQueryParameter("id", Integer.toString(eventId));
+            HttpURLConnection urlConnection = null;
+            try {
+                urlConnection = (HttpURLConnection) new URL(uriBuilder.build().toString()).openConnection();
+                int responseCode = urlConnection.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    String jsonString = readStream(urlConnection.getInputStream());
+                    urlConnection.disconnect();
+                    JSONObject jsonRootObject = new JSONObject(jsonString);
+                    eventStats.likeCount = jsonRootObject.getInt(EventFieldNameDictionary.LIKES);
+                    eventStats.viewCount = jsonRootObject.getInt(EventFieldNameDictionary.VIEWS);
+                }
+                event = getEventById(eventId);
+                if (event == null) {
+                    event = mEventDataSource.getByEventId(eventId);
+                }
+                if (event != null) {
+                    event.stats = eventStats;
+                }
+            } catch (IOException | JSONException exp) {
                 result = RESULT_BAD;
             }
-        } else {
-            result = RESULT_BAD;
+        }
+        mEventStatsDataSource.createOrUpdateEventStats(eventStats);
+        return new EventApiCallResult(result, event);
+    }
+
+    EventApiCallResult performObtainEvent(int eventId) {
+        int result = RESULT_OK;
+        Event event = getEventById(eventId);
+        if (event == null) {
+            try {
+                Uri.Builder uriBuilder = createApiUriBuilder(API_REQUEST_GET_EVENT);
+                uriBuilder.appendQueryParameter("id", Integer.toString(eventId));
+                HttpURLConnection urlConnection = (HttpURLConnection) new URL(uriBuilder.build().toString()).openConnection();
+                int responseCode = urlConnection.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    String jsonString = readStream(urlConnection.getInputStream());
+                    urlConnection.disconnect();
+                    JSONObject jsonRootObject = new JSONObject(jsonString);
+                    String response = jsonRootObject.getString("response");
+                    if ("ok".equals(response)) {
+                        JSONObject eventJsonObject = jsonRootObject.getJSONObject("event");
+                        event = createEventFromJson(eventJsonObject);
+                        createEventStats(event.id, eventJsonObject.optInt(EventFieldNameDictionary.VIEWS), eventJsonObject.optInt(EventFieldNameDictionary.LIKES));
+                        mEventDataSource.createOrUpdateEvent(event);
+                        setEvents(sortByStartTime(mEventDataSource.getAllEvents()));
+                    } else {
+                        result = RESULT_BAD;
+                    }
+                } else {
+                    result = RESULT_BAD;
+                }
+            } catch (IOException | JSONException exp) {
+                result = RESULT_BAD;
+            }
         }
         return new EventApiCallResult(result, event);
     }
 
-    EventApiCallResult performUpdateEventLike(int eventId) throws IOException, JSONException {
+    EventApiCallResult performUpdateEventLike(int eventId) {
+        int result = RESULT_OK;
         ArrayList<NameValuePair> parameters = new ArrayList<>();
         parameters.add(new BasicNameValuePair("key", "78GlLJhL"));
         EventStats eventStats = obtainEventStatsByEventId(eventId);
-        eventStats.myLikeStatus = LIKED_NOT_CONFIRMED;
+        eventStats.myLikeStatus = LIKE_NOT_CONFIRMED;
         if (NowApplication.getState() == NowApplication.APP_STATE.ONLINE) {
-            if (performPostApiCall(API_REQUEST_UPDATE_LIKE, eventId, parameters).result == RESULT_OK) {
-                eventStats.myLikeStatus = LIKED_CONFIRMED;
+            result = performPostApiCall(API_REQUEST_UPDATE_LIKE, eventId, parameters);
+            if (result == RESULT_OK) {
+                eventStats.myLikeStatus = LIKE_CONFIRMED;
             }
         }
         mEventStatsDataSource.createOrUpdateEventStats(eventStats);
-        return new EventApiCallResult(RESULT_OK, null);
+        return new EventApiCallResult(result, null);
     }
 
-    EventApiCallResult performUpdateEventView(int eventId) throws IOException, JSONException {
-        return performPostApiCall(API_REQUEST_UPDATE_VIEW, eventId, null);
+    EventApiCallResult performUpdateEventView(int eventId) {
+        return new EventApiCallResult(performPostApiCall(API_REQUEST_UPDATE_VIEW, eventId, null), null);
     }
 
-    private EventApiCallResult performPostApiCall(String api, int eventId, @Nullable ArrayList<NameValuePair> parameters) throws IOException, JSONException {
-        Integer result = RESULT_OK;
+    private int performPostApiCall(String api, int eventId, @Nullable ArrayList<NameValuePair> parameters) {
+        int result = RESULT_OK;
         DefaultHttpClient httpClient = new DefaultHttpClient();
         ArrayList<NameValuePair> fullParameters = new ArrayList<>();
         fullParameters.add(new BasicNameValuePair("id", Integer.toString(eventId)));
@@ -502,16 +513,20 @@ public class EventsModel {
             fullParameters.addAll(parameters);
         }
         HttpPost httpPost = new HttpPost(getApiQuery(api));
-        httpPost.setEntity(new UrlEncodedFormEntity(fullParameters));
-        HttpResponse httpResponse = httpClient.execute(httpPost);
-        HttpEntity httpEntity = httpResponse.getEntity();
-        String jsonString = EntityUtils.toString(httpEntity);
-        JSONObject jsonRootObject = new JSONObject(jsonString);
-        String response = jsonRootObject.getString("response");
-        if (!("ok".equals(response))) {
+        try {
+            httpPost.setEntity(new UrlEncodedFormEntity(fullParameters));
+            HttpResponse httpResponse = httpClient.execute(httpPost);
+            HttpEntity httpEntity = httpResponse.getEntity();
+            String jsonString = EntityUtils.toString(httpEntity);
+            JSONObject jsonRootObject = new JSONObject(jsonString);
+            String response = jsonRootObject.getString("response");
+            if (!("ok".equals(response))) {
+                result = RESULT_BAD;
+            }
+        } catch (IOException | JSONException e) {
             result = RESULT_BAD;
         }
-        return new EventApiCallResult(result, null);
+        return result;
     }
 
     private Uri.Builder createApiUriBuilder(String apiMethod) {
@@ -752,33 +767,29 @@ public class EventsModel {
         return result;
     }
 
-    public EventStats obtainEventStatsByEventId(int id) {
-        EventStats eventStats = mEventStatsDataSource.getByEventId(id);
+    @NonNull
+    public EventStats obtainEventStatsByEventId(int eventId) {
+        EventStats eventStats = mEventStatsDataSource.getByEventId(eventId);
         if (eventStats == null) {
             eventStats = new EventStats();
-            eventStats.id = id;
+            eventStats.id = eventId;
             mEventStatsDataSource.createOrUpdateEventStats(eventStats);
         }
         return eventStats;
     }
 
-    private void createEventStats(int id, int viewCount, int likeCount) {
-        EventStats eventStats = mEventStatsDataSource.getByEventId(id);
+    private void createEventStats(int eventId, int viewCount, int likeCount) {
+        EventStats eventStats = mEventStatsDataSource.getByEventId(eventId);
         if (eventStats == null) {
             eventStats = new EventStats();
-            eventStats.id = id;
+            eventStats.id = eventId;
             eventStats.viewCount = viewCount;
             eventStats.likeCount = likeCount;
             mEventStatsDataSource.createOrUpdateEventStats(eventStats);
         }
     }
 
-    private class EventNameComparator implements Comparator<Event> {
-        public int compare(Event left, Event right) {
-            return Long.valueOf(left.date + left.startAt).compareTo(right.date + right.startAt);
-        }
-    }
-
+    @Nullable
     public EventAdvert getActualAdvert() {
         EventAdvert result = null;
         int dice = new Random().nextInt(100);
@@ -790,8 +801,14 @@ public class EventsModel {
             }
         }
         if (result == null && eventAdverts.size() > 0) {
-            result = eventAdverts.get(2);
+            result = eventAdverts.get(0);
         }
         return result;
+    }
+
+    private class EventNameComparator implements Comparator<Event> {
+        public int compare(Event left, Event right) {
+            return Long.valueOf(left.date + left.startAt).compareTo(right.date + right.startAt);
+        }
     }
 }

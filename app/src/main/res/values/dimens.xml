@@ -27,8 +27,8 @@
     <item name="event_item_view_height_ratio" format="float" type="dimen">0.86</item>
     <dimen name="snack_bar_height" type="dimen">48dp</dimen>
     <dimen name="fab_compat_margin">0dp</dimen>
-    <dimen name="advert_block_icon_width">48dp</dimen>
-    <dimen name="advert_block_icon_height">32dp</dimen>
-    <dimen name="advert_text">14sp</dimen>
+    <dimen name="advert_block_icon_width">64dp</dimen>
+    <dimen name="advert_block_icon_height">48dp</dimen>
+    <dimen name="advert_text">16sp</dimen>
 
 </resources>

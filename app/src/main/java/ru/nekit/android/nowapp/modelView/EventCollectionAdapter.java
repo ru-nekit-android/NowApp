@@ -464,7 +464,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         public void onClick(View view) {
             EventItemWrapper eventItemWrapper = getItem(getAdapterPosition());
             if (eventItemWrapper != null) {
-                mItemClickListener.onEventItemSelect(eventItemWrapper.event);
+                mItemClickListener.onEventSelect(eventItemWrapper.event);
             }
         }
     }

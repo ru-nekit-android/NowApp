@@ -26,7 +26,6 @@ import ru.nekit.android.nowapp.modelView.listeners.IEventSelectListener;
 
 public class EventCollectionActivity extends AppCompatActivity implements IEventSelectListener, IEventPosterSelectListener {
 
-    private EventDetailFragment mEventDetailFragment;
     private EventPosterViewFragment mEventPosterViewFragment;
     private BroadcastReceiver mChangeApplicationStateReceiver;
     private View mOfflineView;
@@ -121,13 +120,11 @@ public class EventCollectionActivity extends AppCompatActivity implements IEvent
     }
 
     @Override
-    public void onEventItemSelect(Event event) {
-        if (mEventDetailFragment == null) {
-            mEventDetailFragment = EventDetailFragment.getInstance();
-        }
-        mEventDetailFragment.setEventItem(event);
-        if (!mEventDetailFragment.isAdded()) {
-            getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left, R.anim.enter_from_left, R.anim.exit_to_right).addToBackStack(null).replace(R.id.event_place_holder, mEventDetailFragment, EventDetailFragment.TAG).commit();
+    public void onEventSelect(Event event) {
+        EventDetailFragment eventDetailFragment = EventDetailFragment.getInstance();
+        eventDetailFragment.setEventItem(event);
+        if (!eventDetailFragment.isAdded()) {
+            getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left, R.anim.enter_from_left, R.anim.exit_to_right).addToBackStack(null).replace(R.id.event_place_holder, eventDetailFragment, EventDetailFragment.TAG).commit();
         }
     }
 

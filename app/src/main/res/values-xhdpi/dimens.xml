@@ -14,7 +14,7 @@
     <dimen name="progress_wheel_size">32dp</dimen>
     <dimen name="icon_place_size">18dp</dimen>
     <dimen name="event_loading_padding">4dp</dimen>
-    <dimen name="event_start_time_height">32dp</dimen>
+    <dimen name="event_start_time_height">36dp</dimen>
     <dimen name="small_space">4dp</dimen>
     <dimen name="normal_space">8dp</dimen>
     <dimen name="big_space">16dp</dimen>
@@ -23,6 +23,8 @@
     <dimen name="logo_max_width">72dp</dimen>
     <dimen name="logo_max_height">54dp</dimen>
     <dimen name="event_stats_icon_size">14dp</dimen>
+    <dimen name="advert_block_icon_width">64dp</dimen>
+    <dimen name="advert_block_icon_height">48dp</dimen>
     <item name="event_name_line_spacing_multiplier" format="float" type="dimen">0.8</item>
     <item name="event_item_view_height_ratio" format="float" type="dimen">0.86</item>
 
