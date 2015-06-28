@@ -100,7 +100,6 @@ import ru.nekit.android.nowapp.modelView.listeners.IEventSelectListener;
 import ru.nekit.android.nowapp.utils.RobotoTextAppearanceSpan;
 import ru.nekit.android.nowapp.utils.TextViewUtils;
 
-import static ru.nekit.android.nowapp.NowApplication.APP_STATE.OFFLINE;
 import static ru.nekit.android.nowapp.NowApplication.APP_STATE.ONLINE;
 
 @SuppressWarnings("ResourceType")
@@ -259,19 +258,15 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
     private void showAdvertBlock() {
         if (isResumed()) {
-            mEventAdvert = EventsModel.getInstance().getActualAdvert();
-            if (mEventAdvert != null && NowApplication.getState() == OFFLINE) {
-                if (EventsModel.getInstance().getEventById(mEventAdvert.eventId) == null) {
-                    mEventAdvert = null;
-                }
-            }
-            if (mEventAdvert != null) {
+            EventsModel model = EventsModel.getInstance();
+            mEventAdvert = model.getActualAdvert();
+            if (mEventAdvert != null && model.checkOnEventAvailableInOffline(mEventAdvert.eventId)) {
                 expand(mAdvertBlock);
                 ImageView advertIcon = (ImageView) mAdvertBlock.findViewById(R.id.advert_icon_view);
                 Glide.with(this).load(mEventAdvert.logoThumb).into(advertIcon);
                 TextView advertTextView = (TextView) mAdvertBlock.findViewById(R.id.advert_text_view);
-                String advertString = getActivity().getResources().getString(R.string.attention_short) + " " + EventsModel.getStartTimeAlias(getActivity(), mEventAdvert) + " " + mEventAdvert.placeName + " " + mEventAdvert.name;
-                advertTextView.setText(advertString);
+                String advertMessage = TextUtils.join(" ", new String[]{getActivity().getResources().getString(R.string.attention_short), EventsModel.getStartTimeAlias(getActivity(), mEventAdvert), mEventAdvert.placeName, mEventAdvert.name});
+                advertTextView.setText(advertMessage);
                 mAdvertBlock.setOnClickListener(this);
             }
         }

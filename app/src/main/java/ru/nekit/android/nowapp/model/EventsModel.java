@@ -59,6 +59,8 @@ import ru.nekit.android.nowapp.model.vo.EventAdvert;
 import ru.nekit.android.nowapp.model.vo.EventStats;
 import ru.nekit.android.nowapp.model.vo.EventToCalendarLink;
 
+import static ru.nekit.android.nowapp.NowApplication.APP_STATE.OFFLINE;
+
 /**
  * Created by chuvac on 15.03.15.
  */
@@ -347,7 +349,7 @@ public class EventsModel {
         return (event.date + event.endAt) > (getCurrentTimeTimestamp(mContext, true) + getCurrentDateTimestamp(mContext, true));
     }
 
-    public Event getEventById(int id) {
+    private Event getEventById(int id) {
         Event result = null;
         for (int i = 0; i < mEvents.size() && result == null; i++) {
             Event event = mEvents.get(i);
@@ -436,16 +438,16 @@ public class EventsModel {
                     eventStats.likeCount = jsonRootObject.getInt(EventFieldNameDictionary.LIKES);
                     eventStats.viewCount = jsonRootObject.getInt(EventFieldNameDictionary.VIEWS);
                 }
-                event = getEventById(eventId);
-                if (event == null) {
-                    event = mEventDataSource.getByEventId(eventId);
-                }
-                if (event != null) {
-                    event.stats = eventStats;
-                }
             } catch (IOException | JSONException exp) {
                 result = RESULT_BAD;
             }
+        }
+        event = getEventById(eventId);
+        if (event == null) {
+            event = mEventDataSource.getByEventId(eventId);
+        }
+        if (event != null) {
+            event.stats = eventStats;
         }
         mEventStatsDataSource.createOrUpdateEventStats(eventStats);
         return new EventApiCallResult(result, event);
@@ -802,6 +804,13 @@ public class EventsModel {
             result = eventAdverts.get(0);
         }
         return result;
+    }
+
+    public boolean checkOnEventAvailableInOffline(int eventId) {
+        if (NowApplication.getState() == OFFLINE) {
+            return mEventDataSource.getByEventId(eventId) != null;
+        }
+        return true;
     }
 
     private class EventNameComparator implements Comparator<Event> {
