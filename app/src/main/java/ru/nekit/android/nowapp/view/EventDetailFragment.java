@@ -100,6 +100,7 @@ import ru.nekit.android.nowapp.modelView.listeners.IEventSelectListener;
 import ru.nekit.android.nowapp.utils.RobotoTextAppearanceSpan;
 import ru.nekit.android.nowapp.utils.TextViewUtils;
 
+import static ru.nekit.android.nowapp.NowApplication.APP_STATE.OFFLINE;
 import static ru.nekit.android.nowapp.NowApplication.APP_STATE.ONLINE;
 
 @SuppressWarnings("ResourceType")
@@ -114,7 +115,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     private static final String KEY_SELECTED = "ru.nekit.android.selected";
     private static final int MAX_ZOOM = 19;
     private final FloatingActionButtonBehavior mFloatingActionButtonBehavior;
-    private final Handler mHandler = new Handler(Looper.getMainLooper());
+    private final Handler mHandler;
     private MapView mMapView;
     private final MapListener mMapListener = new MapListener() {
         @Override
@@ -159,6 +160,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
     public EventDetailFragment() {
         mFloatingActionButtonBehavior = new FloatingActionButtonBehavior();
+        mHandler = new Handler(Looper.getMainLooper());
     }
 
     public static EventDetailFragment getInstance() {
@@ -258,6 +260,11 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     private void showAdvertBlock() {
         if (isResumed()) {
             mEventAdvert = EventsModel.getInstance().getActualAdvert();
+            if (mEventAdvert != null && NowApplication.getState() == OFFLINE) {
+                if (EventsModel.getInstance().getEventById(mEventAdvert.eventId) == null) {
+                    mEventAdvert = null;
+                }
+            }
             if (mEventAdvert != null) {
                 expand(mAdvertBlock);
                 ImageView advertIcon = (ImageView) mAdvertBlock.findViewById(R.id.advert_icon_view);

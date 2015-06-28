@@ -347,11 +347,11 @@ public class EventsModel {
         return (event.date + event.endAt) > (getCurrentTimeTimestamp(mContext, true) + getCurrentDateTimestamp(mContext, true));
     }
 
-    private Event getEventById(int ID) {
+    public Event getEventById(int id) {
         Event result = null;
         for (int i = 0; i < mEvents.size() && result == null; i++) {
             Event event = mEvents.get(i);
-            if (event.id == ID) {
+            if (event.id == id) {
                 result = event;
             }
         }
@@ -646,8 +646,6 @@ public class EventsModel {
                     mAvailableEventCount = getEvents().size();
                 }
             }
-        } else {
-            result = EventsModel.RESULT_BAD;
         }
         return result;
     }
