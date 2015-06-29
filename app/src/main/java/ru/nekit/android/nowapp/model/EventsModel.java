@@ -796,13 +796,14 @@ public class EventsModel {
         ArrayList<EventAdvert> eventAdverts = mEventAdvertDataSource.getAllEventAdverts();
         for (int i = 0; result == null && i < eventAdverts.size(); i++) {
             EventAdvert eventAdvert = eventAdverts.get(i);
-            if (dice >= eventAdvert.showChanceLow && dice <= eventAdvert.showChanceHigh) {
+            if (eventAdvert.showChanceHigh != 0 && dice > eventAdvert.showChanceLow && dice <= eventAdvert.showChanceHigh) {
                 result = eventAdvert;
             }
         }
+        /*for debug
         if (result == null && eventAdverts.size() > 0) {
             result = eventAdverts.get(0);
-        }
+        }*/
         return result;
     }
 
