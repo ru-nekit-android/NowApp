@@ -8,7 +8,7 @@ android {
         applicationId "ru.nekit.android.nowapp"
         minSdkVersion 14
         targetSdkVersion 22
-        versionCode 8
+        versionCode 10
         versionName "1.1"
     }
     buildTypes {

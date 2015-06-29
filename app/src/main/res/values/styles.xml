@@ -238,6 +238,7 @@
     </style>
 
     <style name="AdvertText">
+        <item name="typeface">roboto_light</item>
         <item name="android:textColor">@android:color/black</item>
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>

@@ -17,5 +17,6 @@
     <dimen name="logo_max_width">64dp</dimen>
     <dimen name="logo_max_height">48dp</dimen>
     <dimen name="event_stats_icon_size">14dp</dimen>
+    <dimen name="advert_text">15sp</dimen>
 
 </resources>
