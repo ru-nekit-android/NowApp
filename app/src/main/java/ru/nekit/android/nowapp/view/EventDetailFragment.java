@@ -14,6 +14,7 @@ import android.graphics.Color;
 import android.graphics.LightingColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
+import android.hardware.SensorManager;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -63,6 +64,7 @@ import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 import com.pnikosis.materialishprogress.ProgressWheel;
+import com.squareup.seismic.ShakeDetector;
 
 import org.osmdroid.DefaultResourceProxyImpl;
 import org.osmdroid.api.IGeoPoint;
@@ -103,7 +105,7 @@ import ru.nekit.android.nowapp.utils.TextViewUtils;
 import static ru.nekit.android.nowapp.NowApplication.APP_STATE.ONLINE;
 
 @SuppressWarnings("ResourceType")
-public class EventDetailFragment extends Fragment implements View.OnClickListener, LoaderManager.LoaderCallbacks {
+public class EventDetailFragment extends Fragment implements View.OnClickListener, LoaderManager.LoaderCallbacks, ShakeDetector.Listener {
 
     public static final String TAG = "ru.nekit.android.event_detail_fragment";
 
@@ -156,6 +158,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     private View mAdvertBlock;
     private Timer mTimer;
     private ProgressDialog mProgressDialog;
+    private ShakeDetector mShakeDetector;
 
     public EventDetailFragment() {
         mFloatingActionButtonBehavior = new FloatingActionButtonBehavior();
@@ -254,6 +257,9 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                     }
                 },
                 SHOW_ADVERT_DELAY);
+        SensorManager sensorManager = (SensorManager) activity.getSystemService(Context.SENSOR_SERVICE);
+        mShakeDetector = new ShakeDetector(this);
+        mShakeDetector.start(sensorManager);
     }
 
     private void showAdvertBlock() {
@@ -488,6 +494,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         mFloatingActionButtonBehavior.deactivate();
         myLocationOverLay.disableMyLocation();
         mTimer.cancel();
+        mShakeDetector.stop();
     }
 
     private void createMap() {
@@ -1007,6 +1014,11 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         progress.show();
         progress.setMessage(context.getResources().getString(R.string.loading));
         return progress;
+    }
+
+    @Override
+    public void hearShake() {
+
     }
 
     class FloatingActionButtonBehavior extends FloatingActionButton.Behavior {
