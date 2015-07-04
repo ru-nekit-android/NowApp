@@ -4,7 +4,7 @@
     <string name="about_title">О программе</string>
 
     <string name="going_right_now">уже идёт!</string>
-    <string name="going_right_now_advert">сейчас идёт</string>
+    <string name="going_right_now_advert">сейчас</string>
     <string name="going_right_now_keywords">уже идёт сейчас</string>
     <string name="already_ended">уже закончилось!</string>
     <string name="entrance_title">"ВХОД:"</string>
@@ -50,6 +50,10 @@
     <string name="open_calendar_message">Открыть</string>
     <string name="attention_short">А</string>
     <string name="loading">Загрузка…</string>
+    <string name="update_app">Обновить</string>
+    <string name="update_app_later">В следующий раз</string>
+    <string name="update_app_title">Доступно обновление</string>
+    <string name="update_app_message">Доступна новая версия для приложения. Пожалуйста, обновите до версии \"%s\" сейчас.</string>
 
     <string-array name="day_of_week">
         <item>ВС</item>

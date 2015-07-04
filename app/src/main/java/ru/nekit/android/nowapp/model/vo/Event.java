@@ -35,7 +35,6 @@ public class Event extends EventBase implements Parcelable {
     public int allNightParty;
     public double lat;
     public double lng;
-    public EventStats stats;
 
     public Event() {
     }

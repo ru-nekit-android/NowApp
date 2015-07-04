@@ -187,10 +187,10 @@ public class EventsModel {
     }
 
     public static String getStartTimeAlias(Context context, EventAdvert eventAdvert) {
-        long time = eventAdvert.startAt + getTimeZoneOffsetInSeconds();
+        long time = eventAdvert.startAt;
         long startAt = time % TimeUnit.DAYS.toSeconds(1);
         long date = time - startAt;
-        return createEventStartTimeString(context, date, startAt, 0, false, true);
+        return createEventStartTimeString(context, date, startAt, 0, false, true).toLowerCase();
     }
 
     public static String getStartTimeAlias(Context context, Event event) {
@@ -201,7 +201,7 @@ public class EventsModel {
         return createEventStartTimeString(context, event.date, event.startAt, event.endAt, true, false);
     }
 
-    private static String createEventStartTimeString(Context context, long date, long startAt, long endAt, boolean createKeywords, boolean advert) {
+    private static String createEventStartTimeString(Context context, long date, long startAt, long endAt, boolean createForKeywords, boolean creteForAdvert) {
         Resources resources = context.getResources();
         long currentTimeTimestamp = getCurrentTimeTimestamp(context, true);
         long startAfterSeconds = startAt - currentTimeTimestamp;
@@ -210,7 +210,7 @@ public class EventsModel {
         startAfterSeconds += dateDelta;
         if (startAfterSeconds <= 0) {
             if (endAt > currentTimeTimestamp || endAt == 0) {
-                startTimeAliasString = resources.getString(createKeywords ? R.string.going_right_now_keywords : advert ? R.string.going_right_now_advert : R.string.going_right_now);
+                startTimeAliasString = resources.getString(createForKeywords ? R.string.going_right_now_keywords : creteForAdvert ? R.string.going_right_now_advert : R.string.going_right_now);
             } else {
                 startTimeAliasString = resources.getString(R.string.already_ended);
             }
@@ -422,14 +422,13 @@ public class EventsModel {
 
     EventApiCallResult performObtainEventStats(int eventId) {
         int result = RESULT_OK;
-        Event event = null;
+        Event event;
         EventStats eventStats = obtainEventStatsByEventId(eventId);
         if (NowApplication.getState() == NowApplication.APP_STATE.ONLINE) {
-            Uri.Builder uriBuilder = createApiUriBuilder(API_REQUEST_GET_STATS);
-            uriBuilder.appendQueryParameter("id", Integer.toString(eventId));
-            HttpURLConnection urlConnection = null;
             try {
-                urlConnection = (HttpURLConnection) new URL(uriBuilder.build().toString()).openConnection();
+                Uri.Builder uriBuilder = createApiUriBuilder(API_REQUEST_GET_STATS);
+                uriBuilder.appendQueryParameter("id", Integer.toString(eventId));
+                HttpURLConnection urlConnection = (HttpURLConnection) new URL(uriBuilder.build().toString()).openConnection();
                 int responseCode = urlConnection.getResponseCode();
                 if (responseCode == HttpURLConnection.HTTP_OK) {
                     String jsonString = readStream(urlConnection.getInputStream());
@@ -445,9 +444,6 @@ public class EventsModel {
         event = getEventById(eventId);
         if (event == null) {
             event = mEventDataSource.getByEventId(eventId);
-        }
-        if (event != null) {
-            event.stats = eventStats;
         }
         mEventStatsDataSource.createOrUpdateEventStats(eventStats);
         return new EventApiCallResult(result, event);
@@ -790,13 +786,13 @@ public class EventsModel {
     }
 
     @Nullable
-    public EventAdvert getActualAdvert() {
+    public EventAdvert getActualAdvertExcludeByEventId(int eventId) {
         EventAdvert result = null;
         int dice = new Random().nextInt(100);
         ArrayList<EventAdvert> eventAdverts = mEventAdvertDataSource.getAllEventAdverts();
         for (int i = 0; result == null && i < eventAdverts.size(); i++) {
             EventAdvert eventAdvert = eventAdverts.get(i);
-            if (eventAdvert.showChanceHigh != 0 && dice > eventAdvert.showChanceLow && dice <= eventAdvert.showChanceHigh) {
+            if (eventAdvert.eventId != eventId && eventAdvert.showChanceHigh != 0 && dice >= eventAdvert.showChanceLow && dice < eventAdvert.showChanceHigh) {
                 result = eventAdvert;
             }
         }

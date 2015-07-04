@@ -265,7 +265,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     private void showAdvertBlock() {
         if (isResumed()) {
             EventsModel model = EventsModel.getInstance();
-            mEventAdvert = model.getActualAdvert();
+            mEventAdvert = model.getActualAdvertExcludeByEventId(mEvent.id);
             if (mEventAdvert != null && model.checkOnEventAvailableInOffline(mEventAdvert.eventId)) {
                 expand(mAdvertBlock);
                 ImageView advertIcon = (ImageView) mAdvertBlock.findViewById(R.id.advert_icon_view);
@@ -450,24 +450,23 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
     private void updateEventStats(boolean confirmed) {
         Resources resources = getActivity().getResources();
-        EventStats eventStats = mEvent.stats;
-        if (eventStats == null) {
-            eventStats = EventsModel.getInstance().obtainEventStatsByEventId(mEvent.id);
+        EventStats eventStats = EventsModel.getInstance().obtainEventStatsByEventId(mEvent.id);
+        if (eventStats != null) {
+            boolean myLike = eventStats.myLikeStatus != 0;
+            mViewsView.setText(eventStats.getViews(NowApplication.getState() == NowApplication.APP_STATE.ONLINE, confirmed));
+            mLikesView.setText(eventStats.getLikes());
+            mFloatingActionButton.setEnabled(!myLike);
+            int normalColor = resources.getColor(R.color.event_stats_normal);
+            int activeColor = resources.getColor(R.color.event_stats_active);
+            int likeColor = myLike ? activeColor : normalColor;
+            mViewsIcon.getDrawable().setColorFilter(new LightingColorFilter(normalColor, normalColor));
+            mViewsIcon.setImageDrawable(mViewsIcon.getDrawable());
+            mLikesIcon.getDrawable().setColorFilter(new LightingColorFilter(likeColor, likeColor));
+            mLikesIcon.setImageDrawable(mLikesIcon.getDrawable());
+            mLikeContainer.setBackgroundResource(myLike ? R.drawable.event_stats_bacground : 0);
+            mLikesView.setTextColor(likeColor);
+            mFloatingActionButton.setImageDrawable(resources.getDrawable(myLike ? R.drawable.ic_favorite_white : R.drawable.ic_favorite_border));
         }
-        boolean myLike = eventStats.myLikeStatus != 0;
-        mViewsView.setText(eventStats.getViews(NowApplication.getState() == NowApplication.APP_STATE.ONLINE, confirmed));
-        mLikesView.setText(eventStats.getLikes());
-        mFloatingActionButton.setEnabled(!myLike);
-        int normalColor = resources.getColor(R.color.event_stats_normal);
-        int activeColor = resources.getColor(R.color.event_stats_active);
-        int likeColor = myLike ? activeColor : normalColor;
-        mViewsIcon.getDrawable().setColorFilter(new LightingColorFilter(normalColor, normalColor));
-        mViewsIcon.setImageDrawable(mViewsIcon.getDrawable());
-        mLikesIcon.getDrawable().setColorFilter(new LightingColorFilter(likeColor, likeColor));
-        mLikesIcon.setImageDrawable(mLikesIcon.getDrawable());
-        mLikeContainer.setBackgroundResource(myLike ? R.drawable.event_stats_bacground : 0);
-        mLikesView.setTextColor(likeColor);
-        mFloatingActionButton.setImageDrawable(resources.getDrawable(myLike ? R.drawable.ic_favorite_white : R.drawable.ic_favorite_border));
     }
 
     private void setMenuItVisible(int id, boolean visible, Menu menu) {
@@ -864,6 +863,12 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     }
 
     @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mHandler.removeCallbacksAndMessages(null);
+    }
+
+    @Override
     public void onClick(View view) {
         Intent intent;
         switch (view.getId()) {
@@ -929,8 +934,8 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
             case R.id.fab_event:
 
-                EventStats eventStats = mEvent.stats;
-                if (eventStats.myLikeStatus == 0) {
+                EventStats eventStats = EventsModel.getInstance().obtainEventStatsByEventId(mEvent.id);
+                if (eventStats != null && eventStats.myLikeStatus == 0) {
                     showAddToCalendarDialog();
                     initEventApiExecutor(EventApiExecutor.METHOD_LIKE, mEvent.id);
                 }
@@ -1018,7 +1023,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
     @Override
     public void hearShake() {
-
+        //TODO: implement
     }
 
     class FloatingActionButtonBehavior extends FloatingActionButton.Behavior {
