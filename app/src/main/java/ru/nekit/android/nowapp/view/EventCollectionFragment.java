@@ -5,6 +5,8 @@ import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
@@ -16,6 +18,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
@@ -38,15 +41,18 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+
+import com.madx.updatechecker.lib.UpdateRunnable;
+
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 
 import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
-import ru.nekit.android.nowapp.model.vo.Event;
 import ru.nekit.android.nowapp.model.EventItemsLoader;
-import ru.nekit.android.nowapp.model.EventsModel;
 import ru.nekit.android.nowapp.model.EventItemsSearcher;
+import ru.nekit.android.nowapp.model.EventsModel;
+import ru.nekit.android.nowapp.model.vo.Event;
 import ru.nekit.android.nowapp.modelView.EventCollectionAdapter;
 import ru.nekit.android.nowapp.modelView.listeners.IBackPressedListener;
 import ru.nekit.android.nowapp.modelView.listeners.IEventSelectListener;
@@ -62,15 +68,6 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
 
     private static final int LOADER_ID = 2;
     private static final int SEARCHER_ID = 3;
-
-    private int smoothScrollDuration() {
-        return getActivity().getResources().getInteger(R.integer.smooth_scroll_duration);
-    }
-
-    private boolean featureLiveSearch() {
-        return getActivity().getResources().getBoolean(R.bool.feature_live_search);
-    }
-
     private EventsModel mEventModel;
     private String mQueryWithResult;
     private String mQuery;
@@ -88,7 +85,6 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private BroadcastReceiver mLocalBroadcastReceiver;
     private SearchView mSearchView;
-    private FloatingActionButton mFloatingActionButton;
     private TextView mSearchStatus;
     private EditText mSearchViewEditText;
     private Animator.AnimatorListener mAnimatorListener;
@@ -97,6 +93,14 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         mLoadingState = LOADING_STATE.LOADED;
         mLoadingType = null;
         mMode = MODE.NORMAL;
+    }
+
+    private int smoothScrollDuration() {
+        return getActivity().getResources().getInteger(R.integer.smooth_scroll_duration);
+    }
+
+    private boolean featureLiveSearch() {
+        return getActivity().getResources().getBoolean(R.bool.feature_live_search);
     }
 
     @Override
@@ -225,14 +229,18 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     public void onResume() {
         super.onResume();
 
-        ((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+        Activity activity = getActivity();
+        ActionBar actionBar = ((AppCompatActivity) activity).getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(false);
+        }
         if (mSearchResultIsPresent) {
             new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     restoreMode();
                 }
-            }, getActivity().getResources().getInteger(R.integer.slide_animation_duration) / 3 * 2);
+            }, activity.getResources().getInteger(R.integer.slide_animation_duration) / 3 * 2);
         } else {
             mEventItemsView.requestFocus();
             setEventsFromModel();
@@ -261,6 +269,10 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         applyApplicationState();
         NowApplication.registerForAppChangeStateNotification(mLocalBroadcastReceiver);
         mEventModel.registerForLoadInBackgroundResultNotification(mLocalBroadcastReceiver);
+
+        if (NowApplication.getState() == ONLINE) {
+            new UpdateRunnable(activity, new Handler()).start();
+        }
     }
 
     private void restoreMode() {
@@ -364,16 +376,16 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
             }
         });
 
-        mFloatingActionButton = (FloatingActionButton) view.findViewById(R.id.fab_events);
+        FloatingActionButton floatingActionButton = (FloatingActionButton) view.findViewById(R.id.fab_events);
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            CoordinatorLayout.LayoutParams p = (CoordinatorLayout.LayoutParams) mFloatingActionButton.getLayoutParams();
+            CoordinatorLayout.LayoutParams p = (CoordinatorLayout.LayoutParams) floatingActionButton.getLayoutParams();
             p.setMargins(0, 0, 0, 0);
-            mFloatingActionButton.setLayoutParams(p);
+            floatingActionButton.setLayoutParams(p);
         }
-        mFloatingActionButton.setOnClickListener(this);
+        floatingActionButton.setOnClickListener(this);
 
         mSearchStatus = (TextView) view.findViewById(R.id.search_status);
-        mFloatingActionButtonAnimator = new FloatingActionButtonAnimator(context, mFloatingActionButton, mEventItemsView);
+        mFloatingActionButtonAnimator = new FloatingActionButtonAnimator(context, floatingActionButton, mEventItemsView);
 
         SoftKeyboardListenerLayout scrollView = (SoftKeyboardListenerLayout) view.findViewById(R.id.root_layout);
         scrollView.setOnSoftKeyboardListener(this);
@@ -550,6 +562,15 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
 
             }
         }
+    }
+
+    public int getVersionCodeInstalled() {
+        try {
+            PackageInfo info = getActivity().getPackageManager().getPackageInfo(getActivity().getPackageName(), 0);
+            return info.versionCode;
+        } catch (PackageManager.NameNotFoundException exp) {
+        }
+        return 0;
     }
 
     @Override

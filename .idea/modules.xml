@@ -5,6 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/NowApp.iml" filepath="$PROJECT_DIR$/NowApp.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/robototextview/robototextview.iml" filepath="$PROJECT_DIR$/robototextview/robototextview.iml" />
+      <module fileurl="file://$PROJECT_DIR$/updatechecker/updatechecker.iml" filepath="$PROJECT_DIR$/updatechecker/updatechecker.iml" />
     </modules>
   </component>
 </project>
