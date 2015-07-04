@@ -143,7 +143,9 @@ public class UpdateChecker implements Runnable {
     public void run() {
         update_available = update_available();
         if (update_available) {
-
+            if(listener != null){
+                listener.onNewVersion(current_version);
+            }
         }
     }
 

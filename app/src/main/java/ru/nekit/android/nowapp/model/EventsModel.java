@@ -787,13 +787,24 @@ public class EventsModel {
 
     @Nullable
     public EventAdvert getActualAdvertExcludeByEventId(int eventId) {
+        ArrayList<EventAdvert> eventAdvertsSource = mEventAdvertDataSource.getAllEventAdverts();
+        ArrayList<EventAdvert> eventAdverts = new ArrayList<>();
+        EventAdvert eventAdvert;
         EventAdvert result = null;
-        int dice = new Random().nextInt(100);
-        ArrayList<EventAdvert> eventAdverts = mEventAdvertDataSource.getAllEventAdverts();
-        for (int i = 0; result == null && i < eventAdverts.size(); i++) {
-            EventAdvert eventAdvert = eventAdverts.get(i);
-            if (eventAdvert.eventId != eventId && eventAdvert.showChanceHigh != 0 && dice >= eventAdvert.showChanceLow && dice < eventAdvert.showChanceHigh) {
-                result = eventAdvert;
+        int i = 0;
+        for (; i < eventAdvertsSource.size(); i++) {
+            eventAdvert = eventAdvertsSource.get(i);
+            if (eventAdvert.eventId != eventId) {
+                eventAdverts.add(eventAdvert);
+            }
+        }
+        if (eventAdverts.size() > 0) {
+            int dice = new Random().nextInt(100);
+            for (i = 0; result == null && i < eventAdverts.size(); i++) {
+                eventAdvert = eventAdverts.get(i);
+                if (eventAdvert.showChanceHigh != 0 && dice >= eventAdvert.showChanceLow && dice < eventAdvert.showChanceHigh) {
+                    result = eventAdvert;
+                }
             }
         }
         /*for debug
