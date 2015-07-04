@@ -9,6 +9,9 @@ import android.content.SharedPreferences;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.DisplayMetrics;
 
+import com.madx.updatechecker.lib.UpdateChecker;
+import com.madx.updatechecker.lib.UpdateCheckerListener;
+
 import java.util.concurrent.TimeUnit;
 
 import ru.nekit.android.nowapp.model.EventsModel;
@@ -21,8 +24,7 @@ import static ru.nekit.android.nowapp.NowApplication.APP_STATE.ONLINE;
 /**
  * Created by chuvac on 17.03.15.
  */
-public class NowApplication extends Application implements ConnectivityReceiver.OnNetworkAvailableListener {
-
+public class NowApplication extends Application implements ConnectivityReceiver.OnNetworkAvailableListener, UpdateCheckerListener {
 
     public static final String CHANGE_APPLICATION_STATE_NOTIFICATION = "ru.nekit.android.change_application_state";
     public static final int VALID_DATA_PERIOD_HOURS = 24;
@@ -33,6 +35,7 @@ public class NowApplication extends Application implements ConnectivityReceiver.
     private static EventsModel mEventModel;
     private static SharedPreferences mSharedPreferences;
     private static ConnectivityReceiver mConnectivityReceiver;
+
     public NowApplication() {
         super();
         instance = this;
@@ -100,6 +103,10 @@ public class NowApplication extends Application implements ConnectivityReceiver.
         VTAG.call("metrics density: " + metrics.density);
     }
 
+    public static void checkForUpdate() {
+        new UpdateChecker(instance, instance).start();
+    }
+
     @Override
     public void onNetworkAvailable() {
         setState(ONLINE);
@@ -108,6 +115,11 @@ public class NowApplication extends Application implements ConnectivityReceiver.
     @Override
     public void onNetworkUnavailable() {
         setState(OFFLINE);
+    }
+
+    @Override
+    public void onNewVersion(String version) {
+
     }
 
     public enum APP_STATE {

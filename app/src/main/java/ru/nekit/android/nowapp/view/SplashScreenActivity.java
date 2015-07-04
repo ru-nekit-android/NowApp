@@ -14,6 +14,7 @@ import android.widget.TextView;
 
 import com.pnikosis.materialishprogress.ProgressWheel;
 
+import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.EventItemsLoader;
 import ru.nekit.android.nowapp.utils.ConnectionUtil;
@@ -123,6 +124,7 @@ public class SplashScreenActivity extends ActionBarActivity implements LoaderMan
             new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
+                    NowApplication.checkForUpdate();
                     startActivity(new Intent(SplashScreenActivity.this, EventCollectionActivity.class));
                     finish();
                 }

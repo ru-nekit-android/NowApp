@@ -41,9 +41,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-
-import com.madx.updatechecker.lib.UpdateRunnable;
-
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 
@@ -270,9 +267,6 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         NowApplication.registerForAppChangeStateNotification(mLocalBroadcastReceiver);
         mEventModel.registerForLoadInBackgroundResultNotification(mLocalBroadcastReceiver);
 
-        if (NowApplication.getState() == ONLINE) {
-            new UpdateRunnable(activity, new Handler()).start();
-        }
     }
 
     private void restoreMode() {
@@ -419,9 +413,6 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         } else {
             mFloatingActionButtonAnimator.show();
         }
-        //another types of deactivate FAB
-        //mFloatingActionButton.setClickable(!hideFAB);
-        //mFloatingActionButton.setVisibility(hideFAB ? View.INVISIBLE : View.VISIBLE);
         if (mLoadingState == state) return;
         mLoadingState = state;
         if (EventsModel.REQUEST_NEW_EVENTS.equals(mLoadingType)) {

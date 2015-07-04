@@ -34,20 +34,13 @@ import org.jsoup.Jsoup;
  *
  * @author Daniele
  */
-public class UpdateRunnable implements Runnable {
+public class UpdateChecker implements Runnable {
 
-    /**
-     * The Activity from which the updater is called
-     */
-    private final Activity activity;
     /**
      * The Context from which the updater is called
      */
     private final Context context;
-    /**
-     * The Handler generated from the activity
-     */
-    private final Handler handler;
+
     /**
      * The package name of your app
      */
@@ -56,8 +49,10 @@ public class UpdateRunnable implements Runnable {
      * The current version of your app
      */
     private final String current_version;
+
+    private final UpdateCheckerListener listener;
     /**
-     * Each time you enter in an Activity which for example called: <b>new UpdateRunnable(this, new Handler()).start();</b>
+     * Each time you enter in an Activity which for example called: <b>new UpdateChecker(this, new Handler()).start();</b>
      * this is the minimum time which has to pass between an automatic verification of an update and the next automatic verification.
      */
     private final long TIME_RETRY_TO_UPDATE;
@@ -86,15 +81,14 @@ public class UpdateRunnable implements Runnable {
     /**
      * Updater Runnable constructor
      *
-     * @param activity             the activity from which the updater is called
-     * @param handler              the handler to manage the UI in the specified {@link #activity}
+     * @param context              the activity from which the updater is called
+     * @param listener             the handler to manage the UI in the specified {@link #context}
      * @param time_retry_to_update time in millis which represents the time after which the runnable called with force = false have to retry to check if an update exists
      */
-    public UpdateRunnable(Activity activity, Handler handler, long time_retry_to_update) {
-        this.activity = activity;
-        this.context = activity.getApplicationContext();
-        this.handler = handler;
+    public UpdateChecker(Context context, UpdateCheckerListener listener, long time_retry_to_update) {
+        this.context = context;
         this.package_name = context.getPackageName();
+        this.listener = listener;
         String current_version = "";
         try {
             current_version = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName;
@@ -108,11 +102,11 @@ public class UpdateRunnable implements Runnable {
     /**
      * Updater Runnable constructor, when called in automatic way it runs once a day
      *
-     * @param activity the activity from which the updater is called
-     * @param handler  the handler to manage the UI in the specified {@link #activity}
+     * @param context  the activity from which the updater is called
+     * @param listener the handler to manage the UI in the specified {@link #context}
      */
-    public UpdateRunnable(Activity activity, Handler handler) {
-        this(activity, handler, DAY);
+    public UpdateChecker(Context context, UpdateCheckerListener listener) {
+        this(context, listener, DAY);
     }
 
     /**
@@ -124,7 +118,7 @@ public class UpdateRunnable implements Runnable {
      * @param force if true it forces a dialog visualization (even if already updated)
      * @return an updater
      */
-    public UpdateRunnable force(boolean force) {
+    public UpdateChecker force(boolean force) {
         this.force = force;
         return this;
     }
@@ -133,7 +127,7 @@ public class UpdateRunnable implements Runnable {
      * @param light_theme if true uses drawables compatible with Light Themes
      * @return an updater
      */
-    public UpdateRunnable lightTheme(boolean light_theme) {
+    public UpdateChecker lightTheme(boolean light_theme) {
         this.light_theme = light_theme;
         return this;
     }
@@ -148,14 +142,9 @@ public class UpdateRunnable implements Runnable {
     @Override
     public void run() {
         update_available = update_available();
-        handler.post(new Runnable() {
-            public void run() {
-                if (update_available) {
+        if (update_available) {
 
-
-                }
-            }
-        });
+        }
     }
 
     /**
@@ -165,13 +154,13 @@ public class UpdateRunnable implements Runnable {
      */
     private boolean update_available() {
         // I take the time in millis when you've checked the update for the last time
-        long lastUpdateTime = getLastTimeTriedUpdate(activity);
+        long lastUpdateTime = getLastTimeTriedUpdate(context);
         // If force = true skip this check, otherwise check if it has already checked within a {link #TIME_RETRY_TO_UPDATE}
         if (!force && (lastUpdateTime + TIME_RETRY_TO_UPDATE) > System.currentTimeMillis()) {
             //return false;
         }
         // Sets new instant of time in which it has checked the update
-        setLastTimeTriedUpdate(activity);
+        setLastTimeTriedUpdate(context);
         // Check if there is really an update on the Google Play Store
         return web_update();
     }
@@ -236,3 +225,4 @@ public class UpdateRunnable implements Runnable {
     }
 
 }
+
