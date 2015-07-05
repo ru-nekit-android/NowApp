@@ -485,7 +485,9 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         NowApplication.unregisterForAppChangeStateNotification(mChangeApplicationStateReceiver);
         mFloatingActionButtonBehavior.deactivate();
         myLocationOverLay.disableMyLocation();
-        mTimer.cancel();
+        if (mTimer != null) {
+            mTimer.cancel();
+        }
         mShakeDetector.stop();
     }
 
