@@ -60,6 +60,7 @@ import ru.nekit.android.nowapp.model.vo.EventStats;
 import ru.nekit.android.nowapp.model.vo.EventToCalendarLink;
 
 import static ru.nekit.android.nowapp.NowApplication.APP_STATE.OFFLINE;
+import static ru.nekit.android.nowapp.NowApplication.APP_STATE.ONLINE;
 
 /**
  * Created by chuvac on 15.03.15.
@@ -186,11 +187,8 @@ public class EventsModel {
         setEventsFromLocalDataSource(allEvents);
     }
 
-    public static String getStartTimeAlias(Context context, EventAdvert eventAdvert) {
-        long time = eventAdvert.startAt;
-        long startAt = time % TimeUnit.DAYS.toSeconds(1);
-        long date = time - startAt;
-        return createEventStartTimeString(context, date, startAt, 0, false, true).toLowerCase();
+    public static String getStartTimeAliasForAdvert(Context context, Event event) {
+        return createEventStartTimeString(context, event.date, event.startAt, event.endAt, false, true).toLowerCase();
     }
 
     public static String getStartTimeAlias(Context context, Event event) {
@@ -452,7 +450,7 @@ public class EventsModel {
     EventApiCallResult performObtainEvent(int eventId) {
         int result = RESULT_OK;
         Event event = getEventById(eventId);
-        if (event == null) {
+        if (NowApplication.getState() == ONLINE && event == null) {
             try {
                 Uri.Builder uriBuilder = createApiUriBuilder(API_REQUEST_GET_EVENT);
                 uriBuilder.appendQueryParameter("id", Integer.toString(eventId));
@@ -786,7 +784,8 @@ public class EventsModel {
     }
 
     @Nullable
-    public EventAdvert getActualAdvertExcludeByEventId(int eventId) {
+    public EventAdvert generateAdvertExcludeByEventId(int eventId) {
+        long currentTime = getCurrentTimeTimestamp(mContext, true) + getCurrentDateTimestamp(mContext, true);
         ArrayList<EventAdvert> eventAdvertsSource = mEventAdvertDataSource.getAllEventAdverts();
         ArrayList<EventAdvert> eventAdverts = new ArrayList<>();
         EventAdvert eventAdvert;
@@ -794,7 +793,7 @@ public class EventsModel {
         int i = 0;
         for (; i < eventAdvertsSource.size(); i++) {
             eventAdvert = eventAdvertsSource.get(i);
-            if (eventAdvert.eventId != eventId) {
+            if (eventAdvert.eventId != eventId && checkOnEventAvailableInOffline(eventAdvert.eventId) && currentTime < eventAdvert.startAt) {
                 eventAdverts.add(eventAdvert);
             }
         }
@@ -808,13 +807,14 @@ public class EventsModel {
             }
         }
         /*for debug
-        if (result == null && eventAdverts.size() > 0) {
-            result = eventAdverts.get(0);
-        }*/
+        if (result == null && eventAdvertsSource.size() > 0) {
+            result = eventAdvertsSource.get(0);
+        }
+        */
         return result;
     }
 
-    public boolean checkOnEventAvailableInOffline(int eventId) {
+    private boolean checkOnEventAvailableInOffline(int eventId) {
         if (NowApplication.getState() == OFFLINE) {
             return mEventDataSource.getByEventId(eventId) != null;
         }
