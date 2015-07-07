@@ -16,10 +16,8 @@
 
 package com.madx.updatechecker.lib;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.os.Handler;
 import android.preference.PreferenceManager;
 
 import com.madx.updatechecker.lib.utils.versioning.DefaultArtifactVersion;
