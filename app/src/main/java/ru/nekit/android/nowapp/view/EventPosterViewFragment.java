@@ -2,6 +2,7 @@ package ru.nekit.android.nowapp.view;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -52,13 +53,15 @@ public class EventPosterViewFragment extends Fragment {
         if (getArguments() != null) {
             mImageUrl = getArguments().getString(IMAGE_URL);
         }
-        setRetainInstance(true);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        ((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
     }
 
     @Override
@@ -71,7 +74,6 @@ public class EventPosterViewFragment extends Fragment {
 
             @Override
             public boolean onException(Exception e, String model, Target<GlideDrawable> target, boolean isFirstResource) {
-                //getActivity().getSupportFragmentManager().popBackStack();
                 mProgressWheel.setVisibility(View.GONE);
                 posterView.setImageResource(R.drawable.event_poster_stub);
                 return true;

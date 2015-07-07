@@ -7,5 +7,5 @@ import ru.nekit.android.nowapp.model.vo.Event;
  */
 
 public interface IEventSelectListener {
-    void onEventSelect(Event event);
+    void onEventSelect(Event event, boolean openNew);
 }

@@ -114,6 +114,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     private static final String KEY_EVENT_ITEM = "ru.nekit.android.event_item";
     private static final String KEY_SELECTED = "ru.nekit.android.selected";
     private static final int MAX_ZOOM = 19;
+
     private final FloatingActionButtonBehavior mFloatingActionButtonBehavior;
     private final Handler mHandler;
     private MapView mMapView;
@@ -129,33 +130,25 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
             return false;
         }
     };
-    private Event mEvent;
+    private Event mEvent, mEventLinkToAdvert;
     private EventAdvert mEventAdvert;
-    private Event mEventLinkToAdvert;
     private IEventPosterSelectListener mEventPosterSelectListener;
     private IEventSelectListener mEventItemSelectListener;
     private ProgressWheel mProgressWheel;
     private GeoPoint mEventLocationPoint;
-    private View mMapViewContainer;
-    private ImageView mPosterThumbView;
     private boolean mPosterViewIsEmpty;
     private BroadcastReceiver mChangeApplicationStateReceiver;
     private MyLocationNewOverlay myLocationOverLay;
     private LocationManager mLocationManager;
     private ScrollView mScrollView;
-    private TextView mDescriptionView;
-    private TextView mViewsView;
-    private TextView mLikesView;
-    private ImageView mViewsIcon;
-    private ImageView mLikesIcon;
-    private Button mPhoneButton;
-    private Button mSiteButton;
+    private TextView mDescriptionView, mViewsView, mLikesView;
+    private ImageView mViewsIcon, mLikesIcon, mPosterThumbView;
+    private Button mPhoneButton, mSiteButton;
     private FloatingActionButton mFloatingActionButton;
     private LayoutInflater mInflater;
     private CoordinatorLayout mRootLayout;
     private EventToCalendarLink mEventToCalendarLink;
-    private View mLikeContainer;
-    private View mAdvertBlock;
+    private View mMapViewContainer, mLikeContainer, mAdvertBlock;
     private Timer mTimer;
     private long obtainAdvertCallTime;
     private EventsModel mEventModel;
@@ -182,7 +175,6 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setRetainInstance(true);
         setHasOptionsMenu(true);
         mChangeApplicationStateReceiver = new BroadcastReceiver() {
             @Override
@@ -251,11 +243,47 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         //shake
         mShakeDetector = new ShakeDetector(this);
         mShakeDetector.start((SensorManager) activity.getSystemService(Context.SENSOR_SERVICE));
+
+        mPosterThumbView.setOnClickListener(this);
+        CoordinatorLayout.LayoutParams fabLayoutParams = (CoordinatorLayout.LayoutParams) mFloatingActionButton.getLayoutParams();
+        fabLayoutParams.setBehavior(mFloatingActionButtonBehavior);
+
+        mSiteButton.setOnClickListener(this);
+        mPhoneButton.setOnClickListener(this);
+        mMapViewContainer.findViewById(R.id.zoom_minus).setOnClickListener(this);
+        mMapViewContainer.findViewById(R.id.zoom_plus).setOnClickListener(this);
+        mMapViewContainer.findViewById(R.id.place_group).setOnClickListener(this);
+        mMapViewContainer.findViewById(R.id.my_location).setOnClickListener(this);
+
+        mFloatingActionButton.setOnClickListener(this);
+        mMapViewContainer.findViewById(R.id.map_scroll_fake_view).setOnTouchListener(new View.OnTouchListener() {
+
+            @Override
+            public boolean onTouch(View view, MotionEvent event) {
+                int action = event.getAction();
+                switch (action) {
+                    case MotionEvent.ACTION_DOWN:
+                        mScrollView.requestDisallowInterceptTouchEvent(true);
+                        return false;
+
+                    case MotionEvent.ACTION_UP:
+                        mScrollView.requestDisallowInterceptTouchEvent(false);
+                        return true;
+
+                    case MotionEvent.ACTION_MOVE:
+                        mScrollView.requestDisallowInterceptTouchEvent(true);
+                        return false;
+
+                    default:
+                        return true;
+                }
+            }
+        });
     }
 
     private void showAdvertBlockWithDelay(long delay) {
-        final Context context = getActivity();
         if (isResumed()) {
+            final Context context = getActivity();
             mTimer = new Timer();
             mTimer.schedule(
                     new TimerTask() {
@@ -423,7 +451,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                     initEventApiExecutor(EventApiExecutor.METHOD_OBTAIN_STATS, mEvent.id);
 
                     if (loader.getId() == API_EXECUTOR_GROUP_ID + EventApiExecutor.METHOD_LIKE) {
-                        ViewCompat.animate(mFloatingActionButton).scaleX(0).scaleY(0).setInterpolator(new FastOutSlowInInterpolator()).setListener(null);
+                        ViewCompat.animate(mFloatingActionButton).scaleX(0).scaleY(0).setInterpolator(new FastOutSlowInInterpolator());
                     }
 
                     break;
@@ -488,6 +516,16 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         if (mTimer != null) {
             mTimer.cancel();
         }
+        mHandler.removeCallbacksAndMessages(null);
+        mPosterThumbView.setOnClickListener(null);
+        mSiteButton.setOnClickListener(null);
+        mPhoneButton.setOnClickListener(null);
+        mMapViewContainer.findViewById(R.id.zoom_minus).setOnClickListener(null);
+        mMapViewContainer.findViewById(R.id.zoom_plus).setOnClickListener(null);
+        mMapViewContainer.findViewById(R.id.place_group).setOnClickListener(null);
+        mMapViewContainer.findViewById(R.id.my_location).setOnClickListener(null);
+        mMapViewContainer.findViewById(R.id.map_scroll_fake_view).setOnTouchListener(null);
+        mFloatingActionButton.setOnClickListener(this);
         mShakeDetector.stop();
     }
 
@@ -632,8 +670,6 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
             ((ImageView) view.findViewById(R.id.category_type_view)).setImageDrawable(context.getResources().getDrawable(categoryDrawableId));
         }
 
-        mPosterThumbView.setOnClickListener(this);
-
         TextView dayDateView = (TextView) view.findViewById(R.id.day_date_view);
         TextView monthView = (TextView) view.findViewById(R.id.month_view);
         TextView dayOfWeekView = (TextView) view.findViewById(R.id.day_of_week_view);
@@ -648,7 +684,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         mSiteButton.setVisibility(View.GONE);
         if (!"".equals(mEvent.site)) {
             mSiteButton.setVisibility(View.VISIBLE);
-            mSiteButton.setOnClickListener(this);
+
             mSiteButton.setText(mEvent.site);
             mSiteButton.setTransformationMethod(null);
         }
@@ -659,7 +695,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                     mPhoneButton.setEnabled(false);
                 } else {
                     mPhoneButton.setEnabled(true);
-                    mPhoneButton.setOnClickListener(this);
+
                 }
                 mPhoneButton.setVisibility(View.VISIBLE);
                 mPhoneButton.setText(mEvent.phone);
@@ -678,36 +714,6 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         mDescriptionView.setText(mEvent.eventDescription);
         mMapView = (MapView) view.findViewById(R.id.map_view);
         mScrollView = (ScrollView) view.findViewById(R.id.scroll_view);
-        View mapScrollFakeView = view.findViewById(R.id.map_scroll_fake_view);
-
-        mapScrollFakeView.setOnTouchListener(new View.OnTouchListener() {
-
-            @Override
-            public boolean onTouch(View view, MotionEvent event) {
-                int action = event.getAction();
-                switch (action) {
-                    case MotionEvent.ACTION_DOWN:
-                        mScrollView.requestDisallowInterceptTouchEvent(true);
-                        return false;
-
-                    case MotionEvent.ACTION_UP:
-                        mScrollView.requestDisallowInterceptTouchEvent(false);
-                        return true;
-
-                    case MotionEvent.ACTION_MOVE:
-                        mScrollView.requestDisallowInterceptTouchEvent(true);
-                        return false;
-
-                    default:
-                        return true;
-                }
-            }
-        });
-
-        view.findViewById(R.id.zoom_minus).setOnClickListener(this);
-        view.findViewById(R.id.zoom_plus).setOnClickListener(this);
-        view.findViewById(R.id.place_group).setOnClickListener(this);
-        view.findViewById(R.id.my_location).setOnClickListener(this);
 
         createEventPlaceTextBlock(context, placeNameView, mEvent.placeName, mEvent.address);
 
@@ -718,14 +724,10 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
         mFloatingActionButton = (FloatingActionButton) view.findViewById(R.id.fab_event);
         mFloatingActionButton.setBackgroundTintList(ColorStateList.valueOf(EventsModel.getCategoryColor(mEvent.category)));
-        CoordinatorLayout.LayoutParams fabLayoutParams = (CoordinatorLayout.LayoutParams) mFloatingActionButton.getLayoutParams();
-        fabLayoutParams.setBehavior(mFloatingActionButtonBehavior);
-        mFloatingActionButton.setOnClickListener(this);
 
         mViewsIcon = (ImageView) view.findViewById(R.id.event_view_icon);
         mLikesIcon = (ImageView) view.findViewById(R.id.event_like_icon);
         mLikeContainer = view.findViewById(R.id.event_like_container);
-
         mAdvertBlock = view.findViewById(R.id.advert_block);
 
         return view;
@@ -936,7 +938,8 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
             case R.id.advert_block:
 
-                mEventItemSelectListener.onEventSelect(mEventLinkToAdvert);
+                mEventItemSelectListener.onEventSelect(mEventLinkToAdvert, true);
+                mAdvertBlock.setOnClickListener(null);
 
                 break;
 
@@ -1045,7 +1048,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                 if (translationY != this.mTranslationY) {
                     ViewCompat.animate(fab).cancel();
                     if (Math.abs(translationY - this.mTranslationY) == (float) snackbar.getHeight()) {
-                        ViewCompat.animate(fab).translationY(translationY).setInterpolator(new FastOutSlowInInterpolator()).setListener(null);
+                        ViewCompat.animate(fab).translationY(translationY).setInterpolator(new FastOutSlowInInterpolator());
                     } else {
                         if (doBottomViewOverlap(false)) {
                             ViewCompat.setTranslationY(fab, translationY);

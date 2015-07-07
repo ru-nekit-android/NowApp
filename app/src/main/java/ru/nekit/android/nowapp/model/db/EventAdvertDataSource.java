@@ -7,11 +7,9 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 
 import java.util.ArrayList;
-import java.util.Random;
 
 import ru.nekit.android.nowapp.model.EventFieldNameDictionary;
 import ru.nekit.android.nowapp.model.vo.EventAdvert;
-import ru.nekit.android.nowapp.model.vo.EventStats;
 
 /**
  * Created by chuvac on 21.04.15.

@@ -179,8 +179,7 @@ public class EventDataSource {
         query = normalizeForSearch(query);
         ArrayList<Event> eventList = new ArrayList<>();
         ArrayList<String> queryList = new ArrayList<>();
-        for (int i = 0; i < FTS_SEARCH_ORDER.length; i++) {
-            String field = FTS_SEARCH_ORDER[i];
+        for (String field : FTS_SEARCH_ORDER) {
             queryList.add(EventSQLiteHelper._ID + " IN (" +
                     "SELECT " + EventSQLiteHelper._ID + " FROM " + EventSQLiteHelper.FTS_TABLE_NAME + " WHERE " + field + " MATCH '" + query + "') ");
         }

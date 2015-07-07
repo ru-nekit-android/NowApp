@@ -5,11 +5,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
 
-import java.util.ArrayList;
-import java.util.Random;
-
 import ru.nekit.android.nowapp.model.EventFieldNameDictionary;
-import ru.nekit.android.nowapp.model.vo.EventAdvert;
 
 /**
  * Created by chuvac on 21.04.15.

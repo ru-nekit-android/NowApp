@@ -201,9 +201,9 @@ public class EventsModel {
 
     private static String createEventStartTimeString(Context context, long date, long startAt, long endAt, boolean createForKeywords, boolean creteForAdvert) {
         Resources resources = context.getResources();
-        long currentTimeTimestamp = getCurrentTimeTimestamp(context, true);
+        long currentTimeTimestamp = getCurrentDayTime(context, true);
         long startAfterSeconds = startAt - currentTimeTimestamp;
-        long dateDelta = date - getCurrentDateTimestamp(context, true);
+        long dateDelta = date - getCurrentDateTime(context, true);
         String startTimeAliasString;
         startAfterSeconds += dateDelta;
         if (startAfterSeconds <= 0) {
@@ -281,7 +281,7 @@ public class EventsModel {
         return sInstance;
     }
 
-    public static long getCurrentTimeTimestamp(Context context, boolean usePrecision) {
+    public static long getCurrentDayTime(Context context, boolean usePrecision) {
         Calendar calendar = Calendar.getInstance();
         int minutes = calendar.get(Calendar.MINUTE);
         int hours = calendar.get(Calendar.HOUR_OF_DAY);
@@ -293,14 +293,14 @@ public class EventsModel {
         return currentTimeTimestamp;
     }
 
-    public static long getCurrentDateTimestamp(Context context, boolean usePrecision) {
+    public static long getCurrentDateTime(Context context, boolean usePrecision) {
         Calendar calendar = Calendar.getInstance();
-        long currentDateTimestamp = TimeUnit.MILLISECONDS.toSeconds(calendar.getTimeInMillis()) - getCurrentTimeTimestamp(context, false);
+        long currentTime = TimeUnit.MILLISECONDS.toSeconds(calendar.getTimeInMillis()) - getCurrentDayTime(context, false);
         if (usePrecision) {
             long precision = TimeUnit.MINUTES.toSeconds(context.getResources().getInteger(R.integer.event_time_precision_in_minutes));
-            currentDateTimestamp = ((int) currentDateTimestamp / precision) * precision;
+            currentTime = ((int) currentTime / precision) * precision;
         }
-        return currentDateTimestamp + getTimeZoneOffsetInSeconds();
+        return currentTime + getTimeZoneOffsetInSeconds();
     }
 
     private static long getTimeZoneOffsetInSeconds() {
@@ -344,7 +344,7 @@ public class EventsModel {
     }
 
     private boolean eventIsActual(Event event) {
-        return (event.date + event.endAt) > (getCurrentTimeTimestamp(mContext, true) + getCurrentDateTimestamp(mContext, true));
+        return (event.date + event.endAt) > (getCurrentDayTime(mContext, true) + getCurrentDateTime(mContext, true));
     }
 
     private Event getEventById(int id) {
@@ -576,8 +576,8 @@ public class EventsModel {
             } else {
                 uriBuilder
                         .appendQueryParameter("fl", "1")
-                        .appendQueryParameter("date", String.format("%d", getCurrentDateTimestamp(mContext, true)))
-                        .appendQueryParameter("startAt", String.format("%d", getCurrentTimeTimestamp(mContext, true)));
+                        .appendQueryParameter("date", String.format("%d", getCurrentDateTime(mContext, true)))
+                        .appendQueryParameter("startAt", String.format("%d", getCurrentDayTime(mContext, true)));
             }
             HttpURLConnection urlConnection = (HttpURLConnection) new URL(uriBuilder.build().toString()).openConnection();
             int responseCode = urlConnection.getResponseCode();
@@ -785,7 +785,7 @@ public class EventsModel {
 
     @Nullable
     public EventAdvert generateAdvertExcludeByEventId(int eventId) {
-        long currentTime = getCurrentTimeTimestamp(mContext, true) + getCurrentDateTimestamp(mContext, true);
+        long currentTime = getCurrentDayTime(mContext, true) + getCurrentDateTime(mContext, true);
         ArrayList<EventAdvert> eventAdvertsSource = mEventAdvertDataSource.getAllEventAdverts();
         ArrayList<EventAdvert> eventAdverts = new ArrayList<>();
         EventAdvert eventAdvert;
@@ -806,11 +806,11 @@ public class EventsModel {
                 }
             }
         }
-        /*for debug
+        //for debug
         if (result == null && eventAdvertsSource.size() > 0) {
             result = eventAdvertsSource.get(0);
         }
-        */
+
         return result;
     }
 

@@ -21,18 +21,19 @@ import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
 import ru.nekit.android.nowapp.R;
-import ru.nekit.android.nowapp.model.vo.Event;
 import ru.nekit.android.nowapp.model.EventsModel;
+import ru.nekit.android.nowapp.model.vo.Event;
 import ru.nekit.android.nowapp.modelView.listeners.IEventSelectListener;
 
 import static ru.nekit.android.nowapp.model.EventsModel.getCategoryDrawable;
-import static ru.nekit.android.nowapp.model.EventsModel.getCurrentDateTimestamp;
+import static ru.nekit.android.nowapp.model.EventsModel.getCurrentDateTime;
 
 /**
  * Created by chuvac on 12.03.15.
@@ -49,18 +50,17 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     private final ArrayList<EventItemWrapper> mEventItems;
     private final ArrayList<Target> mLoadingList;
     private final EventsModel mEventModel;
-    private final int mItemHeight, mColumns, mMargin;
-    private RecyclerView mRecyclerView;
+    private final int mItemHeight, mColumns, mMargin, mLoadMoreCount;
+    private WeakReference<RecyclerView> mRecyclerViewReference;
     private RecyclerView.OnScrollListener mScrollListener;
     private IEventSelectListener mItemClickListener;
     private boolean mImmediateImageLoading;
     private OnLoadMorelListener mLoadMoreListener;
     private Timer mTimer;
     private Handler mHandler;
-    private int mLoadMoreCount;
     private EventItemWrapper mLoadingItem;
 
-    public EventCollectionAdapter(Context context, EventsModel model, int columns) {
+    public EventCollectionAdapter(Context context, int columns) {
         mContext = context;
         mInflater = LayoutInflater.from(context);
         mColumns = columns;
@@ -71,7 +71,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         mMargin = context.getResources().getDimensionPixelSize(R.dimen.event_collection_space);
         mEventItems = new ArrayList<>();
         mLoadingList = new ArrayList<>();
-        mEventModel = model;
+        mEventModel = EventsModel.getInstance(context);
         mImmediateImageLoading = true;
         mLoadMoreCount = columns > 2 ? 0 : columns;
     }
@@ -88,7 +88,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     }
 
     public void registerRecyclerView(RecyclerView recyclerView) {
-        mRecyclerView = recyclerView;
+        mRecyclerViewReference = new WeakReference<>(recyclerView);
         mScrollListener = new RecyclerView.OnScrollListener() {
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 GridLayoutManager layoutManager = (GridLayoutManager) recyclerView.getLayoutManager();
@@ -110,8 +110,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             }
 
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                int speed = Math.abs(dy);
-                if (STOP_IMAGE_LOADING_WITH_QUICK_SCROLLING && speed > MAX_SCROLL_SPEED) {
+                if (STOP_IMAGE_LOADING_WITH_QUICK_SCROLLING && Math.abs(dy) > MAX_SCROLL_SPEED) {
                     stopImageLoading();
                 }
             }
@@ -142,17 +141,20 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     }
 
     private void updateEventStartTime() {
-        GridLayoutManager layoutManager = (GridLayoutManager) mRecyclerView.getLayoutManager();
-        if (layoutManager != null) {
-            int firstVisibleItem = layoutManager.findFirstVisibleItemPosition();
-            int lastVisibleItem = layoutManager.findLastVisibleItemPosition();
-            if (firstVisibleItem > -1 && lastVisibleItem > -1) {
-                for (int i = firstVisibleItem; i <= lastVisibleItem; i++) {
-                    EventCollectionItemViewHolder eventCollectionItemViewHolder = (EventCollectionItemViewHolder) mRecyclerView.findViewHolderForAdapterPosition(i);
-                    if (eventCollectionItemViewHolder != null) {
-                        EventItemWrapper eventItemWrapper = getItem(i);
-                        if (eventItemWrapper != null) {
-                            setStartTimeForEvent(eventItemWrapper.event, eventCollectionItemViewHolder);
+        RecyclerView recyclerView = mRecyclerViewReference.get();
+        if (recyclerView != null) {
+            GridLayoutManager layoutManager = (GridLayoutManager) recyclerView.getLayoutManager();
+            if (layoutManager != null) {
+                int firstVisibleItem = layoutManager.findFirstVisibleItemPosition();
+                int lastVisibleItem = layoutManager.findLastVisibleItemPosition();
+                if (firstVisibleItem > -1 && lastVisibleItem > -1) {
+                    for (int i = firstVisibleItem; i <= lastVisibleItem; i++) {
+                        EventCollectionItemViewHolder eventCollectionItemViewHolder = (EventCollectionItemViewHolder) recyclerView.findViewHolderForAdapterPosition(i);
+                        if (eventCollectionItemViewHolder != null) {
+                            EventItemWrapper eventItemWrapper = getItem(i);
+                            if (eventItemWrapper != null) {
+                                setStartTimeForEvent(eventItemWrapper.event, eventCollectionItemViewHolder);
+                            }
                         }
                     }
                 }
@@ -168,10 +170,10 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         if (mScrollListener != null) {
             recyclerView.removeOnScrollListener(mScrollListener);
         }
+        mEventItems.clear();
         mScrollListener = null;
         mTimer.cancel();
-        mTimer = null;
-        mHandler = null;
+        mHandler.removeCallbacksAndMessages(null);
     }
 
     public void addItems(ArrayList<Event> events) {
@@ -198,8 +200,8 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         }
         if (events != null && events.size() > 0) {
             for (Event event : events) {
-                long dateDelta = event.date - getCurrentDateTimestamp(mContext, true);
-                if (dateDelta >= 0 && event.endAt > EventsModel.getCurrentTimeTimestamp(mContext, true) || dateDelta > 1) {
+                long dateDelta = event.date - getCurrentDateTime(mContext, true);
+                if (dateDelta >= 0 && event.endAt > EventsModel.getCurrentDayTime(mContext, true) || dateDelta > 1) {
                     mEventItems.add(new EventItemWrapper(event));
                 }
             }
@@ -216,11 +218,6 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     public boolean setItems(ArrayList<Event> events) {
 
         return setItems(events, false);
-    }
-
-    public void clearItems() {
-        mEventItems.clear();
-        notifyDataSetChanged();
     }
 
     @Override
@@ -275,10 +272,11 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             setStartTimeForEvent(event, eventCollectionItemViewHolder);
             int categoryDrawableId = getCategoryDrawable(event.category);
             if (categoryDrawableId != 0) {
-                eventCollectionItemViewHolder.getCatalogIcon().setImageDrawable(mContext.getResources().getDrawable(categoryDrawableId));
+                ImageView imageView = eventCollectionItemViewHolder.getCatalogIcon();
+                imageView.setImageDrawable(mContext.getResources().getDrawable(categoryDrawableId));
             }
         } else {
-            layoutParams.height = mContext.getResources().getDimensionPixelOffset(R.dimen.progress_wheel_size) + 2 * mMargin + 2 * mContext.getResources().getDimensionPixelOffset(R.dimen.event_loading_padding);
+            layoutParams.height = mContext.getResources().getDimensionPixelOffset(R.dimen.progress_wheel_size) + 2 * (mMargin + mContext.getResources().getDimensionPixelOffset(R.dimen.event_loading_padding));
             layoutParams.setMargins(mMargin, mMargin, mMargin, mMargin);
         }
     }
@@ -302,7 +300,6 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     private void addToLoadingList(final EventItemWrapper eventItemWrapper, final ImageView viewTarget) {
         mLoadingList.add(Glide.with(mContext).load(eventItemWrapper.event.posterBlur).centerCrop().dontAnimate().listener(new RequestListener<String, GlideDrawable>() {
-
             @Override
             public boolean onException(Exception exp, String model, Target<GlideDrawable> target, boolean isFirstResource) {
                 return true;
@@ -385,21 +382,23 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         if (!mImmediateImageLoading) {
             mImmediateImageLoading = true;
             for (int i = firstVisibleItem; i <= lastVisibleItem; i++) {
-                RecyclerView.ViewHolder viewHolder = mRecyclerView.findViewHolderForAdapterPosition(i);
-                if (viewHolder.getClass() == EventCollectionItemViewHolder.class) {
-                    EventCollectionItemViewHolder eventCollectionItemViewHolder = (EventCollectionItemViewHolder) mRecyclerView.findViewHolderForAdapterPosition(i);
-                    EventItemWrapper eventItemWrapper = getItem(i);
-                    if (eventItemWrapper != null && !eventItemWrapper.posterLoaded) {
-                        addToLoadingList(getItem(i), eventCollectionItemViewHolder.getPosterThumbView());
+                final RecyclerView recyclerView = mRecyclerViewReference.get();
+                if (recyclerView != null) {
+                    RecyclerView.ViewHolder viewHolder = recyclerView.findViewHolderForAdapterPosition(i);
+                    if (viewHolder.getClass() == EventCollectionItemViewHolder.class) {
+                        EventCollectionItemViewHolder eventCollectionItemViewHolder = (EventCollectionItemViewHolder) recyclerView.findViewHolderForAdapterPosition(i);
+                        EventItemWrapper eventItemWrapper = getItem(i);
+                        if (eventItemWrapper != null && !eventItemWrapper.posterLoaded) {
+                            addToLoadingList(getItem(i), eventCollectionItemViewHolder.getPosterThumbView());
+                        }
                     }
                 }
             }
         }
     }
 
-    abstract static public class OnLoadMorelListener {
-        public void onLoadMore() {
-        }
+    public interface OnLoadMorelListener {
+        void onLoadMore();
     }
 
     class EventItemWrapper {
@@ -464,7 +463,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         public void onClick(View view) {
             EventItemWrapper eventItemWrapper = getItem(getAdapterPosition());
             if (eventItemWrapper != null) {
-                mItemClickListener.onEventSelect(eventItemWrapper.event);
+                mItemClickListener.onEventSelect(eventItemWrapper.event, false);
             }
         }
     }

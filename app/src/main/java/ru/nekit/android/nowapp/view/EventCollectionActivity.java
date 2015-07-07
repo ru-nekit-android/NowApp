@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.AppCompatDialog;
@@ -29,6 +30,7 @@ public class EventCollectionActivity extends AppCompatActivity implements IEvent
     private EventPosterViewFragment mEventPosterViewFragment;
     private BroadcastReceiver mChangeApplicationStateReceiver;
     private View mOfflineView;
+    private EventDetailFragment mEventDetailFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,11 +39,14 @@ public class EventCollectionActivity extends AppCompatActivity implements IEvent
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.setNavigationIcon(R.drawable.ic_action_previous_item);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayShowTitleEnabled(false);
+        }
         FragmentManager fragmentManager = getSupportFragmentManager();
         EventCollectionFragment mEventCollectionFragment = new EventCollectionFragment();
         if (fragmentManager.findFragmentByTag(EventCollectionFragment.TAG) == null) {
-            getSupportFragmentManager().beginTransaction().add(R.id.event_place_holder, mEventCollectionFragment, EventCollectionFragment.TAG).commit();
+            fragmentManager.beginTransaction().add(R.id.event_place_holder, mEventCollectionFragment, EventCollectionFragment.TAG).commit();
         }
 
         mOfflineView = findViewById(R.id.offline_view);
@@ -120,11 +125,19 @@ public class EventCollectionActivity extends AppCompatActivity implements IEvent
     }
 
     @Override
-    public void onEventSelect(Event event) {
-        EventDetailFragment eventDetailFragment = EventDetailFragment.getInstance();
-        eventDetailFragment.setEventItem(event);
-        if (!eventDetailFragment.isAdded()) {
-            getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left, R.anim.enter_from_left, R.anim.exit_to_right).addToBackStack(null).replace(R.id.event_place_holder, eventDetailFragment, EventDetailFragment.TAG).commit();
+    public void onEventSelect(Event event, boolean openNew) {
+        EventDetailFragment fragment;
+        if (openNew) {
+            fragment = EventDetailFragment.getInstance();
+        } else {
+            if (mEventDetailFragment == null) {
+                mEventDetailFragment = EventDetailFragment.getInstance();
+            }
+            fragment = mEventDetailFragment;
+        }
+        fragment.setEventItem(event);
+        if (!fragment.isAdded()) {
+            getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left, R.anim.enter_from_left, R.anim.exit_to_right).addToBackStack(null).replace(R.id.event_place_holder, fragment, EventDetailFragment.TAG).commit();
         }
     }
 

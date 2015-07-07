@@ -1,11 +1,10 @@
 package ru.nekit.android.nowapp.model.vo;
 
-import android.app.usage.UsageEvents;
 import android.os.Parcel;
 import android.os.Parcelable;
 
 /**
- * Created by chuvac on 12.03.15.
+ * Created by chuvac on 12.03.15
  */
 public class Event extends EventBase implements Parcelable {
 
