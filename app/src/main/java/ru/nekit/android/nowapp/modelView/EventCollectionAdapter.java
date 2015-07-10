@@ -1,9 +1,10 @@
 package ru.nekit.android.nowapp.modelView;
 
+import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.PorterDuff;
-import android.os.Handler;
-import android.os.Looper;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
@@ -23,9 +24,6 @@ import com.bumptech.glide.request.target.Target;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
 
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.EventsModel;
@@ -56,9 +54,8 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     private IEventClickListener mItemClickListener;
     private boolean mImmediateImageLoading;
     private OnLoadMorelListener mLoadMoreListener;
-    private Timer mTimer;
-    private Handler mHandler;
     private EventItemWrapper mLoadingItem;
+    private BroadcastReceiver mUpdateReceiver;
 
     public EventCollectionAdapter(Context context, int columns) {
         mContext = context;
@@ -116,29 +113,12 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             }
         };
         recyclerView.addOnScrollListener(mScrollListener);
-
-        mHandler = new Handler(Looper.getMainLooper());
-        mTimer = new Timer();
-
-        mTimer.scheduleAtFixedRate(
-
-                new TimerTask() {
-
-                    @Override
-                    public void run() {
-
-                        mHandler.post(new Runnable() {
-                            public void run() {
-                                if (TimeUnit.SECONDS.toMinutes(EventsModel.getCurrentDayTime(mContext, false)) % mContext.getResources().getInteger(R.integer.event_time_precision_in_minutes) == 0) {
-                                    updateEventStartTime();
-                                }
-                            }
-                        });
-                    }
-                },
-                0,
-                TimeUnit.SECONDS.toMillis(1));
-
+        mEventModel.registerForFiveMinuteUpdateNotification(mUpdateReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                updateEventStartTime();
+            }
+        });
         updateEventStartTime();
     }
 
@@ -174,8 +154,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         }
         mEventItems.clear();
         mScrollListener = null;
-        mTimer.cancel();
-        mHandler.removeCallbacksAndMessages(null);
+        mEventModel.unregisterForFiveMinuteUpdateNotification(mUpdateReceiver);
     }
 
     public void addItems(ArrayList<Event> events) {

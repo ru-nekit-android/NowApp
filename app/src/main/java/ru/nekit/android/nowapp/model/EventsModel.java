@@ -45,6 +45,8 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Random;
 import java.util.TimeZone;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
 import ru.nekit.android.nowapp.NowApplication;
@@ -72,11 +74,12 @@ public class EventsModel {
     public static final int LIKE_CONFIRMED = 2;
     public static final int LIKE_NOT_CONFIRMED = 1;
     public static final int DATA_IS_EMPTY = 1;
-    public static final String LOAD_IN_BACKGROUND_NOTIFICATION = "ru.nekit.android.nowapp.load_in_background_result";
     public static final String LOADING_TYPE = "loading_type";
     public static final String REQUEST_NEW_EVENTS = "request_new_event_items";
     public static final String REFRESH_EVENTS = "refresh_event_items";
     public static final String LOAD_IN_BACKGROUND = "load_in_background";
+    public static final String LOAD_IN_BACKGROUND_NOTIFICATION = "ru.nekit.android.nowapp.load_in_background_notification";
+    public static final String UPDATE_FIVE_MINUTE_TIMER_NOTIFICATION = "ru.nekit.android.nowapp.update_five_minute_timer_notification";
     private static final long MAXIMUM_TIME_PERIOD_FOR_DATE_ALIAS_SUPPORT = TimeUnit.HOURS.toSeconds(4);
     private static final long[] NIGHT_PERIOD = {TimeUnit.HOURS.toSeconds(23), TimeUnit.HOURS.toSeconds(5) - 1};
     private static final long[] MORNING_PERIOD = {TimeUnit.HOURS.toSeconds(5), TimeUnit.HOURS.toSeconds(12) - 1};
@@ -92,13 +95,13 @@ public class EventsModel {
     private static final String API_REQUEST_UPDATE = API_ROOT + ".update";
     private static final String API_REQUEST_UPDATE_LIKE = API_REQUEST_UPDATE + ".like";
     private static final String API_REQUEST_UPDATE_VIEW = API_REQUEST_UPDATE + ".view";
-
     private static final String DATABASE_NAME = "nowapp.db";
     private static final int DATABASE_VERSION = 10;
     private static final HashMap<String, String> CATEGORY_TYPE_KEYWORDS = new HashMap<>();
     private static final HashMap<String, Integer> CATEGORY_TYPE = new HashMap<>();
     private static final HashMap<String, Integer> CATEGORY_TYPE_COLOR = new HashMap<>();
     private static final HashMap<String, Integer> CATEGORY_TYPE_BIG = new HashMap<>();
+    public static ArrayList<Integer> HAND;
     private static ArrayList<Pair<String, long[]>> PERIODS = new ArrayList<Pair<String, long[]>>(4) {{
         add(new Pair<>("ночью", NIGHT_PERIOD));
         add(new Pair<>("утром", MORNING_PERIOD));
@@ -113,6 +116,7 @@ public class EventsModel {
     private final EventAdvertDataSource mEventAdvertDataSource;
     private final Runnable mBackgroundLoadTask;
     private final EventToCalendarDataSource mEventToCalendarDataSource;
+    private final Timer mTimer;
     private int mAvailableEventCount;
     private int mCurrentPage;
     private boolean mReachEndOfDataList;
@@ -169,6 +173,23 @@ public class EventsModel {
                 }
             }
         };
+
+
+        mTimer = new Timer();
+
+        mTimer.scheduleAtFixedRate(
+
+                new TimerTask() {
+
+                    @Override
+                    public void run() {
+                        if (getCurrentDayTimeInSeconds() % TimeUnit.MINUTES.toSeconds(1) == 0 && TimeUnit.SECONDS.toMinutes(getCurrentDayTime(mContext, false)) % mContext.getResources().getInteger(R.integer.event_time_precision_in_minutes) == 0) {
+                            LocalBroadcastManager.getInstance(mContext).sendBroadcast(new Intent(UPDATE_FIVE_MINUTE_TIMER_NOTIFICATION));
+                        }
+                    }
+                },
+                0,
+                TimeUnit.SECONDS.toMillis(1));
 
         mEventDataSource.openForWrite();
         mEventStatsDataSource.openForWrite();
@@ -293,6 +314,10 @@ public class EventsModel {
         return currentTimeTimestamp;
     }
 
+    private static long getCurrentDayTimeInSeconds() {
+        return Calendar.getInstance().get(Calendar.SECOND);
+    }
+
     public static long getCurrentDateTime(Context context, boolean usePrecision) {
         Calendar calendar = Calendar.getInstance();
         long currentTime = TimeUnit.MILLISECONDS.toSeconds(calendar.getTimeInMillis()) - getCurrentDayTime(context, false);
@@ -313,6 +338,10 @@ public class EventsModel {
 
     public static long getEventEndTimeInSeconds(Event event) {
         return event.date + event.endAt - getTimeZoneOffsetInSeconds();
+    }
+
+    public void destroy() {
+        mTimer.cancel();
     }
 
     private boolean FEATURE_LOAD_IN_BACKGROUND() {
@@ -340,6 +369,14 @@ public class EventsModel {
     }
 
     public void unregisterForLoadInBackgroundResultNotification(BroadcastReceiver receiver) {
+        LocalBroadcastManager.getInstance(mContext).unregisterReceiver(receiver);
+    }
+
+    public void registerForFiveMinuteUpdateNotification(BroadcastReceiver receiver) {
+        LocalBroadcastManager.getInstance(mContext).registerReceiver(receiver, new IntentFilter(UPDATE_FIVE_MINUTE_TIMER_NOTIFICATION));
+    }
+
+    public void unregisterForFiveMinuteUpdateNotification(BroadcastReceiver receiver) {
         LocalBroadcastManager.getInstance(mContext).unregisterReceiver(receiver);
     }
 
@@ -539,6 +576,20 @@ public class EventsModel {
     int performEventsLoad(String loadingType) throws IOException, JSONException {
 
         Integer result = RESULT_OK;
+
+        if (HAND == null) {
+            HAND = new ArrayList<>();
+            for (int i = 0; i < 80; i++) {
+                String imagePostfixIndex = Integer.toString(i);
+                String imagePostfix = "";
+                for (int j = imagePostfixIndex.length(); j < 5; j++) {
+                    imagePostfix += "0";
+                }
+                imagePostfix += imagePostfixIndex;
+                HAND.add(mContext.getResources()
+                        .getIdentifier("appphone_seichas_" + imagePostfix, "drawable", mContext.getPackageName()));
+            }
+        }
 
         boolean requestNewEvents = REQUEST_NEW_EVENTS.equals(loadingType);
 
