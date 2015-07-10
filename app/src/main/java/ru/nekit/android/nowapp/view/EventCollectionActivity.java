@@ -21,11 +21,11 @@ import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.vo.Event;
 import ru.nekit.android.nowapp.modelView.listeners.IBackPressedListener;
+import ru.nekit.android.nowapp.modelView.listeners.IEventClickListener;
 import ru.nekit.android.nowapp.modelView.listeners.IEventPosterSelectListener;
-import ru.nekit.android.nowapp.modelView.listeners.IEventSelectListener;
 
 
-public class EventCollectionActivity extends AppCompatActivity implements IEventSelectListener, IEventPosterSelectListener {
+public class EventCollectionActivity extends AppCompatActivity implements IEventClickListener, IEventPosterSelectListener {
 
     private EventPosterViewFragment mEventPosterViewFragment;
     private BroadcastReceiver mChangeApplicationStateReceiver;
@@ -125,7 +125,7 @@ public class EventCollectionActivity extends AppCompatActivity implements IEvent
     }
 
     @Override
-    public void onEventSelect(Event event, boolean openNew) {
+    public void onEventClick(Event event, boolean openNew) {
         EventDetailFragment fragment;
         if (openNew) {
             fragment = EventDetailFragment.getInstance();
@@ -135,9 +135,9 @@ public class EventCollectionActivity extends AppCompatActivity implements IEvent
             }
             fragment = mEventDetailFragment;
         }
-        fragment.setEventItem(event);
+        fragment.setEventAndAdvertPossibility(event, !openNew);
         if (!fragment.isAdded()) {
-            getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left, R.anim.enter_from_left, R.anim.exit_to_right).addToBackStack(null).replace(R.id.event_place_holder, fragment, EventDetailFragment.TAG).commit();
+            getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left, R.anim.enter_from_left, R.anim.exit_to_right).replace(R.id.event_place_holder, fragment, EventDetailFragment.TAG).addToBackStack(null).commit();
         }
     }
 

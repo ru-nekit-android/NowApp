@@ -78,6 +78,7 @@ import org.osmdroid.views.overlay.OverlayItem;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
+import java.lang.ref.WeakReference;
 import java.text.DateFormatSymbols;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -88,6 +89,7 @@ import java.util.concurrent.TimeUnit;
 
 import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
+import ru.nekit.android.nowapp.VTAG;
 import ru.nekit.android.nowapp.model.EventApiCallResult;
 import ru.nekit.android.nowapp.model.EventApiExecutor;
 import ru.nekit.android.nowapp.model.vo.Event;
@@ -96,8 +98,8 @@ import ru.nekit.android.nowapp.model.vo.EventStats;
 import ru.nekit.android.nowapp.model.EventsModel;
 import ru.nekit.android.nowapp.model.EventToCalendarLoader;
 import ru.nekit.android.nowapp.model.vo.EventToCalendarLink;
+import ru.nekit.android.nowapp.modelView.listeners.IEventClickListener;
 import ru.nekit.android.nowapp.modelView.listeners.IEventPosterSelectListener;
-import ru.nekit.android.nowapp.modelView.listeners.IEventSelectListener;
 import ru.nekit.android.nowapp.utils.RobotoTextAppearanceSpan;
 import ru.nekit.android.nowapp.utils.TextViewUtils;
 
@@ -113,10 +115,20 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     private static final int API_EXECUTOR_GROUP_ID = 1;
     private static final String KEY_EVENT_ITEM = "ru.nekit.android.event_item";
     private static final String KEY_SELECTED = "ru.nekit.android.selected";
+    private static final String KEY_ADVERT_POSSIBILITY = "ru.nekit.android.possibility";
     private static final int MAX_ZOOM = 19;
 
     private final FloatingActionButtonBehavior mFloatingActionButtonBehavior;
     private final Handler mHandler;
+    private final EventsModel mEventModel;
+    private Timer mTimer;
+    //private Timer mTimerForHand;
+    private Event mEvent, mEventLinkToAdvert;
+    private EventAdvert mEventAdvert;
+    private IEventPosterSelectListener mEventPosterSelectListener;
+    private IEventClickListener mEventClickListener;
+    private ProgressWheel mProgressWheel;
+    private GeoPoint mEventLocationPoint;
     private MapView mMapView;
     private final MapListener mMapListener = new MapListener() {
         @Override
@@ -130,12 +142,6 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
             return false;
         }
     };
-    private Event mEvent, mEventLinkToAdvert;
-    private EventAdvert mEventAdvert;
-    private IEventPosterSelectListener mEventPosterSelectListener;
-    private IEventSelectListener mEventItemSelectListener;
-    private ProgressWheel mProgressWheel;
-    private GeoPoint mEventLocationPoint;
     private boolean mPosterViewIsEmpty;
     private BroadcastReceiver mChangeApplicationStateReceiver;
     private MyLocationNewOverlay myLocationOverLay;
@@ -149,13 +155,13 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     private CoordinatorLayout mRootLayout;
     private EventToCalendarLink mEventToCalendarLink;
     private View mMapViewContainer, mLikeContainer, mAdvertBlock;
-    private Timer mTimer;
     private long obtainAdvertCallTime;
-    private EventsModel mEventModel;
     private ShakeDetector mShakeDetector;
+    private ImageView mHandView;
+    //private int mHandFrameIndex;
 
     public EventDetailFragment() {
-        mFloatingActionButtonBehavior = new FloatingActionButtonBehavior();
+        mFloatingActionButtonBehavior = new FloatingActionButtonBehavior(this);
         mHandler = new Handler(Looper.getMainLooper());
         mEventModel = EventsModel.getInstance();
     }
@@ -165,11 +171,11 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     }
 
     private float LOCATION_MIN_UPDATE_DISTANCE() {
-        return getActivity().getResources().getInteger(R.integer.location_min_update_distance);
+        return getResources().getInteger(R.integer.location_min_update_distance);
     }
 
     private long LOCATION_MIN_UPDATE_TIME() {
-        return getActivity().getResources().getInteger(R.integer.location_min_update_time);
+        return getResources().getInteger(R.integer.location_min_update_time);
     }
 
     @Override
@@ -192,7 +198,16 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        createMap();
+        mHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (isResumed()) {
+                    createMap();
+                    //showHand();
+                }
+            }
+        }, getResources().getInteger(R.integer.slide_animation_duration) * 2);
+
     }
 
     @Override
@@ -209,12 +224,6 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
         applyApplicationState();
         NowApplication.registerForAppChangeStateNotification(mChangeApplicationStateReceiver);
-
-        GpsMyLocationProvider gpsLocationProvider = new GpsMyLocationProvider(activity);
-        gpsLocationProvider.setLocationUpdateMinTime(LOCATION_MIN_UPDATE_TIME());
-        gpsLocationProvider.setLocationUpdateMinDistance(LOCATION_MIN_UPDATE_DISTANCE());
-        myLocationOverLay.enableMyLocation(gpsLocationProvider);
-        myLocationOverLay.setDrawAccuracyEnabled(true);
 
         initEventToCalendarLoader(EventToCalendarLoader.CHECK);
 
@@ -235,10 +244,13 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         displayEventStats(!eventSelected);
 
         //init advert::init load
-        mEventAdvert = mEventModel.generateAdvertExcludeByEventId(mEvent.id);
-        if (mEventAdvert != null) {
-            obtainAdvertCallTime = System.currentTimeMillis();
-            initEventApiExecutor(EventApiExecutor.METHOD_OBTAIN_EVENT, mEventAdvert.eventId);
+        boolean advertPossibility = arg.getBoolean(KEY_ADVERT_POSSIBILITY, true);
+        if (advertPossibility) {
+            mEventAdvert = mEventModel.generateAdvertExcludeByEventId(mEvent.id);
+            if (mEventAdvert != null) {
+                obtainAdvertCallTime = System.currentTimeMillis();
+                initEventApiExecutor(EventApiExecutor.METHOD_OBTAIN_EVENT, mEventAdvert.eventId);
+            }
         }
         //shake
         mShakeDetector = new ShakeDetector(this);
@@ -281,6 +293,30 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         });
     }
 
+    /*private void showHand() {
+        if (isResumed()) {
+            mHandFrameIndex = 0;
+            mTimerForHand = new Timer();
+            mTimerForHand.scheduleAtFixedRate(
+                    new TimerTask() {
+                        @Override
+                        public void run() {
+                            getActivity().runOnUiThread(new Runnable() {
+                                public void run() {
+                                    mHandFrameIndex = (mHandFrameIndex + 1) % 79;
+                                    if (mHandFrameIndex % 4 == 0) {
+                                        mHandView.setImageResource(EventsModel.HAND.get(mHandFrameIndex));
+                                        VTAG.call("run");
+                                    }
+                                }
+                            });
+                        }
+                    },
+                    0,
+                    25);
+        }
+    }*/
+
     private void showAdvertBlockWithDelay(long delay) {
         if (isResumed()) {
             final Context context = getActivity();
@@ -289,16 +325,15 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                     new TimerTask() {
                         @Override
                         public void run() {
-                            mHandler.post(new Runnable() {
+                            getActivity().runOnUiThread(new Runnable() {
                                 public void run() {
                                     expand(mAdvertBlock);
                                     ImageView advertIcon = (ImageView) mAdvertBlock.findViewById(R.id.advert_icon_view);
                                     Glide.with(EventDetailFragment.this).load(mEventAdvert.logoThumb).into(advertIcon);
                                     TextView advertTextView = (TextView) mAdvertBlock.findViewById(R.id.advert_text_view);
-                                    String advertMessage = TextUtils.join(" ", new String[]{context.getResources().getString(R.string.attention_short), EventsModel.getStartTimeAliasForAdvert(context, mEventLinkToAdvert), mEventAdvert.placeName, mEventAdvert.name});
+                                    String advertMessage = TextUtils.join(" ", new String[]{getResources().getString(R.string.attention_short), EventsModel.getStartTimeAliasForAdvert(context, mEventLinkToAdvert), mEventAdvert.placeName, mEventAdvert.name});
                                     advertTextView.setText(advertMessage);
                                     mAdvertBlock.setOnClickListener(EventDetailFragment.this);
-                                    mTimer.cancel();
                                 }
                             });
                         }
@@ -326,7 +361,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                 return true;
             }
         };
-        animation.setDuration((int) (targetHeight / view.getContext().getResources().getDisplayMetrics().density) * 4);
+        animation.setDuration((int) (targetHeight / getResources().getDisplayMetrics().density) * 4);
         view.startAnimation(animation);
     }
 
@@ -360,7 +395,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
     @Override
     public Loader onCreateLoader(int id, Bundle args) {
-        Context context = getActivity();
+        Context context = getActivity().getApplicationContext();
         Loader loader = null;
         switch (id) {
             case CALENDAR_LOADER_ID:
@@ -471,7 +506,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     }
 
     private void displayEventStats(boolean eventStatConfirmed) {
-        Resources resources = getActivity().getResources();
+        Resources resources = getResources();
         EventStats eventStats = EventsModel.getInstance().obtainEventStatsByEventId(mEvent.id);
         boolean myLike = eventStats.myLikeStatus != 0;
         mViewsView.setText(eventStats.getViews(NowApplication.getState() == ONLINE, eventStatConfirmed));
@@ -512,10 +547,15 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         super.onPause();
         NowApplication.unregisterForAppChangeStateNotification(mChangeApplicationStateReceiver);
         mFloatingActionButtonBehavior.deactivate();
-        myLocationOverLay.disableMyLocation();
+        if (myLocationOverLay != null) {
+            myLocationOverLay.disableMyLocation();
+        }
         if (mTimer != null) {
             mTimer.cancel();
         }
+        //if (mTimerForHand != null) {
+        //    mTimerForHand.cancel();
+        //}
         mHandler.removeCallbacksAndMessages(null);
         mPosterThumbView.setOnClickListener(null);
         mSiteButton.setOnClickListener(null);
@@ -531,38 +571,38 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
     private void createMap() {
 
-        Context context = getActivity();
+        Context context = getActivity().getApplicationContext();
 
-        //configure map view container :: set height - half of screen height
-        DisplayMetrics displaymetrics = new DisplayMetrics();
-        getActivity().getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
-        int height = displaymetrics.heightPixels;
-        mMapViewContainer.getLayoutParams().height = (height + getActivity().getResources().getDimensionPixelOffset(R.dimen.logo_max_height)) / 2;
 
         //configure map view :: set parameters + add marker
         mMapView.setBuiltInZoomControls(false);
         mMapView.setMultiTouchControls(true);
         mMapView.setTileSource(TileSourceFactory.MAPNIK);
-        mEventLocationPoint = new GeoPoint(mEvent.lat, mEvent.lng);
         mMapView.getController().setZoom(MAX_ZOOM);
-        mMapView.getController().setCenter(mEventLocationPoint);
-
-        //configure map view overlay :: add map marker
-        final ArrayList<OverlayItem> items = new ArrayList<>();
-        OverlayItem overlayItem = new OverlayItem(null, null, mEventLocationPoint);
-        overlayItem.setMarkerHotspot(OverlayItem.HotspotPlace.BOTTOM_CENTER);
-        items.add(overlayItem);
-        DefaultResourceProxyImpl resProxyImp = new DefaultResourceProxyImpl(context);
-        ItemizedIconOverlay markersOverlay = new ItemizedIconOverlay<>(items, getResources().getDrawable(R.drawable.ic_action_location), null, resProxyImp);
-        mMapView.getOverlays().add(markersOverlay);
 
         //configure map view overlay :: add my location marker
         myLocationOverLay = new MyLocationNewOverlay(context, mMapView);
+        GpsMyLocationProvider gpsLocationProvider = new GpsMyLocationProvider(context);
+        gpsLocationProvider.setLocationUpdateMinTime(LOCATION_MIN_UPDATE_TIME());
+        gpsLocationProvider.setLocationUpdateMinDistance(LOCATION_MIN_UPDATE_DISTANCE());
+        myLocationOverLay.enableMyLocation(gpsLocationProvider);
+        myLocationOverLay.setDrawAccuracyEnabled(true);
         mMapView.getOverlays().add(myLocationOverLay);
 
         mMapView.setMapListener(mMapListener);
 
         checkZoomButtons();
+
+        //configure map view overlay :: add map marker
+        mEventLocationPoint = new GeoPoint(mEvent.lat, mEvent.lng);
+        final ArrayList<OverlayItem> items = new ArrayList<>();
+        OverlayItem overlayItem = new OverlayItem(null, null, mEventLocationPoint);
+        overlayItem.setMarkerHotspot(OverlayItem.HotspotPlace.BOTTOM_CENTER);
+        items.add(overlayItem);
+        DefaultResourceProxyImpl resProxyImp = new DefaultResourceProxyImpl(getActivity());
+        ItemizedIconOverlay markersOverlay = new ItemizedIconOverlay<>(items, getResources().getDrawable(R.drawable.ic_action_location), null, resProxyImp);
+        mMapView.getOverlays().add(markersOverlay);
+        mMapView.getController().setCenter(mEventLocationPoint);
     }
 
     @Override
@@ -613,7 +653,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
     private View constructInterface(View view) {
 
-        final Context context = getActivity();
+        final Context context = getActivity().getApplicationContext();
 
         mRootLayout = (CoordinatorLayout) view.findViewById(R.id.root_layout);
         TextView titleView = (TextView) view.findViewById(R.id.title_view);
@@ -642,7 +682,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
             }).into(mPosterThumbView);
         } else {
             mProgressWheel.setVisibility(View.GONE);
-            mPosterThumbView.setImageDrawable(context.getResources().getDrawable(R.drawable.event_poster_stub));
+            mPosterThumbView.setImageDrawable(getResources().getDrawable(R.drawable.event_poster_stub));
         }
         String logoThumb = mEvent.logoThumb;
         final ImageView logoView = (ImageView) view.findViewById(R.id.logo_view);
@@ -667,7 +707,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         }
         int categoryDrawableId = EventsModel.getCategoryBigDrawable(mEvent.category);
         if (categoryDrawableId != 0) {
-            ((ImageView) view.findViewById(R.id.category_type_view)).setImageDrawable(context.getResources().getDrawable(categoryDrawableId));
+            ((ImageView) view.findViewById(R.id.category_type_view)).setImageDrawable(getResources().getDrawable(categoryDrawableId));
         }
 
         TextView dayDateView = (TextView) view.findViewById(R.id.day_date_view);
@@ -712,23 +752,29 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         createEventTimeTextBlock(context, timeView, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE));
         createEventEntranceTextBlock(context, entranceView, mEvent.entrance);
         mDescriptionView.setText(mEvent.eventDescription);
-        mMapView = (MapView) view.findViewById(R.id.map_view);
-        mScrollView = (ScrollView) view.findViewById(R.id.scroll_view);
-
-        createEventPlaceTextBlock(context, placeNameView, mEvent.placeName, mEvent.address);
 
         mMapViewContainer = view.findViewById(R.id.map_view_container);
+        mMapView = (MapView) view.findViewById(R.id.map_view);
+        mScrollView = (ScrollView) view.findViewById(R.id.scroll_view);
+        mViewsIcon = (ImageView) view.findViewById(R.id.event_view_icon);
+        mLikesIcon = (ImageView) view.findViewById(R.id.event_like_icon);
+        mLikeContainer = view.findViewById(R.id.event_like_container);
+        mAdvertBlock = view.findViewById(R.id.advert_block);
+        mHandView = (ImageView) view.findViewById(R.id.hand_view);
+
+        //configure map view container :: set height - half of screen height
+        DisplayMetrics displaymetrics = new DisplayMetrics();
+        getActivity().getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
+        int height = displaymetrics.heightPixels;
+        mMapViewContainer.getLayoutParams().height = (height + getResources().getDimensionPixelOffset(R.dimen.logo_max_height)) / 2;
+
+        createEventPlaceTextBlock(context, placeNameView, mEvent.placeName, mEvent.address);
 
         //TODO: do not work
         mScrollView.scrollTo(0, 0);
 
         mFloatingActionButton = (FloatingActionButton) view.findViewById(R.id.fab_event);
         mFloatingActionButton.setBackgroundTintList(ColorStateList.valueOf(EventsModel.getCategoryColor(mEvent.category)));
-
-        mViewsIcon = (ImageView) view.findViewById(R.id.event_view_icon);
-        mLikesIcon = (ImageView) view.findViewById(R.id.event_like_icon);
-        mLikeContainer = view.findViewById(R.id.event_like_container);
-        mAdvertBlock = view.findViewById(R.id.advert_block);
 
         return view;
     }
@@ -743,7 +789,6 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     }
 
     public boolean onOptionsItemSelected(MenuItem item) {
-        Context context = getActivity();
         switch (item.getItemId()) {
 
             case R.id.action_share:
@@ -752,7 +797,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                 sharingIntent.setType("text/plain");
                 sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, mEvent.name);
                 sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, mEvent.eventDescription);
-                startActivity(Intent.createChooser(sharingIntent, context.getResources().getString(R.string.share_title)));
+                startActivity(Intent.createChooser(sharingIntent, getResources().getString(R.string.share_title)));
 
                 return true;
 
@@ -788,7 +833,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     }
 
     private void createEventEntranceTextBlock(Context context, TextView entranceView, String entrance) {
-        String title = context.getResources().getString(R.string.entrance_title);
+        String title = getResources().getString(R.string.entrance_title);
         SpannableString titleSpan = new SpannableString(title);
         titleSpan.setSpan(new RobotoTextAppearanceSpan(context, R.style.EntranceTitle), 0, title.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
         SpannableString entranceSpan = new SpannableString(entrance);
@@ -824,13 +869,14 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         timeView.setText(finalText);
     }
 
-    public void setEventItem(Event event) {
+    public void setEventAndAdvertPossibility(Event event, boolean advertPossibility) {
         Bundle arg = getArguments();
         if (arg == null) {
             arg = new Bundle();
         }
         arg.putParcelable(KEY_EVENT_ITEM, event);
         arg.putBoolean(KEY_SELECTED, true);
+        arg.putBoolean(KEY_ADVERT_POSSIBILITY, advertPossibility);
         setArguments(arg);
     }
 
@@ -844,10 +890,10 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                     + " must implement IEventPosterSelectListener");
         }
         try {
-            mEventItemSelectListener = (IEventSelectListener) getActivity();
+            mEventClickListener = (IEventClickListener) getActivity();
         } catch (ClassCastException exp) {
             throw new ClassCastException(activity.toString()
-                    + " must implement IEventSelectListener");
+                    + " must implement IEventClickListener");
         }
     }
 
@@ -855,13 +901,13 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     public void onDetach() {
         super.onDetach();
         mEventPosterSelectListener = null;
-        mEventItemSelectListener = null;
+        mEventClickListener = null;
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        mHandler.removeCallbacksAndMessages(null);
+        mMapView.setMapListener(null);
     }
 
     @Override
@@ -938,7 +984,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
             case R.id.advert_block:
 
-                mEventItemSelectListener.onEventSelect(mEventLinkToAdvert, true);
+                mEventClickListener.onEventClick(mEventLinkToAdvert, true);
                 mAdvertBlock.setOnClickListener(null);
 
                 break;
@@ -1010,10 +1056,11 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         //TODO: implement
     }
 
-    class FloatingActionButtonBehavior extends FloatingActionButton.Behavior {
+    static class FloatingActionButtonBehavior extends FloatingActionButton.Behavior {
 
         private float mTranslationY;
         private boolean mAllowMoveOnScroll, mAllowMoveOnSnackbarShow;
+        private WeakReference<EventDetailFragment> fragmentReference;
 
         private final ViewTreeObserver.OnGlobalLayoutListener floatingActionButtonLayoutListener = new ViewTreeObserver.OnGlobalLayoutListener() {
 
@@ -1032,9 +1079,10 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
             }
         };
 
-        public FloatingActionButtonBehavior() {
+        public FloatingActionButtonBehavior(EventDetailFragment fragment) {
             mAllowMoveOnScroll = true;
             mAllowMoveOnSnackbarShow = true;
+            fragmentReference = new WeakReference<>(fragment);
         }
 
         public boolean onDependentViewChanged(CoordinatorLayout parent, FloatingActionButton child, View dependency) {
@@ -1076,51 +1124,69 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         }
 
         public void activate() {
-            mFloatingActionButton.getViewTreeObserver().addOnGlobalLayoutListener(floatingActionButtonLayoutListener);
-            mScrollView.getViewTreeObserver().addOnScrollChangedListener(scrollListener);
-            validatePosition();
+            EventDetailFragment fragment = fragmentReference.get();
+            if (fragment != null) {
+                fragment.mFloatingActionButton.getViewTreeObserver().addOnGlobalLayoutListener(floatingActionButtonLayoutListener);
+                fragment.mScrollView.getViewTreeObserver().addOnScrollChangedListener(scrollListener);
+                validatePosition();
+            }
         }
 
         public void deactivate() {
-            mFloatingActionButton.getViewTreeObserver().removeGlobalOnLayoutListener(floatingActionButtonLayoutListener);
-            mScrollView.getViewTreeObserver().removeOnScrollChangedListener(scrollListener);
+            EventDetailFragment fragment = fragmentReference.get();
+            if (fragment != null) {
+                fragment.mFloatingActionButton.getViewTreeObserver().removeGlobalOnLayoutListener(floatingActionButtonLayoutListener);
+                fragment.mScrollView.getViewTreeObserver().removeOnScrollChangedListener(scrollListener);
+            }
         }
 
         private void validatePosition() {
-            if (EventDetailFragment.this.isResumed()) {
-                float appWorkAreaHeight = mRootLayout.getHeight();
+            EventDetailFragment fragment = fragmentReference.get();
+            if (fragment != null && fragment.isResumed()) {
+                float appWorkAreaHeight = fragment.mRootLayout.getHeight();
                 float appHeight = getAppHeight();
-                int space = getActivity().getResources().getDimensionPixelOffset(R.dimen.fab_compat_margin);
-                int fabHeight = mFloatingActionButton.getHeight();
+                int space = fragment.getResources().getDimensionPixelOffset(R.dimen.fab_compat_margin);
+                int fabHeight = fragment.mFloatingActionButton.getHeight();
                 float bottomViewBottom = getBottomViewBottom();
                 if (mAllowMoveOnScroll) {
+                    float y;
                     if (appHeight < bottomViewBottom) {
-                        mFloatingActionButton.setY(appWorkAreaHeight - fabHeight - space);
+                        y = appWorkAreaHeight - fabHeight - space;
                     } else {
-                        mFloatingActionButton.setY(appWorkAreaHeight - (appHeight - bottomViewBottom) - fabHeight - space);
+                        y = appWorkAreaHeight - (appHeight - bottomViewBottom) - fabHeight - space;
                     }
+                    fragment.mFloatingActionButton.setY(y);
+                    fragment.mHandView.setY(y - fragment.mHandView.getHeight() / 2 - fragment.getResources().getDimension(R.dimen.big_space) - fabHeight / 2 * (fragment.mFloatingActionButton.getVisibility() == View.VISIBLE ? .5f : -1));
                 }
-                mDescriptionView.setPadding(0, 0, 0, mFloatingActionButton.getVisibility() == View.VISIBLE ? (fabHeight + space) / 3 * 2 : 0);
+                fragment.mDescriptionView.setPadding(0, 0, 0, fragment.mFloatingActionButton.getVisibility() == View.VISIBLE ? (fabHeight + space) / 3 * 2 : 0);
             }
         }
 
         private float getAppHeight() {
-            float appWorkAreaHeight = mRootLayout.getHeight();
-            int[] appWorkAreaCords = new int[2];
-            mRootLayout.getLocationOnScreen(appWorkAreaCords);
-            return appWorkAreaCords[1] + appWorkAreaHeight;
+            EventDetailFragment fragment = fragmentReference.get();
+            if (fragment != null) {
+                float appWorkAreaHeight = fragment.mRootLayout.getHeight();
+                int[] appWorkAreaCords = new int[2];
+                fragment.mRootLayout.getLocationOnScreen(appWorkAreaCords);
+                return appWorkAreaCords[1] + appWorkAreaHeight;
+            }
+            return 0;
         }
 
         private float getBottomViewBottom() {
-            View bottomView = mMapViewContainer;
-            if (mPhoneButton.getVisibility() == View.VISIBLE) {
-                bottomView = mPhoneButton;
-            } else if (mSiteButton.getVisibility() == View.VISIBLE) {
-                bottomView = mSiteButton;
+            EventDetailFragment fragment = fragmentReference.get();
+            if (fragment != null) {
+                View bottomView = fragment.mMapViewContainer;
+                if (fragment.mPhoneButton.getVisibility() == View.VISIBLE) {
+                    bottomView = fragment.mPhoneButton;
+                } else if (fragment.mSiteButton.getVisibility() == View.VISIBLE) {
+                    bottomView = fragment.mSiteButton;
+                }
+                int[] bottomViewCords = new int[2];
+                bottomView.getLocationOnScreen(bottomViewCords);
+                return bottomViewCords[1];
             }
-            int[] bottomViewCords = new int[2];
-            bottomView.getLocationOnScreen(bottomViewCords);
-            return bottomViewCords[1];
+            return 0;
         }
 
         public boolean doBottomViewOverlap() {
@@ -1128,7 +1194,11 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         }
 
         private boolean doBottomViewOverlap(boolean withSnackBar) {
-            return getAppHeight() < getBottomViewBottom() + (withSnackBar ? 1 : 0) * getActivity().getResources().getDimensionPixelOffset(R.dimen.snack_bar_height);
+            EventDetailFragment fragment = fragmentReference.get();
+            if (fragment != null) {
+                return getAppHeight() < getBottomViewBottom() + (withSnackBar ? 1 : 0) * fragment.getResources().getDimensionPixelOffset(R.dimen.snack_bar_height);
+            }
+            return false;
         }
 
         public void allowMoveOnScroll(boolean value) {

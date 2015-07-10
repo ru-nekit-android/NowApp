@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.EventsModel;
 import ru.nekit.android.nowapp.model.vo.Event;
-import ru.nekit.android.nowapp.modelView.listeners.IEventSelectListener;
+import ru.nekit.android.nowapp.modelView.listeners.IEventClickListener;
 
 import static ru.nekit.android.nowapp.model.EventsModel.getCategoryDrawable;
 import static ru.nekit.android.nowapp.model.EventsModel.getCurrentDateTime;
@@ -53,7 +53,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     private final int mItemHeight, mColumns, mMargin, mLoadMoreCount;
     private WeakReference<RecyclerView> mRecyclerViewReference;
     private RecyclerView.OnScrollListener mScrollListener;
-    private IEventSelectListener mItemClickListener;
+    private IEventClickListener mItemClickListener;
     private boolean mImmediateImageLoading;
     private OnLoadMorelListener mLoadMoreListener;
     private Timer mTimer;
@@ -83,7 +83,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         return displaymetrics.widthPixels;
     }
 
-    public void setOnItemClickListener(IEventSelectListener listener) {
+    public void setOnItemClickListener(IEventClickListener listener) {
         mItemClickListener = listener;
     }
 
@@ -129,13 +129,15 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
                         mHandler.post(new Runnable() {
                             public void run() {
-                                updateEventStartTime();
+                                if (TimeUnit.SECONDS.toMinutes(EventsModel.getCurrentDayTime(mContext, false)) % mContext.getResources().getInteger(R.integer.event_time_precision_in_minutes) == 0) {
+                                    updateEventStartTime();
+                                }
                             }
                         });
                     }
                 },
                 0,
-                TimeUnit.MINUTES.toMillis(mContext.getResources().getInteger(R.integer.event_time_precision_in_minutes)) / 2);
+                TimeUnit.SECONDS.toMillis(1));
 
         updateEventStartTime();
     }
@@ -463,7 +465,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         public void onClick(View view) {
             EventItemWrapper eventItemWrapper = getItem(getAdapterPosition());
             if (eventItemWrapper != null) {
-                mItemClickListener.onEventSelect(eventItemWrapper.event, false);
+                mItemClickListener.onEventClick(eventItemWrapper.event, false);
             }
         }
     }

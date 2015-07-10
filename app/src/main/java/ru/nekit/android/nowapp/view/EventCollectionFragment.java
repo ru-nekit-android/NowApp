@@ -5,8 +5,6 @@ import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Handler;
@@ -50,14 +48,14 @@ import ru.nekit.android.nowapp.model.EventsModel;
 import ru.nekit.android.nowapp.model.vo.Event;
 import ru.nekit.android.nowapp.modelView.EventCollectionAdapter;
 import ru.nekit.android.nowapp.modelView.listeners.IBackPressedListener;
-import ru.nekit.android.nowapp.modelView.listeners.IEventSelectListener;
+import ru.nekit.android.nowapp.modelView.listeners.IEventClickListener;
 import ru.nekit.android.nowapp.widget.FloatingActionButtonAnimator;
 import ru.nekit.android.nowapp.widget.ScrollingGridLayoutManager;
 import ru.nekit.android.nowapp.widget.SoftKeyboardListenerLayout;
 
 import static ru.nekit.android.nowapp.NowApplication.APP_STATE.ONLINE;
 
-public class EventCollectionFragment extends Fragment implements LoaderManager.LoaderCallbacks, IEventSelectListener, View.OnClickListener, SearchView.OnQueryTextListener, IBackPressedListener, TextView.OnEditorActionListener, SoftKeyboardListenerLayout.OnSoftKeyboardListener, EventCollectionAdapter.OnLoadMorelListener {
+public class EventCollectionFragment extends Fragment implements LoaderManager.LoaderCallbacks, IEventClickListener, View.OnClickListener, SearchView.OnQueryTextListener, IBackPressedListener, TextView.OnEditorActionListener, SoftKeyboardListenerLayout.OnSoftKeyboardListener, EventCollectionAdapter.OnLoadMorelListener {
 
     public static final String TAG = "ru.nekit.android.event_collection_fragment";
 
@@ -74,7 +72,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     private Event mWaitingForOpenItem;
     private boolean mKeyboardVisible;
     private EventCollectionAdapter mEventCollectionAdapter;
-    private IEventSelectListener mEventItemSelectListener;
+    private IEventClickListener mEventItemSelectListener;
     private FloatingActionButtonAnimator mFloatingActionButtonAnimator;
     private RecyclerView mEventItemsView;
     private SwipeRefreshLayout mSwipeRefreshLayout;
@@ -93,15 +91,15 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     }
 
     private int smoothScrollDuration() {
-        return getActivity().getResources().getInteger(R.integer.smooth_scroll_duration);
+        return getResources().getInteger(R.integer.smooth_scroll_duration);
     }
 
     private boolean featureLiveSearch() {
-        return getActivity().getResources().getBoolean(R.bool.feature_live_search);
+        return getResources().getBoolean(R.bool.feature_live_search);
     }
 
     @Override
-    public void onEventSelect(final Event event, boolean openNew) {
+    public void onEventClick(final Event event, boolean openNew) {
         if (mLoadingState == LOADING_STATE.LOADED) {
             if (searchViewVisible()) {
                 applyMode(MODE.NORMAL);
@@ -110,11 +108,11 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                 } else {
                     mFloatingActionButtonAnimator.hide();
                     mEventItemsView.requestFocus();
-                    mEventItemSelectListener.onEventSelect(event, false);
+                    mEventItemSelectListener.onEventClick(event, false);
                 }
             } else {
                 mFloatingActionButtonAnimator.hide();
-                mEventItemSelectListener.onEventSelect(event, false);
+                mEventItemSelectListener.onEventClick(event, false);
             }
         } else {
             //strange behavior on usual user-case
@@ -232,26 +230,6 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
             actionBar.setDisplayHomeAsUpEnabled(false);
         }
 
-        int listColumn = getResources().getInteger(R.integer.event_collection_column_count);
-
-        ScrollingGridLayoutManager mEventCollectionLayoutManager = new ScrollingGridLayoutManager(activity, listColumn, smoothScrollDuration());
-
-        mEventCollectionAdapter = new EventCollectionAdapter(activity, listColumn);
-        mEventCollectionAdapter.setHasStableIds(true);
-        mEventCollectionAdapter.setOnItemClickListener(this);
-
-        mEventItemsView.setHasFixedSize(true);
-        mEventItemsView.setItemAnimator(new DefaultItemAnimator());
-        mEventItemsView.setAdapter(mEventCollectionAdapter);
-        mEventItemsView.setLayoutManager(mEventCollectionLayoutManager);
-
-        mEventCollectionLayoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
-            @Override
-            public int getSpanSize(int position) {
-                return mEventCollectionAdapter.getSpanSize(position);
-            }
-        });
-
         mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
@@ -263,6 +241,8 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
 
         mEventCollectionAdapter.setLoadMoreListener(this);
 
+        mEventCollectionAdapter.setOnItemClickListener(this);
+
         mFloatingActionButton.setOnClickListener(this);
         mFloatingActionButtonAnimator = new FloatingActionButtonAnimator(activity, mFloatingActionButton, mEventItemsView);
         mScrollView.setOnSoftKeyboardListener(this);
@@ -272,10 +252,10 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                 public void run() {
                     restoreMode();
                 }
-            }, activity.getResources().getInteger(R.integer.slide_animation_duration) / 3 * 2);
+            }, getResources().getInteger(R.integer.slide_animation_duration) / 3 * 2);
         } else {
             mEventItemsView.requestFocus();
-            setEventsFromModel();
+
             if (mEventModel.dataIsActual()) {
                 if (mEventModel.getCurrentPage() != mCurrentPage) {
                     mCurrentPage = mEventModel.getCurrentPage();
@@ -295,7 +275,6 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
             }
         }
 
-        mEventCollectionAdapter.registerRecyclerView(mEventItemsView);
         mFloatingActionButtonAnimator.attachToRecyclerView();
 
         applyApplicationState();
@@ -371,6 +350,29 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         mSearchStatus = (TextView) view.findViewById(R.id.search_status);
         mScrollView = (SoftKeyboardListenerLayout) view.findViewById(R.id.root_layout);
 
+        int listColumn = getResources().getInteger(R.integer.event_collection_column_count);
+
+        mEventCollectionAdapter = new EventCollectionAdapter(getActivity(), listColumn);
+        mEventCollectionAdapter.setHasStableIds(true);
+        mEventItemsView.setAdapter(mEventCollectionAdapter);
+
+        mEventCollectionAdapter.registerRecyclerView(mEventItemsView);
+
+        mEventItemsView.setHasFixedSize(true);
+        mEventItemsView.setItemAnimator(new DefaultItemAnimator());
+
+        ScrollingGridLayoutManager mEventCollectionLayoutManager = new ScrollingGridLayoutManager(getActivity(), listColumn, smoothScrollDuration());
+
+        mEventCollectionLayoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
+            @Override
+            public int getSpanSize(int position) {
+                return mEventCollectionAdapter.getSpanSize(position);
+            }
+        });
+
+        mEventItemsView.setLayoutManager(mEventCollectionLayoutManager);
+
+        setEventsFromModel();
         return view;
     }
 
@@ -383,7 +385,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     public void onSoftKeyboardHidden() {
         if (mWaitingForOpenItem != null) {
             mFloatingActionButtonAnimator.hide();
-            mEventItemSelectListener.onEventSelect(mWaitingForOpenItem, false);
+            mEventItemSelectListener.onEventClick(mWaitingForOpenItem, false);
             mWaitingForOpenItem = null;
         }
         mKeyboardVisible = false;
@@ -452,10 +454,10 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         try {
-            mEventItemSelectListener = (IEventSelectListener) getActivity();
+            mEventItemSelectListener = (IEventClickListener) getActivity();
         } catch (ClassCastException exp) {
             throw new ClassCastException(activity.toString()
-                    + " must implement IEventSelectListener");
+                    + " must implement IEventClickListener");
         }
     }
 
@@ -466,6 +468,12 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     }
 
     @Override
+    public void onDestroy() {
+        super.onDetach();
+        mEventCollectionAdapter.unregisterRecyclerView(mEventItemsView);
+    }
+
+    @Override
     public void onPause() {
         mSwipeRefreshLayout.setRefreshing(false);
         mSwipeRefreshLayout.setOnRefreshListener(null);
@@ -473,9 +481,10 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         loaderManager.destroyLoader(LOADER_ID);
         loaderManager.destroyLoader(SEARCHER_ID);
         setLoadingState(LOADING_STATE.LOADED);
-        mEventCollectionAdapter.unregisterRecyclerView(mEventItemsView);
+
         mEventCollectionAdapter.setOnItemClickListener(null);
         mEventCollectionAdapter.setLoadMoreListener(null);
+
         mFloatingActionButtonAnimator.dettachFromRecyclerView();
         mFloatingActionButton.setOnClickListener(null);
         mScrollView.setOnSoftKeyboardListener(null);
@@ -617,10 +626,9 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     }
 
     private void animateFade(boolean in, View view) {
-        Context context = getActivity();
-        Resources res = context != null ? context.getResources() : null;
+        Resources res = getResources();
         if (res != null) {
-            int duration = context.getResources().getInteger(R.integer.change_mode_animation_duration);
+            int duration = getResources().getInteger(R.integer.change_mode_animation_duration);
             view.animate().alpha(in ? 1 : 0).setInterpolator(new AccelerateDecelerateInterpolator()).setListener(mAnimatorListener).setDuration(duration);
         }
     }

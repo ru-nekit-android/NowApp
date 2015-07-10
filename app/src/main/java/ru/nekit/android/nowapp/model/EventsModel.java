@@ -806,11 +806,11 @@ public class EventsModel {
                 }
             }
         }
-        //for debug
+        /*for debug
         if (result == null && eventAdvertsSource.size() > 0) {
             result = eventAdvertsSource.get(0);
         }
-
+        */
         return result;
     }
 
