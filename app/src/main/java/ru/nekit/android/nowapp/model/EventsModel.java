@@ -99,6 +99,13 @@ public class EventsModel {
     private static final int DATABASE_VERSION = 10;
     private static final HashMap<String, String> CATEGORY_TYPE_KEYWORDS = new HashMap<>();
     private static final HashMap<String, Integer> CATEGORY_TYPE = new HashMap<>();
+    private static final String CATEGORY_SPORT = "category_sport";
+    private static final String CATEGORY_ENTERTAINMENT = "category_entertainment";
+    private static final String CATEGORY_OTHER = "category_other";
+    private static final String CATEGORY_EDUCATION = "category_education";
+    private static final String CATEGORY_DISCOUNT = "category_discount";
+    private static final String CATEGORY_MUSIC = "category_music";
+
     private static final HashMap<String, Integer> CATEGORY_TYPE_COLOR = new HashMap<>();
     private static final HashMap<String, Integer> CATEGORY_TYPE_BIG = new HashMap<>();
     public static ArrayList<Integer> HAND;
@@ -134,24 +141,33 @@ public class EventsModel {
         mEventsCountPerPage = 0;
         mReachEndOfDataList = false;
 
-        CATEGORY_TYPE.put("category_sport", R.drawable.category_sport);
-        CATEGORY_TYPE.put("category_entertainment", R.drawable.category_entertainment);
-        CATEGORY_TYPE.put("category_other", R.drawable.category_other);
-        CATEGORY_TYPE.put("category_education", R.drawable.category_education);
+        CATEGORY_TYPE.put(CATEGORY_SPORT, R.drawable.event_category_sport);
+        CATEGORY_TYPE.put(CATEGORY_ENTERTAINMENT, R.drawable.event_category_entertainment);
+        CATEGORY_TYPE.put(CATEGORY_OTHER, R.drawable.event_category_other);
+        CATEGORY_TYPE.put(CATEGORY_EDUCATION, R.drawable.event_category_education);
+        CATEGORY_TYPE.put(CATEGORY_DISCOUNT, R.drawable.event_category_discount);
+        CATEGORY_TYPE.put(CATEGORY_MUSIC, R.drawable.event_category_music);
 
-        CATEGORY_TYPE_KEYWORDS.put("category_sport", context.getResources().getString(R.string.event_category_sport_keywords));
-        CATEGORY_TYPE_KEYWORDS.put("category_entertainment", context.getResources().getString(R.string.event_category_entertainment_keywords));
-        CATEGORY_TYPE_KEYWORDS.put("category_other", context.getResources().getString(R.string.event_category_other_keywords));
-        CATEGORY_TYPE_KEYWORDS.put("category_education", context.getResources().getString(R.string.event_category_education_keywords));
+        CATEGORY_TYPE_KEYWORDS.put(CATEGORY_SPORT, context.getResources().getString(R.string.event_category_sport_keywords));
+        CATEGORY_TYPE_KEYWORDS.put(CATEGORY_ENTERTAINMENT, context.getResources().getString(R.string.event_category_entertainment_keywords));
+        CATEGORY_TYPE_KEYWORDS.put(CATEGORY_OTHER, context.getResources().getString(R.string.event_category_other_keywords));
+        CATEGORY_TYPE_KEYWORDS.put(CATEGORY_EDUCATION, context.getResources().getString(R.string.event_category_education_keywords));
+        CATEGORY_TYPE_KEYWORDS.put(CATEGORY_MUSIC, context.getResources().getString(R.string.event_category_music_keywords));
+        CATEGORY_TYPE_KEYWORDS.put(CATEGORY_DISCOUNT, context.getResources().getString(R.string.event_category_discount_keywords));
 
-        CATEGORY_TYPE_BIG.put("category_sport", R.drawable.event_category_sport_big);
-        CATEGORY_TYPE_BIG.put("category_entertainment", R.drawable.event_category_entertainment_big);
-        CATEGORY_TYPE_BIG.put("category_other", R.drawable.event_category_other_big);
-        CATEGORY_TYPE_BIG.put("category_education", R.drawable.event_category_education_big);
-        CATEGORY_TYPE_COLOR.put("category_sport", context.getResources().getColor(R.color.event_category_sport));
-        CATEGORY_TYPE_COLOR.put("category_entertainment", context.getResources().getColor(R.color.event_category_entertainment));
-        CATEGORY_TYPE_COLOR.put("category_other", context.getResources().getColor(R.color.event_category_other));
-        CATEGORY_TYPE_COLOR.put("category_education", context.getResources().getColor(R.color.event_category_education));
+        CATEGORY_TYPE_BIG.put(CATEGORY_SPORT, R.drawable.event_category_sport_big);
+        CATEGORY_TYPE_BIG.put(CATEGORY_ENTERTAINMENT, R.drawable.event_category_entertainment_big);
+        CATEGORY_TYPE_BIG.put(CATEGORY_OTHER, R.drawable.event_category_other_big);
+        CATEGORY_TYPE_BIG.put(CATEGORY_EDUCATION, R.drawable.event_category_education_big);
+        CATEGORY_TYPE_BIG.put(CATEGORY_DISCOUNT, R.drawable.event_category_discount_big);
+        CATEGORY_TYPE_BIG.put(CATEGORY_MUSIC, R.drawable.event_category_music_big);
+
+        CATEGORY_TYPE_COLOR.put(CATEGORY_SPORT, context.getResources().getColor(R.color.event_category_sport));
+        CATEGORY_TYPE_COLOR.put(CATEGORY_ENTERTAINMENT, context.getResources().getColor(R.color.event_category_entertainment));
+        CATEGORY_TYPE_COLOR.put(CATEGORY_OTHER, context.getResources().getColor(R.color.event_category_other));
+        CATEGORY_TYPE_COLOR.put(CATEGORY_EDUCATION, context.getResources().getColor(R.color.event_category_education));
+        CATEGORY_TYPE_COLOR.put(CATEGORY_MUSIC, context.getResources().getColor(R.color.event_category_music));
+        CATEGORY_TYPE_COLOR.put(CATEGORY_DISCOUNT, context.getResources().getColor(R.color.event_category_discount));
 
         mEventDataSource = new EventDataSource(context, DATABASE_NAME, DATABASE_VERSION);
         mEventStatsDataSource = new EventStatsDataSource(context, DATABASE_NAME, DATABASE_VERSION);
@@ -866,10 +882,7 @@ public class EventsModel {
     }
 
     private boolean checkOnEventAvailableInOffline(int eventId) {
-        if (NowApplication.getState() == OFFLINE) {
-            return mEventDataSource.getByEventId(eventId) != null;
-        }
-        return true;
+        return NowApplication.getState() != OFFLINE || mEventDataSource.getByEventId(eventId) != null;
     }
 
     private class EventNameComparator implements Comparator<Event> {

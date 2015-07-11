@@ -3,9 +3,9 @@
     <string name="app_name">Сейчас</string>
     <string name="about_title">О программе</string>
 
-    <string name="going_right_now">уже идёт!</string>
+    <string name="going_right_now">Сейчас!</string>
     <string name="going_right_now_advert">сейчас</string>
-    <string name="going_right_now_keywords">уже идёт сейчас</string>
+    <string name="going_right_now_keywords">уже идет сейчас</string>
     <string name="already_ended">уже закончилось!</string>
     <string name="entrance_title">"ВХОД:"</string>
     <string name="today">Сегодня</string>
@@ -38,6 +38,8 @@
     <string name="event_category_other_keywords">другое корона</string>
     <string name="event_category_entertainment_keywords">развлечения веселье вечер</string>
     <string name="event_category_education_keywords">обучение книг* знания наука</string>
+    <string name="event_category_music_keywords">музыка культура исскуство</string>
+    <string name="event_category_discount_keywords">скидка</string>
     <string name="enterance_title">\"ВХОД:\"</string>
     <string name="share_title">Поделиться</string>
     <string name="add_to_calendar_title">Добавить в календарь</string>
