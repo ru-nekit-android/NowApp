@@ -5,6 +5,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import java.util.ArrayList;
 
@@ -41,7 +43,7 @@ public class EventAdvertDataSource {
         database = eventSQLHelper.getWritableDatabase();
     }
 
-    public void createEventAdvert(EventAdvert eventAdvert) {
+    public void createEventAdvert(@NonNull EventAdvert eventAdvert) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(EventSQLiteHelper.EVENT_ADVERT_ID, eventAdvert.id);
         contentValues.put(EventFieldNameDictionary.ADVERT.EVENT_ID, eventAdvert.eventId);
@@ -56,6 +58,7 @@ public class EventAdvertDataSource {
         database.insertWithOnConflict(EventSQLiteHelper.EVENT_ADVERT_TABLE_NAME, EventSQLiteHelper.EVENT_ADVERT_ID, contentValues, SQLiteDatabase.CONFLICT_REPLACE);
     }
 
+    @Nullable
     public EventAdvert getByEventId(int id) {
         EventAdvert eventAdvert = null;
         Cursor cursor = database.query(EventSQLiteHelper.EVENT_ADVERT_TABLE_NAME,
@@ -70,6 +73,7 @@ public class EventAdvertDataSource {
         return eventAdvert;
     }
 
+    @NonNull
     public ArrayList<EventAdvert> getAllEventAdverts() {
         ArrayList<EventAdvert> eventAdverts = new ArrayList<>();
         Cursor cursor = database.query(EventSQLiteHelper.EVENT_ADVERT_TABLE_NAME,
@@ -85,7 +89,8 @@ public class EventAdvertDataSource {
         return eventAdverts;
     }
 
-    private EventAdvert cursorToEventAdvert(Cursor cursor) {
+    @NonNull
+    private EventAdvert cursorToEventAdvert(@NonNull Cursor cursor) {
         EventAdvert eventAdvert = new EventAdvert();
         eventAdvert.id = cursor.getInt(cursor.getColumnIndex(EventSQLiteHelper.EVENT_ADVERT_ID));
         eventAdvert.eventId = cursor.getInt(cursor.getColumnIndex(EventFieldNameDictionary.ADVERT.EVENT_ID));

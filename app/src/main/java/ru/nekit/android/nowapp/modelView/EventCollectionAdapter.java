@@ -1,10 +1,11 @@
 package ru.nekit.android.nowapp.modelView;
 
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PorterDuff;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
@@ -43,21 +44,27 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     private static final boolean STOP_IMAGE_LOADING_WITH_QUICK_SCROLLING = true;
     private static final int MAX_SCROLL_SPEED = 70;
 
+    @NonNull
     private final LayoutInflater mInflater;
+    @NonNull
     private final Context mContext;
+    @NonNull
     private final ArrayList<EventItemWrapper> mEventItems;
+    @NonNull
     private final ArrayList<Target> mLoadingList;
     private final EventsModel mEventModel;
     private final int mItemHeight, mColumns, mMargin, mLoadMoreCount;
     private WeakReference<RecyclerView> mRecyclerViewReference;
+    @Nullable
     private RecyclerView.OnScrollListener mScrollListener;
     private IEventClickListener mItemClickListener;
     private boolean mImmediateImageLoading;
     private OnLoadMorelListener mLoadMoreListener;
+    @Nullable
     private EventItemWrapper mLoadingItem;
     private BroadcastReceiver mUpdateReceiver;
 
-    public EventCollectionAdapter(Context context, int columns) {
+    public EventCollectionAdapter(@NonNull Context context, int columns) {
         mContext = context;
         mInflater = LayoutInflater.from(context);
         mColumns = columns;
@@ -73,7 +80,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         mLoadMoreCount = columns > 2 ? 0 : columns;
     }
 
-    private static int getScreenWidth(Context context) {
+    private static int getScreenWidth(@NonNull Context context) {
         WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         DisplayMetrics displaymetrics = new DisplayMetrics();
         wm.getDefaultDisplay().getMetrics(displaymetrics);
@@ -84,10 +91,10 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         mItemClickListener = listener;
     }
 
-    public void registerRecyclerView(RecyclerView recyclerView) {
+    public void registerRecyclerView(@NonNull RecyclerView recyclerView) {
         mRecyclerViewReference = new WeakReference<>(recyclerView);
         mScrollListener = new RecyclerView.OnScrollListener() {
-            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 GridLayoutManager layoutManager = (GridLayoutManager) recyclerView.getLayoutManager();
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
                     int firstVisibleItem = layoutManager.findFirstVisibleItemPosition();
@@ -148,7 +155,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         mLoadMoreListener = listener;
     }
 
-    public void unregisterRecyclerView(RecyclerView recyclerView) {
+    public void unregisterRecyclerView(@NonNull RecyclerView recyclerView) {
         if (mScrollListener != null) {
             recyclerView.removeOnScrollListener(mScrollListener);
         }
@@ -175,7 +182,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         }
     }
 
-    private boolean setItems(ArrayList<Event> events, boolean addState) {
+    private boolean setItems(@Nullable ArrayList<Event> events, boolean addState) {
         if (!addState) {
             mEventItems.clear();
         }
@@ -196,11 +203,12 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         return false;
     }
 
-    public boolean setItems(ArrayList<Event> events) {
+    public void setItems(ArrayList<Event> events) {
 
-        return setItems(events, false);
+        setItems(events, false);
     }
 
+    @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view;
@@ -216,7 +224,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     }
 
     @Override
-    public void onBindViewHolder(final RecyclerView.ViewHolder viewHolder, final int position) {
+    public void onBindViewHolder(@NonNull final RecyclerView.ViewHolder viewHolder, final int position) {
         final GridLayoutManager.LayoutParams layoutParams = (GridLayoutManager.LayoutParams) viewHolder.itemView.getLayoutParams();
         if (getItemViewType(position) == NORMAL) {
             layoutParams.height = mItemHeight;
@@ -262,7 +270,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         }
     }
 
-    private void setStartTimeForEvent(Event event, EventCollectionItemViewHolder eventCollectionItemViewHolder) {
+    private void setStartTimeForEvent(@NonNull Event event, @NonNull EventCollectionItemViewHolder eventCollectionItemViewHolder) {
         String startTimeAliasString = EventsModel.getStartTimeAlias(mContext, event);
         TextView startItemView = eventCollectionItemViewHolder.getStartEventView();
         if (startTimeAliasString == null) {
@@ -279,7 +287,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         return getItemViewType(position) == LOADING ? -1 : eventItemWrapper == null ? -1 : eventItemWrapper.event.id;
     }
 
-    private void addToLoadingList(final EventItemWrapper eventItemWrapper, final ImageView viewTarget) {
+    private void addToLoadingList(@NonNull final EventItemWrapper eventItemWrapper, @NonNull final ImageView viewTarget) {
         mLoadingList.add(Glide.with(mContext).load(eventItemWrapper.event.posterBlur).centerCrop().dontAnimate().listener(new RequestListener<String, GlideDrawable>() {
             @Override
             public boolean onException(Exception exp, String model, Target<GlideDrawable> target, boolean isFirstResource) {
@@ -384,6 +392,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     class EventItemWrapper {
 
+        @Nullable
         public String cachedName;
         public int cachedNameLineCount;
         public boolean posterLoaded;
@@ -410,7 +419,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         private ImageView mPosterThumbView;
         private ImageView mCatalogIcon;
 
-        public EventCollectionItemViewHolder(View view) {
+        public EventCollectionItemViewHolder(@NonNull View view) {
             super(view);
             mPlaceView = (TextView) view.findViewById(R.id.place_name_view);
             mNameView = (TextView) view.findViewById(R.id.name_view);
@@ -453,7 +462,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
         View itemView;
 
-        public LoadingHolder(View itemView) {
+        public LoadingHolder(@NonNull View itemView) {
             super(itemView);
             this.itemView = itemView;
         }

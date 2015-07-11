@@ -3,13 +3,14 @@ package ru.nekit.android.nowapp.utils;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.support.annotation.NonNull;
 
 /**
  * Created by chuvac on 28.03.15.
  */
 public class ConnectionUtil {
 
-    public static boolean isInternetAvailable(Context ctx) {
+    public static boolean isInternetAvailable(@NonNull Context ctx) {
         ConnectivityManager cm = (ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = cm.getActiveNetworkInfo();
         // if network is NOT available networkInfo will be null
@@ -18,7 +19,7 @@ public class ConnectionUtil {
 
     }
 
-    public static int getDataConnectionType(Context ctx) {
+    public static int getDataConnectionType(@NonNull Context ctx) {
 
         ConnectivityManager connMgr = (ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
 

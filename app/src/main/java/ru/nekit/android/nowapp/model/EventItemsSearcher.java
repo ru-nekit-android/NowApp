@@ -2,6 +2,7 @@ package ru.nekit.android.nowapp.model;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.content.AsyncTaskLoader;
 
 import java.util.ArrayList;
@@ -18,11 +19,12 @@ public class EventItemsSearcher extends AsyncTaskLoader<ArrayList<Event>> {
 
     private Bundle mArgs;
 
-    public EventItemsSearcher(Context context, Bundle args) {
+    public EventItemsSearcher(@NonNull Context context, Bundle args) {
         super(context);
         mArgs = args;
     }
 
+    @NonNull
     @Override
     public ArrayList<Event> loadInBackground() {
         return NowApplication.getEventModel().performSearch(mArgs.getString(KEY_EVENT_ITEMS_SEARCH));

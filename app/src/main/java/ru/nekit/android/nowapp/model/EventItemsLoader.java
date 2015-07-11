@@ -2,6 +2,7 @@ package ru.nekit.android.nowapp.model;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.content.AsyncTaskLoader;
 
 import org.json.JSONException;
@@ -17,7 +18,7 @@ public class EventItemsLoader extends AsyncTaskLoader<Integer> {
 
     private Bundle mArgs;
 
-    public EventItemsLoader(Context context, Bundle args) {
+    public EventItemsLoader(@NonNull Context context, Bundle args) {
         super(context);
         mArgs = args;
     }
@@ -26,7 +27,7 @@ public class EventItemsLoader extends AsyncTaskLoader<Integer> {
     public Integer loadInBackground() {
         try {
             return NowApplication.getEventModel().performEventsLoad(mArgs.getString(EventsModel.LOADING_TYPE));
-        } catch (IOException | JSONException exp) {
+        } catch (@NonNull IOException | JSONException exp) {
             return EventsModel.RESULT_BAD;
         }
     }

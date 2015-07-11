@@ -1,5 +1,7 @@
 package ru.nekit.android.nowapp.model.vo;
 
+import android.support.annotation.NonNull;
+
 import ru.nekit.android.nowapp.model.EventsModel;
 
 /**
@@ -20,6 +22,7 @@ public class EventStats {
         return likeCount + (myLikeStatus == EventsModel.LIKE_NOT_CONFIRMED ? 1 : 0);
     }
 
+    @NonNull
     public String getLikes() {
         int likes = getLikeCount();
         return likes > MAX_LIKES ? Integer.toString(MAX_LIKES) + "+" : Integer.toString(likes);
@@ -29,6 +32,7 @@ public class EventStats {
         return viewCount + (!online || !confirmed ? 1 : 0);
     }
 
+    @NonNull
     public String getViews(boolean online, boolean confirmed) {
         int views = getViewCount(online, confirmed);
         return views > MAX_VIEWS ? Integer.toString(MAX_VIEWS) + "+" : Integer.toString(views);

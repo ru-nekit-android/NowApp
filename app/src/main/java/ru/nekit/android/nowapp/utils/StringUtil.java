@@ -1,5 +1,7 @@
 package ru.nekit.android.nowapp.utils;
 
+import android.support.annotation.NonNull;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -11,7 +13,8 @@ public class StringUtil {
     private static final int MAX_WORD_LENGTH = 12;
     private static final int MIN_WORD_LENGTH = 7;
 
-    public static ArrayList<String> wrapText(String text) {
+    @NonNull
+    public static ArrayList<String> wrapText(@NonNull String text) {
         ArrayList<String> textArray = new ArrayList<String>(Arrays.asList(text.split(" ")));
         ArrayList<String> textArrayWithWordLengthLimit = new ArrayList<String>();
         ArrayList<String> textArrayResult = new ArrayList<String>();
@@ -74,7 +77,7 @@ public class StringUtil {
         return textArrayResult;
     }
 
-    private static String getStringWithoutLastChar(String string) {
+    private static String getStringWithoutLastChar(@NonNull String string) {
         return string.substring(0, string.length() - 1);
     }
 

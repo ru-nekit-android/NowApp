@@ -21,6 +21,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.CalendarContract;
 import android.provider.Settings;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -58,6 +60,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.badoo.mobile.util.WeakHandler;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.RequestListener;
@@ -89,14 +92,13 @@ import java.util.concurrent.TimeUnit;
 
 import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
-import ru.nekit.android.nowapp.VTAG;
 import ru.nekit.android.nowapp.model.EventApiCallResult;
 import ru.nekit.android.nowapp.model.EventApiExecutor;
+import ru.nekit.android.nowapp.model.EventToCalendarLoader;
+import ru.nekit.android.nowapp.model.EventsModel;
 import ru.nekit.android.nowapp.model.vo.Event;
 import ru.nekit.android.nowapp.model.vo.EventAdvert;
 import ru.nekit.android.nowapp.model.vo.EventStats;
-import ru.nekit.android.nowapp.model.EventsModel;
-import ru.nekit.android.nowapp.model.EventToCalendarLoader;
 import ru.nekit.android.nowapp.model.vo.EventToCalendarLink;
 import ru.nekit.android.nowapp.modelView.listeners.IEventClickListener;
 import ru.nekit.android.nowapp.modelView.listeners.IEventPosterSelectListener;
@@ -118,14 +120,20 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     private static final String KEY_ADVERT_POSSIBILITY = "ru.nekit.android.possibility";
     private static final int MAX_ZOOM = 19;
 
+    @NonNull
     private final FloatingActionButtonBehavior mFloatingActionButtonBehavior;
-    private final Handler mHandler;
+    @NonNull
+    private final WeakHandler mHandler;
     private final EventsModel mEventModel;
     private Timer mTimer;
     //private Timer mTimerForHand;
+    @Nullable
     private Event mEvent, mEventLinkToAdvert;
+    @Nullable
     private EventAdvert mEventAdvert;
+    @Nullable
     private IEventPosterSelectListener mEventPosterSelectListener;
+    @Nullable
     private IEventClickListener mEventClickListener;
     private ProgressWheel mProgressWheel;
     private GeoPoint mEventLocationPoint;
@@ -153,6 +161,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     private FloatingActionButton mFloatingActionButton;
     private LayoutInflater mInflater;
     private CoordinatorLayout mRootLayout;
+    @Nullable
     private EventToCalendarLink mEventToCalendarLink;
     private View mMapViewContainer, mLikeContainer, mAdvertBlock;
     private long obtainAdvertCallTime;
@@ -162,10 +171,11 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
     public EventDetailFragment() {
         mFloatingActionButtonBehavior = new FloatingActionButtonBehavior(this);
-        mHandler = new Handler(Looper.getMainLooper());
+        mHandler = new WeakHandler();
         mEventModel = EventsModel.getInstance();
     }
 
+    @NonNull
     public static EventDetailFragment getInstance() {
         return new EventDetailFragment();
     }
@@ -271,7 +281,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         mMapViewContainer.findViewById(R.id.map_scroll_fake_view).setOnTouchListener(new View.OnTouchListener() {
 
             @Override
-            public boolean onTouch(View view, MotionEvent event) {
+            public boolean onTouch(View view, @NonNull MotionEvent event) {
                 int action = event.getAction();
                 switch (action) {
                     case MotionEvent.ACTION_DOWN:
@@ -342,7 +352,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         }
     }
 
-    private void expand(final View view) {
+    private void expand(@NonNull final View view) {
         view.measure(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         final int targetHeight = view.getMeasuredHeight();
         view.getLayoutParams().height = 0;
@@ -393,6 +403,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         }
     }
 
+    @Nullable
     @Override
     public Loader onCreateLoader(int id, Bundle args) {
         Context context = getActivity().getApplicationContext();
@@ -433,7 +444,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     }
 
     @Override
-    public void onLoadFinished(Loader loader, Object result) {
+    public void onLoadFinished(@NonNull Loader loader, @NonNull Object result) {
         if (isResumed()) {
             switch (loader.getId()) {
                 case CALENDAR_LOADER_ID:
@@ -464,7 +475,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                             });
                         }
                         snackbar.show();
-                        mFloatingActionButton.postDelayed(new Runnable() {
+                        mHandler.postDelayed(new Runnable() {
                             @Override
                             public void run() {
                                 mFloatingActionButtonBehavior.allowMoveOnScroll(true);
@@ -507,7 +518,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
     private void displayEventStats(boolean eventStatConfirmed) {
         Resources resources = getResources();
-        EventStats eventStats = EventsModel.getInstance().obtainEventStatsByEventId(mEvent.id);
+        EventStats eventStats = mEventModel.obtainEventStatsByEventId(mEvent.id);
         boolean myLike = eventStats.myLikeStatus != 0;
         mViewsView.setText(eventStats.getViews(NowApplication.getState() == ONLINE, eventStatConfirmed));
         mLikesView.setText(eventStats.getLikes());
@@ -525,7 +536,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         mFloatingActionButton.setVisibility(myLike ? View.INVISIBLE : View.VISIBLE);
     }
 
-    private void setMenuItVisible(int id, boolean visible, Menu menu) {
+    private void setMenuItVisible(int id, boolean visible, @Nullable Menu menu) {
         if (menu != null) {
             menu.findItem(id).setVisible(visible);
         }
@@ -643,15 +654,17 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         }
     }
 
+    @NonNull
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         mEvent = getArguments().getParcelable(KEY_EVENT_ITEM);
         mInflater = inflater;
         return constructInterface(inflater.inflate(R.layout.fragment_event_detail, container, false));
     }
 
-    private View constructInterface(View view) {
+    @NonNull
+    private View constructInterface(@NonNull View view) {
 
         final Context context = getActivity().getApplicationContext();
 
@@ -780,7 +793,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     }
 
     @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+    public void onCreateOptionsMenu(Menu menu, @NonNull MenuInflater inflater) {
         inflater.inflate(R.menu.menu_event_detail, menu);
         super.onCreateOptionsMenu(menu, inflater);
         setMenuItVisible(R.id.action_add_to_calendar, false, menu);
@@ -788,7 +801,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         setMenuItVisible(R.id.action_show_in_calendar, false, menu);
     }
 
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
 
             case R.id.action_share:
@@ -824,7 +837,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         }
     }
 
-    private void createEventPlaceTextBlock(Context context, TextView placeNameView, String placeName, String address) {
+    private void createEventPlaceTextBlock(@NonNull Context context, @NonNull TextView placeNameView, @NonNull String placeName, @NonNull String address) {
         SpannableString placeNameSpan = new SpannableString(placeName);
         placeNameSpan.setSpan(new RobotoTextAppearanceSpan(context, R.style.Place_Name), 0, placeName.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
         SpannableString addressSpan = new SpannableString(address);
@@ -832,7 +845,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         placeNameView.setText(address.equals(placeName) ? placeNameSpan : TextUtils.concat(placeNameSpan, "\n", addressSpan));
     }
 
-    private void createEventEntranceTextBlock(Context context, TextView entranceView, String entrance) {
+    private void createEventEntranceTextBlock(@NonNull Context context, @NonNull TextView entranceView, @NonNull String entrance) {
         String title = getResources().getString(R.string.entrance_title);
         SpannableString titleSpan = new SpannableString(title);
         titleSpan.setSpan(new RobotoTextAppearanceSpan(context, R.style.EntranceTitle), 0, title.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
@@ -841,7 +854,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         entranceView.setText(TextUtils.concat(titleSpan, "\n", entranceSpan));
     }
 
-    private void createEventTimeTextBlock(Context context, TextView timeView, int hour, int minute) {
+    private void createEventTimeTextBlock(@NonNull Context context, @NonNull TextView timeView, int hour, int minute) {
         String hourTextValue = String.format("%d", hour);
         String minuteTextValue = String.format("%d", minute);
         if (hour < 9) {
@@ -881,7 +894,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     }
 
     @Override
-    public void onAttach(Activity activity) {
+    public void onAttach(@NonNull Activity activity) {
         super.onAttach(activity);
         try {
             mEventPosterSelectListener = (IEventPosterSelectListener) getActivity();
@@ -911,7 +924,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     }
 
     @Override
-    public void onClick(View view) {
+    public void onClick(@NonNull View view) {
         Intent intent;
         switch (view.getId()) {
             case R.id.phone_button:
@@ -974,8 +987,8 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
             case R.id.fab_event:
 
-                EventStats eventStats = EventsModel.getInstance().obtainEventStatsByEventId(mEvent.id);
-                if (eventStats.myLikeStatus == 0) {
+                EventStats eventStats = mEventModel.obtainEventStatsByEventId(mEvent.id);
+                if (eventStats != null && eventStats.myLikeStatus == 0) {
                     showAddToCalendarDialog();
                     initEventApiExecutor(EventApiExecutor.METHOD_LIKE, mEvent.id);
                 }
@@ -1071,6 +1084,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
         };
 
+        @NonNull
         private ViewTreeObserver.OnScrollChangedListener scrollListener = new ViewTreeObserver.OnScrollChangedListener() {
 
             @Override
@@ -1085,12 +1099,12 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
             fragmentReference = new WeakReference<>(fragment);
         }
 
-        public boolean onDependentViewChanged(CoordinatorLayout parent, FloatingActionButton child, View dependency) {
+        public boolean onDependentViewChanged(@NonNull CoordinatorLayout parent, @NonNull FloatingActionButton child, @NonNull View dependency) {
             updateFabTranslationForSnackbar(parent, child, dependency);
             return false;
         }
 
-        private void updateFabTranslationForSnackbar(CoordinatorLayout parent, FloatingActionButton fab, View snackbar) {
+        private void updateFabTranslationForSnackbar(@NonNull CoordinatorLayout parent, @NonNull FloatingActionButton fab, @NonNull View snackbar) {
             if (mAllowMoveOnSnackbarShow) {
                 float translationY = this.getFabTranslationYForSnackbar(parent, fab);
                 if (translationY != this.mTranslationY) {
@@ -1109,7 +1123,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
             }
         }
 
-        private float getFabTranslationYForSnackbar(CoordinatorLayout parent, FloatingActionButton fab) {
+        private float getFabTranslationYForSnackbar(@NonNull CoordinatorLayout parent, @NonNull FloatingActionButton fab) {
             float minOffset = 0.0F;
             List dependencies = parent.getDependencies(fab);
             int i = 0;

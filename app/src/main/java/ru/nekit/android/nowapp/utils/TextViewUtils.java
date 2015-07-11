@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.support.annotation.NonNull;
 import android.text.TextPaint;
 import android.text.style.SuperscriptSpan;
 
@@ -12,7 +13,8 @@ import android.text.style.SuperscriptSpan;
  */
 public class TextViewUtils {
 
-    private static Rect getTextBounds(String text, float textSize, Typeface typeface) {
+    @NonNull
+    private static Rect getTextBounds(@NonNull String text, float textSize, Typeface typeface) {
         TextPaint paint = new TextPaint(Paint.ANTI_ALIAS_FLAG | Paint.SUBPIXEL_TEXT_FLAG);
         paint.setTextSize(textSize);
         paint.setTypeface(typeface);
@@ -21,7 +23,8 @@ public class TextViewUtils {
         return bounds;
     }
 
-    public static SuperscriptSpanAdjuster getSuperscriptSpanAdjuster(Context context, String baseText, int baseTextSize) {
+    @NonNull
+    public static SuperscriptSpanAdjuster getSuperscriptSpanAdjuster(@NonNull Context context, @NonNull String baseText, int baseTextSize) {
         float scaledDensity = context.getResources().getDisplayMetrics().density;
         if (scaledDensity == 1.5) {
             scaledDensity *= 4;
@@ -46,7 +49,7 @@ public class TextViewUtils {
         }
 
         @Override
-        public void updateDrawState(TextPaint paint) {
+        public void updateDrawState(@NonNull TextPaint paint) {
             super.updateDrawState(paint);
             Paint.FontMetricsInt fontMetrics = paint.getFontMetricsInt();
             paint.baselineShift = -baseHeight - fontMetrics.ascent - fontMetrics.descent;
@@ -54,7 +57,7 @@ public class TextViewUtils {
         }
 
         @Override
-        public void updateMeasureState(TextPaint paint) {
+        public void updateMeasureState(@NonNull TextPaint paint) {
             super.updateMeasureState(paint);
             Paint.FontMetricsInt fontMetrics = paint.getFontMetricsInt();
             paint.baselineShift = -baseHeight - fontMetrics.ascent - fontMetrics.descent;

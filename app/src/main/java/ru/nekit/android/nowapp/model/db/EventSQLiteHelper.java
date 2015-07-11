@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
+import android.support.annotation.NonNull;
 
 import ru.nekit.android.nowapp.model.EventFieldNameDictionary;
 
@@ -106,7 +107,7 @@ public class EventSQLiteHelper extends SQLiteOpenHelper implements BaseColumns {
     }
 
     @Override
-    public void onCreate(SQLiteDatabase database) {
+    public void onCreate(@NonNull SQLiteDatabase database) {
         database.execSQL(EVENT_TABLE_CREATE);
         database.execSQL(EVENT_FTS_TABLE_CREATE);
         database.execSQL(EVENT_TO_CALENDAR_LINK_TABLE_CREATE);
@@ -115,7 +116,7 @@ public class EventSQLiteHelper extends SQLiteOpenHelper implements BaseColumns {
     }
 
     @Override
-    public void onUpgrade(SQLiteDatabase database, int oldVersion, int newVersion) {
+    public void onUpgrade(@NonNull SQLiteDatabase database, int oldVersion, int newVersion) {
         database.execSQL("DROP TABLE IF EXISTS " + EVENT_TABLE_NAME);
         database.execSQL("DROP TABLE IF EXISTS " + FTS_TABLE_NAME);
         database.execSQL("DROP TABLE IF EXISTS " + EVENT_TO_CALENDAR_LINK_TABLE_NAME);
@@ -125,7 +126,7 @@ public class EventSQLiteHelper extends SQLiteOpenHelper implements BaseColumns {
     }
 
     @Override
-    public void onDowngrade(SQLiteDatabase database, int oldVersion, int newVersion) {
+    public void onDowngrade(@NonNull SQLiteDatabase database, int oldVersion, int newVersion) {
         onUpgrade(database, oldVersion, newVersion);
     }
 }

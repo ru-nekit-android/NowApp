@@ -6,28 +6,30 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.support.annotation.NonNull;
 
 /**
  * Created by chuvac on 22.04.15.
  */
 public class ConnectivityReceiver extends BroadcastReceiver {
 
+    @NonNull
     private final ConnectivityManager connectivityManager;
     private OnNetworkAvailableListener onNetworkAvailableListener;
     private boolean connection = false;
-    public ConnectivityReceiver(Context context) {
+    public ConnectivityReceiver(@NonNull Context context) {
         connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         checkConnectionOnDemand();
     }
 
-    public void bind(Context context) {
+    public void bind(@NonNull Context context) {
         IntentFilter filter = new IntentFilter();
         filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
         context.registerReceiver(this, filter);
         checkConnectionOnDemand();
     }
 
-    public void unbind(Context context) {
+    public void unbind(@NonNull Context context) {
         context.unregisterReceiver(this);
     }
 
@@ -49,7 +51,7 @@ public class ConnectivityReceiver extends BroadcastReceiver {
     }
 
     @Override
-    public void onReceive(Context context, Intent intent) {
+    public void onReceive(Context context, @NonNull Intent intent) {
         String action = intent.getAction();
         if (action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
             if (connection && intent.getBooleanExtra(ConnectivityManager.EXTRA_NO_CONNECTIVITY, false)) {

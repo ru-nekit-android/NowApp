@@ -2,6 +2,7 @@ package ru.nekit.android.nowapp.model.vo;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.annotation.NonNull;
 
 /**
  * Created by chuvac on 12.03.15
@@ -9,10 +10,12 @@ import android.os.Parcelable;
 public class Event extends EventBase implements Parcelable {
 
     public static final Parcelable.Creator<Event> CREATOR = new Parcelable.Creator<Event>() {
-        public Event createFromParcel(Parcel source) {
+        @NonNull
+        public Event createFromParcel(@NonNull Parcel source) {
             return new Event(source);
         }
 
+        @NonNull
         public Event[] newArray(int size) {
             return new Event[size];
         }
@@ -38,7 +41,7 @@ public class Event extends EventBase implements Parcelable {
     public Event() {
     }
 
-    private Event(Parcel in) {
+    private Event(@NonNull Parcel in) {
         this.placeId = in.readInt();
         this.id = in.readInt();
         this.date = in.readLong();
@@ -69,7 +72,7 @@ public class Event extends EventBase implements Parcelable {
     }
 
     @Override
-    public void writeToParcel(Parcel dest, int flags) {
+    public void writeToParcel(@NonNull Parcel dest, int flags) {
         dest.writeInt(this.placeId);
         dest.writeInt(this.id);
         dest.writeLong(this.date);

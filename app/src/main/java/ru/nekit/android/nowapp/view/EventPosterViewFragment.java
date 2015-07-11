@@ -1,6 +1,8 @@
 package ru.nekit.android.nowapp.view;
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -25,11 +27,13 @@ public class EventPosterViewFragment extends Fragment {
 
     private ProgressWheel mProgressWheel;
 
+    @Nullable
     private String mImageUrl;
 
     public EventPosterViewFragment() {
     }
 
+    @NonNull
     public static EventPosterViewFragment getInstance(String posterUrl) {
         EventPosterViewFragment fragment = new EventPosterViewFragment();
         fragment.setEventPosterUrl(posterUrl);
@@ -65,7 +69,7 @@ public class EventPosterViewFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_poster_view, container, false);
         mProgressWheel = (ProgressWheel) view.findViewById(R.id.progress_wheel);

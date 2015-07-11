@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.support.annotation.NonNull;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.DisplayMetrics;
 
@@ -49,6 +50,7 @@ public class NowApplication extends Application implements ConnectivityReceiver.
         return mEventModel;
     }
 
+    @NonNull
     public static OFFLINE_STATE getOfflineState() {
         long lastDataUpdateTimestamp = mSharedPreferences.getLong(LAST_UPDATE_TIME_KEY, -1);
         if (lastDataUpdateTimestamp == -1) {

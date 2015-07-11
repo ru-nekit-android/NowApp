@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
 import java.util.ArrayList;
@@ -44,6 +45,7 @@ public class EventDataSource {
                     EventFieldNameDictionary.POSTER_ORIGINAL,
                     EventFieldNameDictionary.POSTER_THUMB,
             };
+    @NonNull
     private static String[] FTS_SEARCH_ORDER = {
             EventSQLiteHelper.FTS_EVENT_CATEGORY_KEYWORD,
             EventSQLiteHelper.FTS_EVENT_START_TIME_ALIAS,
@@ -65,7 +67,7 @@ public class EventDataSource {
         database = eventSQLHelper.getWritableDatabase();
     }
 
-    public void createOrUpdateEvent(Event event) {
+    public void createOrUpdateEvent(@NonNull Event event) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(EventSQLiteHelper._ID, event.id);
         contentValues.put(EventFieldNameDictionary.ADDRESS, event.address);
@@ -102,10 +104,11 @@ public class EventDataSource {
         database.insert(EventSQLiteHelper.FTS_TABLE_NAME, null, contentValuesFTS);
     }
 
-    private String normalizeForSearch(String value) {
+    private String normalizeForSearch(@NonNull String value) {
         return value.toLowerCase().replaceAll("\"|«|\\(", "");
     }
 
+    @NonNull
     public ArrayList<Event> getAllEvents() {
         ArrayList<Event> eventList = new ArrayList<>();
         Cursor cursor = database.query(EventSQLiteHelper.EVENT_TABLE_NAME,
@@ -120,7 +123,8 @@ public class EventDataSource {
         return eventList;
     }
 
-    public ArrayList<Event> getByEventIds(ArrayList<Integer> ids) {
+    @NonNull
+    public ArrayList<Event> getByEventIds(@NonNull ArrayList<Integer> ids) {
         ArrayList<Event> events = new ArrayList<>();
         if (ids.size() > 0) {
             Cursor cursor = database.query(EventSQLiteHelper.EVENT_TABLE_NAME,
@@ -136,6 +140,7 @@ public class EventDataSource {
         return events;
     }
 
+    @Nullable
     public Event getByEventId(int id) {
         Event event = null;
         Cursor cursor = database.query(EventSQLiteHelper.EVENT_TABLE_NAME,
@@ -148,7 +153,8 @@ public class EventDataSource {
         return event;
     }
 
-    private Event cursorToEventItem(Cursor cursor) {
+    @NonNull
+    private Event cursorToEventItem(@NonNull Cursor cursor) {
         Event event = new Event();
         event.id = cursor.getInt(cursor.getColumnIndex(EventSQLiteHelper._ID));
         event.address = cursor.getString(cursor.getColumnIndex(EventFieldNameDictionary.ADDRESS));
@@ -175,6 +181,7 @@ public class EventDataSource {
         return event;
     }
 
+    @NonNull
     public ArrayList<Event> fullTextSearch(@NonNull String query) {
         query = normalizeForSearch(query);
         ArrayList<Event> eventList = new ArrayList<>();

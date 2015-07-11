@@ -3,6 +3,7 @@ package ru.nekit.android.nowapp.utils;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Typeface;
+import android.support.annotation.NonNull;
 import android.text.TextPaint;
 import android.text.style.TextAppearanceSpan;
 
@@ -15,7 +16,7 @@ public class RobotoTextAppearanceSpan extends TextAppearanceSpan {
 
     private Typeface mTypeface;
 
-    public RobotoTextAppearanceSpan(Context context, int appearance) {
+    public RobotoTextAppearanceSpan(@NonNull Context context, int appearance) {
         super(context, appearance);
         TypedArray a =
                 context.obtainStyledAttributes(appearance, R.styleable.RobotoTextView);
@@ -25,13 +26,13 @@ public class RobotoTextAppearanceSpan extends TextAppearanceSpan {
     }
 
     @Override
-    public void updateDrawState(TextPaint paint) {
+    public void updateDrawState(@NonNull TextPaint paint) {
         super.updateDrawState(paint);
         RobotoTextViewUtils.setTypeface(paint, mTypeface);
     }
 
     @Override
-    public void updateMeasureState(TextPaint paint) {
+    public void updateMeasureState(@NonNull TextPaint paint) {
         super.updateMeasureState(paint);
         RobotoTextViewUtils.setTypeface(paint, mTypeface);
     }

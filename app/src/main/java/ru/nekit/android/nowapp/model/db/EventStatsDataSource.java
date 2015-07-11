@@ -5,6 +5,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import ru.nekit.android.nowapp.model.EventFieldNameDictionary;
 import ru.nekit.android.nowapp.model.vo.EventStats;
@@ -33,7 +35,7 @@ public class EventStatsDataSource {
         database = eventSQLHelper.getWritableDatabase();
     }
 
-    public void createOrUpdateEventStats(EventStats eventStats) {
+    public void createOrUpdateEventStats(@NonNull EventStats eventStats) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(EventSQLiteHelper.EVENT_ID, eventStats.id);
         contentValues.put(EventFieldNameDictionary.LIKES, eventStats.likeCount);
@@ -42,6 +44,7 @@ public class EventStatsDataSource {
         database.insertWithOnConflict(EventSQLiteHelper.EVENT_STATS_TABLE_NAME, EventSQLiteHelper.EVENT_ID, contentValues, SQLiteDatabase.CONFLICT_REPLACE);
     }
 
+    @Nullable
     public EventStats getByEventId(int id) {
         EventStats eventStats = null;
         Cursor cursor = database.query(EventSQLiteHelper.EVENT_STATS_TABLE_NAME,
@@ -54,7 +57,8 @@ public class EventStatsDataSource {
         return eventStats;
     }
 
-    private EventStats cursorToEventItemStats(Cursor cursor) {
+    @NonNull
+    private EventStats cursorToEventItemStats(@NonNull Cursor cursor) {
         EventStats eventStats = new EventStats();
         eventStats.id = cursor.getInt(cursor.getColumnIndex(EventSQLiteHelper.EVENT_ID));
         eventStats.viewCount = cursor.getInt(cursor.getColumnIndex(EventFieldNameDictionary.VIEWS));

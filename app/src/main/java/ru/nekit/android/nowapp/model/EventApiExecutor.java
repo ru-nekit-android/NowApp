@@ -2,6 +2,8 @@ package ru.nekit.android.nowapp.model;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.content.AsyncTaskLoader;
 
 import ru.nekit.android.nowapp.NowApplication;
@@ -21,11 +23,12 @@ public class EventApiExecutor extends AsyncTaskLoader<EventApiCallResult> {
 
     private Bundle mArgs;
 
-    public EventApiExecutor(Context context, Bundle args) {
+    public EventApiExecutor(@NonNull Context context, Bundle args) {
         super(context);
         mArgs = args;
     }
 
+    @Nullable
     @Override
     public EventApiCallResult loadInBackground() {
 

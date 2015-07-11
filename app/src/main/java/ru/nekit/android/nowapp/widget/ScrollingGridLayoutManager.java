@@ -2,6 +2,7 @@ package ru.nekit.android.nowapp.widget;
 
 import android.content.Context;
 import android.graphics.PointF;
+import android.support.annotation.NonNull;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearSmoothScroller;
 import android.support.v7.widget.RecyclerView;
@@ -19,7 +20,7 @@ public class ScrollingGridLayoutManager extends GridLayoutManager {
     }
 
     @Override
-    public void smoothScrollToPosition(RecyclerView recyclerView, RecyclerView.State state,
+    public void smoothScrollToPosition(@NonNull RecyclerView recyclerView, RecyclerView.State state,
                                        int position) {
         if (getChildCount() > 0) {
             View firstVisibleChild = recyclerView.getChildAt(0);
@@ -39,7 +40,7 @@ public class ScrollingGridLayoutManager extends GridLayoutManager {
         private final float distanceInPixels;
         private final float duration;
 
-        public SmoothScroller(Context context, int distanceInPixels, int duration) {
+        public SmoothScroller(@NonNull Context context, int distanceInPixels, int duration) {
             super(context);
             this.distanceInPixels = distanceInPixels;
             this.duration = duration;

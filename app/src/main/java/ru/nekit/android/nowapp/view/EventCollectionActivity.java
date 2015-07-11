@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBar;
@@ -86,7 +87,7 @@ public class EventCollectionActivity extends AppCompatActivity implements IEvent
         return fragmentManager.findFragmentById(R.id.event_place_holder);
     }
 
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
 
             case android.R.id.home:
@@ -102,8 +103,8 @@ public class EventCollectionActivity extends AppCompatActivity implements IEvent
 
                 AlertDialog.Builder builder;
                 AppCompatDialog dialog;
-                View dialogContentView = getLayoutInflater().inflate(R.layout.about_view, null, false);
-                View dialogTitleView = getLayoutInflater().inflate(R.layout.dialog_title, null, false);
+                View dialogContentView = getLayoutInflater().inflate(R.layout.about_view, null, true);
+                View dialogTitleView = getLayoutInflater().inflate(R.layout.dialog_title, null, true);
                 TextView dialogTextView = (TextView) dialogContentView.findViewById(R.id.text_view);
                 dialogTextView.setTextAppearance(this, R.style.DialogContent);
                 TextView dialogTitleTextView = (TextView) dialogTitleView.findViewById(R.id.text_view);

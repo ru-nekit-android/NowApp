@@ -5,6 +5,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import java.util.ArrayList;
 
@@ -36,6 +38,7 @@ public class EventToCalendarDataSource {
         database = dbHelper.getReadableDatabase();
     }
 
+    @Nullable
     public EventToCalendarLink addLink(long eventID, long calendarID) {
         ContentValues values = new ContentValues();
         values.put(EventSQLiteHelper.EVENT_ID, eventID);
@@ -47,6 +50,7 @@ public class EventToCalendarDataSource {
         return null;
     }
 
+    @NonNull
     public ArrayList<EventToCalendarLink> getAllEventToCalendarLinks() {
         ArrayList<EventToCalendarLink> linkList = new ArrayList<>();
 
@@ -63,7 +67,8 @@ public class EventToCalendarDataSource {
         return linkList;
     }
 
-    private EventToCalendarLink cursorToLink(Cursor cursor) {
+    @NonNull
+    private EventToCalendarLink cursorToLink(@NonNull Cursor cursor) {
         return new EventToCalendarLink(cursor.getLong(cursor.getColumnIndex(EventSQLiteHelper.EVENT_ID)), cursor.getLong(cursor.getColumnIndex(EventSQLiteHelper.CALENDAR_EVENT_ID)));
     }
 
@@ -76,6 +81,7 @@ public class EventToCalendarDataSource {
         database.delete(EventSQLiteHelper.EVENT_TABLE_NAME, String.format("%s = %s", EventSQLiteHelper.EVENT_ID, idString), null);
     }
 
+    @Nullable
     public EventToCalendarLink getLinkByEventID(long ID) {
         String idString = String.valueOf(ID);
         EventToCalendarLink link = null;

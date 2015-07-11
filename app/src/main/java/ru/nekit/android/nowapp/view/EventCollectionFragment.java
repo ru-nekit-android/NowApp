@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
@@ -37,6 +38,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.badoo.mobile.util.WeakHandler;
+
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 
@@ -62,32 +65,40 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     private static final int LOADER_ID = 2;
     private static final int SEARCHER_ID = 3;
     private EventsModel mEventModel;
+    @Nullable
     private String mQueryWithResult;
     private String mQuery;
     private boolean mSearchResultIsPresent;
     private int mCurrentPage;
     private LOADING_STATE mLoadingState;
     private MODE mMode;
+    @Nullable
     private String mLoadingType;
+    @Nullable
     private Event mWaitingForOpenItem;
     private boolean mKeyboardVisible;
     private EventCollectionAdapter mEventCollectionAdapter;
+    @Nullable
     private IEventClickListener mEventItemSelectListener;
     private FloatingActionButtonAnimator mFloatingActionButtonAnimator;
     private RecyclerView mEventItemsView;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private BroadcastReceiver mLocalBroadcastReceiver;
+    @NonNull
     private SearchView mSearchView;
     private TextView mSearchStatus;
     private EditText mSearchViewEditText;
+    @Nullable
     private Animator.AnimatorListener mAnimatorListener;
     private FloatingActionButton mFloatingActionButton;
     private SoftKeyboardListenerLayout mScrollView;
+    private final WeakHandler mHandler;
 
     public EventCollectionFragment() {
         mLoadingState = LOADING_STATE.LOADED;
         mLoadingType = null;
         mMode = MODE.NORMAL;
+        mHandler = new WeakHandler();
     }
 
     private int smoothScrollDuration() {
@@ -124,12 +135,12 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     }
 
     @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+    public void onCreateOptionsMenu(Menu menu, @NonNull MenuInflater inflater) {
         inflater.inflate(R.menu.menu_event_collection, menu);
         super.onCreateOptionsMenu(menu, inflater);
     }
 
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
             default:
                 return super.onOptionsItemSelected(item);
@@ -145,14 +156,14 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         mCurrentPage = mEventModel.getCurrentPage();
         mLocalBroadcastReceiver = new BroadcastReceiver() {
             @Override
-            public void onReceive(Context context, Intent intent) {
+            public void onReceive(Context context, @NonNull Intent intent) {
                 String action = intent.getAction();
                 if (action.equals(NowApplication.CHANGE_APPLICATION_STATE_NOTIFICATION)) {
                     applyApplicationState();
                     if (NowApplication.getState() == ONLINE) {
                         mLoadingType = EventsModel.REFRESH_EVENTS;
                         mEventItemsView.smoothScrollToPosition(0);
-                        mSwipeRefreshLayout.postDelayed(new Runnable() {
+                        mHandler.postDelayed(new Runnable() {
                             @Override
                             public void run() {
                                 mSwipeRefreshLayout.setRefreshing(true);
@@ -247,7 +258,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         mFloatingActionButtonAnimator = new FloatingActionButtonAnimator(activity, mFloatingActionButton, mEventItemsView);
         mScrollView.setOnSoftKeyboardListener(this);
         if (mSearchResultIsPresent) {
-            new Handler().postDelayed(new Runnable() {
+            mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     restoreMode();
@@ -322,7 +333,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
             final Field fCursorDrawableRes = TextView.class.getDeclaredField("mCursorDrawableRes");
             fCursorDrawableRes.setAccessible(true);
             fCursorDrawableRes.set(editText, R.drawable.edit_text_cursor);
-        } catch (final Throwable ignored) {
+        } catch (@NonNull final Throwable ignored) {
         }
     }
 
@@ -340,7 +351,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_event_collection, container, false);
@@ -451,7 +462,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     }
 
     @Override
-    public void onAttach(Activity activity) {
+    public void onAttach(@NonNull Activity activity) {
         super.onAttach(activity);
         try {
             mEventItemSelectListener = (IEventClickListener) getActivity();
@@ -495,6 +506,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         super.onPause();
     }
 
+    @Nullable
     @Override
     public Loader onCreateLoader(int id, Bundle args) {
         Loader loader = null;
@@ -519,7 +531,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     }
 
     @Override
-    public void onLoadFinished(Loader loader, Object result) {
+    public void onLoadFinished(@NonNull Loader loader, Object result) {
         if (isResumed()) {
             switch (loader.getId()) {
                 case LOADER_ID:
@@ -559,7 +571,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     }
 
     @Override
-    public void onLoaderReset(Loader loader) {
+    public void onLoaderReset(@NonNull Loader loader) {
         switch (loader.getId()) {
 
             case LOADER_ID:
@@ -625,7 +637,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         }
     }
 
-    private void animateFade(boolean in, View view) {
+    private void animateFade(boolean in, @NonNull View view) {
         Resources res = getResources();
         if (res != null) {
             int duration = getResources().getInteger(R.integer.change_mode_animation_duration);
@@ -651,7 +663,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     }
 
     @Override
-    public void onClick(View view) {
+    public void onClick(@NonNull View view) {
 
         switch (view.getId()) {
             case R.id.now_title:

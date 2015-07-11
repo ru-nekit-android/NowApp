@@ -2,6 +2,8 @@ package ru.nekit.android.nowapp.model;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.util.Pair;
 
@@ -22,11 +24,12 @@ public class EventToCalendarLoader extends AsyncTaskLoader<Pair<Integer, EventTo
 
     private Bundle mArgs;
 
-    public EventToCalendarLoader(Context context, Bundle args) {
+    public EventToCalendarLoader(@NonNull Context context, Bundle args) {
         super(context);
         mArgs = args;
     }
 
+    @Nullable
     @Override
     public Pair<Integer, EventToCalendarLink> loadInBackground() {
         int method = mArgs.getInt(KEY_METHOD);

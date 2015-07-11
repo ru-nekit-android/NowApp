@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 
@@ -16,6 +17,7 @@ public class AutoResizeTextView extends RobotoTextView {
     private static final float THRESHOLD = 2f;
     private int minTextSize = 0;
     private int maxTextSize = 0;
+    @NonNull
     private Mode mode = Mode.None;
     private boolean inComputation;
     private int widthMeasureSpec;
@@ -25,11 +27,11 @@ public class AutoResizeTextView extends RobotoTextView {
         super(context);
     }
 
-    public AutoResizeTextView(Context context, AttributeSet attrs) {
+    public AutoResizeTextView(@NonNull Context context, @NonNull AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public AutoResizeTextView(Context context, AttributeSet attrs, int defStyle) {
+    public AutoResizeTextView(@NonNull Context context, @NonNull AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
         TypedArray tAttrs = context.obtainStyledAttributes(attrs, R.styleable.AutoResizeTextView, defStyle, 0);
@@ -77,6 +79,7 @@ public class AutoResizeTextView extends RobotoTextView {
             return getMeasuredHeight() >= targetHeight;
     }
 
+    @NonNull
     private Mode getMode(int widthMeasureSpec, int heightMeasureSpec) {
         int widthMode = MeasureSpec.getMode(widthMeasureSpec);
         int heightMode = MeasureSpec.getMode(heightMeasureSpec);

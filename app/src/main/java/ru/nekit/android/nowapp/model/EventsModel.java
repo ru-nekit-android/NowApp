@@ -109,6 +109,7 @@ public class EventsModel {
     private static final HashMap<String, Integer> CATEGORY_TYPE_COLOR = new HashMap<>();
     private static final HashMap<String, Integer> CATEGORY_TYPE_BIG = new HashMap<>();
     public static ArrayList<Integer> HAND;
+    @NonNull
     private static ArrayList<Pair<String, long[]>> PERIODS = new ArrayList<Pair<String, long[]>>(4) {{
         add(new Pair<>("ночью", NIGHT_PERIOD));
         add(new Pair<>("утром", MORNING_PERIOD));
@@ -116,13 +117,21 @@ public class EventsModel {
         add(new Pair<>("вечером", EVENING_PERIOD));
     }};
     private static EventsModel sInstance;
+    @NonNull
     private final Context mContext;
+    @NonNull
     private final ArrayList<Event> mEvents;
+    @NonNull
     private final EventDataSource mEventDataSource;
+    @NonNull
     private final EventStatsDataSource mEventStatsDataSource;
+    @NonNull
     private final EventAdvertDataSource mEventAdvertDataSource;
+    @NonNull
     private final Runnable mBackgroundLoadTask;
+    @NonNull
     private final EventToCalendarDataSource mEventToCalendarDataSource;
+    @NonNull
     private final Timer mTimer;
     private int mAvailableEventCount;
     private int mCurrentPage;
@@ -133,7 +142,7 @@ public class EventsModel {
     private Event mLastAddedInBackgroundEvent;
     private Thread mBackgroundThread;
 
-    private EventsModel(final Context context) {
+    private EventsModel(@NonNull final Context context) {
         mContext = context;
         mEvents = new ArrayList<>();
         mCurrentPage = 1;
@@ -181,7 +190,7 @@ public class EventsModel {
                 while (!Thread.interrupted() && mLoadedInBackgroundPage < getAvailablePageCount() && mLoadedInBackgroundPage <= PAGE_LIMIT_LOAD_IN_BACKGROUND() && result == RESULT_OK) {
                     try {
                         result = performEventsLoad(LOAD_IN_BACKGROUND);
-                    } catch (IOException | JSONException exp) {
+                    } catch (@NonNull IOException | JSONException exp) {
                         //empty
                     }
                     LocalBroadcastManager.getInstance(mContext).sendBroadcast(new Intent(LOAD_IN_BACKGROUND_NOTIFICATION));
@@ -224,19 +233,19 @@ public class EventsModel {
         setEventsFromLocalDataSource(allEvents);
     }
 
-    public static String getStartTimeAliasForAdvert(Context context, Event event) {
+    public static String getStartTimeAliasForAdvert(@NonNull Context context, @NonNull Event event) {
         return createEventStartTimeString(context, event.date, event.startAt, event.endAt, false, true).toLowerCase();
     }
 
-    public static String getStartTimeAlias(Context context, Event event) {
+    public static String getStartTimeAlias(@NonNull Context context, @NonNull Event event) {
         return createEventStartTimeString(context, event.date, event.startAt, event.endAt, false, false);
     }
 
-    public static String getStartTimeKeywords(Context context, Event event) {
+    public static String getStartTimeKeywords(@NonNull Context context, @NonNull Event event) {
         return createEventStartTimeString(context, event.date, event.startAt, event.endAt, true, false);
     }
 
-    private static String createEventStartTimeString(Context context, long date, long startAt, long endAt, boolean createForKeywords, boolean creteForAdvert) {
+    private static String createEventStartTimeString(@NonNull Context context, long date, long startAt, long endAt, boolean createForKeywords, boolean creteForAdvert) {
         Resources resources = context.getResources();
         long currentTimeTimestamp = getCurrentDayTime(context, true);
         long startAfterSeconds = startAt - currentTimeTimestamp;
@@ -306,7 +315,7 @@ public class EventsModel {
         return CATEGORY_TYPE_KEYWORDS.get(category);
     }
 
-    public static synchronized EventsModel getInstance(Context context) {
+    public static synchronized EventsModel getInstance(@NonNull Context context) {
         if (sInstance == null) {
             sInstance = new EventsModel(context);
         }
@@ -318,7 +327,7 @@ public class EventsModel {
         return sInstance;
     }
 
-    public static long getCurrentDayTime(Context context, boolean usePrecision) {
+    public static long getCurrentDayTime(@NonNull Context context, boolean usePrecision) {
         Calendar calendar = Calendar.getInstance();
         int minutes = calendar.get(Calendar.MINUTE);
         int hours = calendar.get(Calendar.HOUR_OF_DAY);
@@ -334,7 +343,7 @@ public class EventsModel {
         return Calendar.getInstance().get(Calendar.SECOND);
     }
 
-    public static long getCurrentDateTime(Context context, boolean usePrecision) {
+    public static long getCurrentDateTime(@NonNull Context context, boolean usePrecision) {
         Calendar calendar = Calendar.getInstance();
         long currentTime = TimeUnit.MILLISECONDS.toSeconds(calendar.getTimeInMillis()) - getCurrentDayTime(context, false);
         if (usePrecision) {
@@ -348,11 +357,11 @@ public class EventsModel {
         return TimeUnit.MILLISECONDS.toSeconds(Calendar.getInstance().getTimeZone().getRawOffset());
     }
 
-    public static long getEventStartTimeInSeconds(Event event) {
+    public static long getEventStartTimeInSeconds(@NonNull Event event) {
         return event.date + event.startAt - getTimeZoneOffsetInSeconds();
     }
 
-    public static long getEventEndTimeInSeconds(Event event) {
+    public static long getEventEndTimeInSeconds(@NonNull Event event) {
         return event.date + event.endAt - getTimeZoneOffsetInSeconds();
     }
 
@@ -368,7 +377,8 @@ public class EventsModel {
         return mContext.getResources().getInteger(R.integer.page_limit_load_in_background);
     }
 
-    private EventToCalendarLink addEventToCalendarLink(Event event, long calendarEventID) {
+    @Nullable
+    private EventToCalendarLink addEventToCalendarLink(@NonNull Event event, long calendarEventID) {
         return mEventToCalendarDataSource.addLink(event.id, calendarEventID);
     }
 
@@ -376,6 +386,7 @@ public class EventsModel {
         mEventToCalendarDataSource.removeLinkByEventId(eventId);
     }
 
+    @Nullable
     private EventToCalendarLink getEventToCalendarLinkByEventId(long eventId) {
         return mEventToCalendarDataSource.getLinkByEventID(eventId);
     }
@@ -396,10 +407,11 @@ public class EventsModel {
         LocalBroadcastManager.getInstance(mContext).unregisterReceiver(receiver);
     }
 
-    private boolean eventIsActual(Event event) {
+    private boolean eventIsActual(@NonNull Event event) {
         return (event.date + event.endAt) > (getCurrentDayTime(mContext, true) + getCurrentDateTime(mContext, true));
     }
 
+    @Nullable
     private Event getEventById(int id) {
         Event result = null;
         for (int i = 0; i < mEvents.size() && result == null; i++) {
@@ -415,6 +427,7 @@ public class EventsModel {
         mEvents.addAll(events);
     }
 
+    @NonNull
     public ArrayList<Event> getEvents() {
         return mEvents;
     }
@@ -436,12 +449,13 @@ public class EventsModel {
         return mCurrentPage;
     }
 
-    private ArrayList<Event> sortByStartTime(ArrayList<Event> events) {
+    @NonNull
+    private ArrayList<Event> sortByStartTime(@NonNull ArrayList<Event> events) {
         Collections.sort(events, new EventNameComparator());
         return events;
     }
 
-    private void setEventsFromLocalDataSource(ArrayList<Event> allEvents) {
+    private void setEventsFromLocalDataSource(@NonNull ArrayList<Event> allEvents) {
         mDataIsActual = false;
         VTAG.call("set Events From Data Source: " + allEvents.size());
         setEvents(sortByStartTime(allEvents));
@@ -461,7 +475,8 @@ public class EventsModel {
         return mAvailableEventCount / mEventsCountPerPage + (mAvailableEventCount % mEventsCountPerPage == 0 ? 0 : 1);
     }
 
-    ArrayList<Event> performSearch(String query) {
+    @NonNull
+    ArrayList<Event> performSearch(@NonNull String query) {
         String[] splitQuery = query.split(" ");
         ArrayList<String> queryList = new ArrayList<>();
         for (String item : splitQuery) {
@@ -471,6 +486,7 @@ public class EventsModel {
         return mEventDataSource.fullTextSearch(queryResult);
     }
 
+    @Nullable
     EventApiCallResult performObtainEventStats(int eventId) {
         int result = RESULT_OK;
         Event event;
@@ -488,7 +504,7 @@ public class EventsModel {
                     eventStats.likeCount = jsonRootObject.getInt(EventFieldNameDictionary.LIKES);
                     eventStats.viewCount = jsonRootObject.getInt(EventFieldNameDictionary.VIEWS);
                 }
-            } catch (IOException | JSONException exp) {
+            } catch (@NonNull IOException | JSONException exp) {
                 result = RESULT_BAD;
             }
         }
@@ -500,6 +516,7 @@ public class EventsModel {
         return new EventApiCallResult(result, event);
     }
 
+    @Nullable
     EventApiCallResult performObtainEvent(int eventId) {
         int result = RESULT_OK;
         Event event = getEventById(eventId);
@@ -526,13 +543,14 @@ public class EventsModel {
                 } else {
                     result = RESULT_BAD;
                 }
-            } catch (IOException | JSONException exp) {
+            } catch (@NonNull IOException | JSONException exp) {
                 result = RESULT_BAD;
             }
         }
         return new EventApiCallResult(result, event);
     }
 
+    @Nullable
     EventApiCallResult performUpdateEventLike(int eventId) {
         int result = RESULT_OK;
         ArrayList<NameValuePair> parameters = new ArrayList<>();
@@ -549,6 +567,7 @@ public class EventsModel {
         return new EventApiCallResult(result, null);
     }
 
+    @Nullable
     EventApiCallResult performUpdateEventView(int eventId) {
         return new EventApiCallResult(performPostApiCall(API_REQUEST_UPDATE_VIEW, eventId, null), null);
     }
@@ -572,7 +591,7 @@ public class EventsModel {
             if (!("ok".equals(response))) {
                 result = RESULT_BAD;
             }
-        } catch (IOException | JSONException e) {
+        } catch (@NonNull IOException | JSONException e) {
             result = RESULT_BAD;
         }
         return result;
@@ -589,7 +608,7 @@ public class EventsModel {
         return createApiUriBuilder(apiMethod).build().toString();
     }
 
-    int performEventsLoad(String loadingType) throws IOException, JSONException {
+    int performEventsLoad(@Nullable String loadingType) throws IOException, JSONException {
 
         Integer result = RESULT_OK;
 
@@ -713,7 +732,8 @@ public class EventsModel {
         return result;
     }
 
-    private Event createEventFromJson(JSONObject jsonObject) {
+    @NonNull
+    private Event createEventFromJson(@NonNull JSONObject jsonObject) {
         Event event = new Event();
         event.date = jsonObject.optLong(EventFieldNameDictionary.DATE, 0);
         event.eventDescription = jsonObject.optString(EventFieldNameDictionary.EVENT_DESCRIPTION);
@@ -740,7 +760,8 @@ public class EventsModel {
         return event;
     }
 
-    private EventAdvert createEventAdvertFromJson(JSONObject jsonObject) {
+    @NonNull
+    private EventAdvert createEventAdvertFromJson(@NonNull JSONObject jsonObject) {
         EventAdvert eventAdvert = new EventAdvert();
         eventAdvert.id = jsonObject.optInt(EventFieldNameDictionary.ID, 0);
         eventAdvert.placeName = jsonObject.optString(EventFieldNameDictionary.ADVERT.PLACE_NAME);
@@ -755,7 +776,7 @@ public class EventsModel {
         return eventAdvert;
     }
 
-    private String readStream(InputStream in) {
+    private String readStream(@NonNull InputStream in) {
         BufferedReader reader = null;
         StringBuilder response = new StringBuilder();
         try {
@@ -778,6 +799,7 @@ public class EventsModel {
         return response.toString();
     }
 
+    @Nullable
     public EventToCalendarLink performCalendarFunctionality(int method, int eventId) {
         EventToCalendarLink result = null;
         long calendarEventID;
@@ -828,7 +850,7 @@ public class EventsModel {
         return result;
     }
 
-    @NonNull
+    @Nullable
     public EventStats obtainEventStatsByEventId(int eventId) {
         EventStats eventStats = mEventStatsDataSource.getByEventId(eventId);
         if (eventStats == null) {
@@ -886,7 +908,7 @@ public class EventsModel {
     }
 
     private class EventNameComparator implements Comparator<Event> {
-        public int compare(Event left, Event right) {
+        public int compare(@NonNull Event left, @NonNull Event right) {
             return Long.valueOf(left.date + left.startAt).compareTo(right.date + right.startAt);
         }
     }

@@ -1,6 +1,7 @@
 package ru.nekit.android.nowapp.widget;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
 import android.util.AttributeSet;
 
@@ -13,11 +14,11 @@ public class SoftKeyboardListenerLayout extends CoordinatorLayout {
 
     private OnSoftKeyboardListener onSoftKeyboardListener;
 
-    public SoftKeyboardListenerLayout(final Context context, final AttributeSet attrs) {
+    public SoftKeyboardListenerLayout(@NonNull final Context context, final AttributeSet attrs) {
         super(context, attrs);
     }
 
-    public SoftKeyboardListenerLayout(Context context) {
+    public SoftKeyboardListenerLayout(@NonNull Context context) {
         super(context);
     }
 
