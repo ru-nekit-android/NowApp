@@ -219,7 +219,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             case NORMAL:
             default:
                 view = mInflater.inflate(R.layout.item_event, parent, false);
-                return new EventCollectionItemViewHolder(view);
+                return new EventCollectionItemViewHolder(view, this);
         }
     }
 
@@ -418,6 +418,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         private TextView mStartItemView;
         private ImageView mPosterThumbView;
         private ImageView mCatalogIcon;
+        private WeakReference<EventCollectionAdapter> mEventCollectionAdapterReference;
 
         public EventCollectionItemViewHolder(@NonNull View view) {
             super(view);
@@ -427,6 +428,11 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             mCatalogIcon = (ImageView) view.findViewById(R.id.category_view);
             mStartItemView = (TextView) view.findViewById(R.id.event_start_time_view);
             view.setOnClickListener(this);
+        }
+
+        public EventCollectionItemViewHolder(View view, EventCollectionAdapter eventCollectionAdapter) {
+            this(view);
+            mEventCollectionAdapterReference = new WeakReference<>(eventCollectionAdapter);
         }
 
         public TextView getPlaceView() {
@@ -453,7 +459,10 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         public void onClick(View view) {
             EventItemWrapper eventItemWrapper = getItem(getAdapterPosition());
             if (eventItemWrapper != null) {
-                mItemClickListener.onEventClick(eventItemWrapper.event, false);
+                EventCollectionAdapter adapter = mEventCollectionAdapterReference.get();
+                if (adapter != null) {
+                    adapter.mItemClickListener.onEventClick(eventItemWrapper.event, false);
+                }
             }
         }
     }
