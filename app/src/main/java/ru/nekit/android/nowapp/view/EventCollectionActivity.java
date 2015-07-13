@@ -28,10 +28,8 @@ import ru.nekit.android.nowapp.modelView.listeners.IEventPosterSelectListener;
 
 public class EventCollectionActivity extends AppCompatActivity implements IEventClickListener, IEventPosterSelectListener {
 
-    private EventPosterViewFragment mEventPosterViewFragment;
     private BroadcastReceiver mChangeApplicationStateReceiver;
     private View mOfflineView;
-    private EventDetailFragment mEventDetailFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -128,30 +126,15 @@ public class EventCollectionActivity extends AppCompatActivity implements IEvent
     @Override
     public void onEventClick(Event event, boolean openNew) {
         EventDetailFragment fragment;
-        if (openNew) {
-            fragment = EventDetailFragment.getInstance();
-        } else {
-            if (mEventDetailFragment == null) {
-                mEventDetailFragment = EventDetailFragment.getInstance();
-            }
-            fragment = mEventDetailFragment;
-        }
+        fragment = EventDetailFragment.getInstance();
         fragment.setEventAndAdvertPossibility(event, !openNew);
-        if (!fragment.isAdded()) {
-            getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left, R.anim.enter_from_left, R.anim.exit_to_right).replace(R.id.event_place_holder, fragment, EventDetailFragment.TAG).addToBackStack(null).commit();
-        }
+        getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left, R.anim.enter_from_left, R.anim.exit_to_right).replace(R.id.event_place_holder, fragment, EventDetailFragment.TAG).addToBackStack(null).commit();
     }
 
     @Override
     public void onEventItemPosterSelect(String posterUrl) {
-        if (mEventPosterViewFragment == null) {
-            mEventPosterViewFragment = EventPosterViewFragment.getInstance(posterUrl);
-        } else {
-            mEventPosterViewFragment.updateEventPosterUrl(posterUrl);
-        }
-        if (!mEventPosterViewFragment.isAdded()) {
-            getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left, R.anim.enter_from_left, R.anim.exit_to_right).replace(R.id.event_place_holder, mEventPosterViewFragment, EventPosterViewFragment.TAG).addToBackStack(null).commit();
-        }
+        EventPosterViewFragment fragment = EventPosterViewFragment.getInstance(posterUrl);
+        getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left, R.anim.enter_from_left, R.anim.exit_to_right).replace(R.id.event_place_holder, fragment, EventPosterViewFragment.TAG).addToBackStack(null).commit();
     }
 
     @Override

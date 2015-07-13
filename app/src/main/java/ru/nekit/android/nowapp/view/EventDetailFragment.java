@@ -17,8 +17,6 @@ import android.hardware.SensorManager;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.provider.CalendarContract;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
@@ -329,7 +327,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
     private void showAdvertBlockWithDelay(long delay) {
         if (isResumed()) {
-            final Context context = getActivity();
+            final Context context = getActivity().getApplicationContext();
             mTimer = new Timer();
             mTimer.schedule(
                     new TimerTask() {
@@ -339,7 +337,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                                 public void run() {
                                     expand(mAdvertBlock);
                                     ImageView advertIcon = (ImageView) mAdvertBlock.findViewById(R.id.advert_icon_view);
-                                    Glide.with(EventDetailFragment.this).load(mEventAdvert.logoThumb).into(advertIcon);
+                                    Glide.with(context).load(mEventAdvert.logoThumb).into(advertIcon);
                                     TextView advertTextView = (TextView) mAdvertBlock.findViewById(R.id.advert_text_view);
                                     String advertMessage = TextUtils.join(" ", new String[]{getResources().getString(R.string.attention_short), EventsModel.getStartTimeAliasForAdvert(context, mEventLinkToAdvert), mEventAdvert.placeName, mEventAdvert.name});
                                     advertTextView.setText(advertMessage);
@@ -380,13 +378,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         args.putInt(EventApiExecutor.KEY_METHOD, method);
         args.putInt(EventApiExecutor.KEY_EVENT_ITEM_ID, eventId);
         LoaderManager loaderManager = getActivity().getSupportLoaderManager();
-        int id = API_EXECUTOR_GROUP_ID + method;
-        final Loader<Integer> loader = loaderManager.getLoader(id);
-        if (loader != null) {
-            loaderManager.restartLoader(id, args, this);
-        } else {
-            loaderManager.initLoader(id, args, this);
-        }
+        loaderManager.initLoader(API_EXECUTOR_GROUP_ID + method, args, this);
     }
 
     private void initEventToCalendarLoader(int method) {
@@ -394,13 +386,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         args.putInt(EventToCalendarLoader.KEY_METHOD, method);
         args.putInt(EventToCalendarLoader.KEY_EVENT_ITEM_ID, mEvent.id);
         LoaderManager loaderManager = getActivity().getSupportLoaderManager();
-        int id = CALENDAR_LOADER_ID;
-        final Loader<EventToCalendarLink> loader = loaderManager.getLoader(id);
-        if (loader != null) {
-            loaderManager.restartLoader(id, args, this);
-        } else {
-            loaderManager.initLoader(id, args, this);
-        }
+        loaderManager.initLoader(CALENDAR_LOADER_ID, args, this);
     }
 
     @Nullable
@@ -446,7 +432,8 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     @Override
     public void onLoadFinished(@NonNull Loader loader, @NonNull Object result) {
         if (isResumed()) {
-            switch (loader.getId()) {
+            int id = loader.getId();
+            switch (id) {
                 case CALENDAR_LOADER_ID:
 
                     Pair<Integer, EventToCalendarLink> calendarResult = (Pair<Integer, EventToCalendarLink>) result;
@@ -458,12 +445,11 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                         messageId = R.string.remove_from_calendar_message;
                     }
                     if (messageId != 0) {
-                        if (mFloatingActionButtonBehavior.doBottomViewOverlap()) {
+                        boolean doOverlay = mFloatingActionButtonBehavior.doBottomViewOverlap();
+                        if (doOverlay) {
                             mFloatingActionButtonBehavior.allowMoveOnScroll(false);
-                            mFloatingActionButtonBehavior.allowMoveOnSnackbarShow(true);
-                        } else {
-                            mFloatingActionButtonBehavior.allowMoveOnSnackbarShow(false);
                         }
+                        mFloatingActionButtonBehavior.allowMoveOnSnackbarShow(doOverlay);
                         Snackbar snackbar = Snackbar.make(mFloatingActionButton, messageId, Snackbar.LENGTH_LONG);
                         snackbar.setActionTextColor(EventsModel.getCategoryColor(mEvent.category));
                         if (calendarResult.first == EventToCalendarLoader.ADD) {
@@ -511,9 +497,10 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
                 default:
                     break;
-
             }
+            getActivity().getSupportLoaderManager().destroyLoader(id);
         }
+
     }
 
     private void displayEventStats(boolean eventStatConfirmed) {
@@ -882,6 +869,18 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         timeView.setText(finalText);
     }
 
+    private void unbindDrawables(View view) {
+        if (view.getBackground() != null) {
+            view.getBackground().setCallback(null);
+        }
+        if (view instanceof ViewGroup) {
+            for (int i = 0; i < ((ViewGroup) view).getChildCount(); i++) {
+                unbindDrawables(((ViewGroup) view).getChildAt(i));
+            }
+            ((ViewGroup) view).removeAllViews();
+        }
+    }
+
     public void setEventAndAdvertPossibility(Event event, boolean advertPossibility) {
         Bundle arg = getArguments();
         if (arg == null) {
@@ -921,6 +920,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     public void onDestroy() {
         super.onDestroy();
         mMapView.setMapListener(null);
+        unbindDrawables(mRootLayout);
     }
 
     @Override
@@ -1100,7 +1100,10 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         }
 
         public boolean onDependentViewChanged(@NonNull CoordinatorLayout parent, @NonNull FloatingActionButton child, @NonNull View dependency) {
-            updateFabTranslationForSnackbar(parent, child, dependency);
+            EventDetailFragment fragment = fragmentReference.get();
+            if (fragment != null && fragment.isResumed()) {
+                updateFabTranslationForSnackbar(parent, child, dependency);
+            }
             return false;
         }
 

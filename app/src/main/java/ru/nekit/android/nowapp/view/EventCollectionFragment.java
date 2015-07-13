@@ -241,6 +241,8 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
             actionBar.setDisplayHomeAsUpEnabled(false);
         }
 
+        mEventCollectionAdapter.registerRecyclerView(mEventItemsView);
+
         mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
@@ -367,8 +369,6 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         mEventCollectionAdapter.setHasStableIds(true);
         mEventItemsView.setAdapter(mEventCollectionAdapter);
 
-        mEventCollectionAdapter.registerRecyclerView(mEventItemsView);
-
         mEventItemsView.setHasFixedSize(true);
         mEventItemsView.setItemAnimator(new DefaultItemAnimator());
 
@@ -481,7 +481,6 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
     @Override
     public void onDestroy() {
         super.onDetach();
-        mEventCollectionAdapter.unregisterRecyclerView(mEventItemsView);
     }
 
     @Override
@@ -502,6 +501,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
 
         NowApplication.unregisterForAppChangeStateNotification(mLocalBroadcastReceiver);
         mEventModel.unregisterForLoadInBackgroundResultNotification(mLocalBroadcastReceiver);
+        mEventCollectionAdapter.unregisterRecyclerView(mEventItemsView);
 
         super.onPause();
     }
@@ -617,7 +617,9 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
                     titleContainer.setVisibility(searchVisible ? View.INVISIBLE : View.VISIBLE);
                 }
                 mSearchView.setVisibility(searchVisible ? View.VISIBLE : View.GONE);
-                animateFade(true, searchVisible ? mSearchView : titleContainer);
+                if (isResumed()) {
+                    animateFade(true, searchVisible ? mSearchView : titleContainer);
+                }
             }
 
             @Override
