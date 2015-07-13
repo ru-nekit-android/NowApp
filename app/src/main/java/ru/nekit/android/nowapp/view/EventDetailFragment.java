@@ -122,6 +122,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     private final FloatingActionButtonBehavior mFloatingActionButtonBehavior;
     @NonNull
     private final WeakHandler mHandler;
+    @NonNull
     private final EventsModel mEventModel;
     private Timer mTimer;
     //private Timer mTimerForHand;
@@ -129,9 +130,9 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     private Event mEvent, mEventLinkToAdvert;
     @Nullable
     private EventAdvert mEventAdvert;
-    @Nullable
+    @NonNull
     private IEventPosterSelectListener mEventPosterSelectListener;
-    @Nullable
+    @NonNull
     private IEventClickListener mEventClickListener;
     private ProgressWheel mProgressWheel;
     private GeoPoint mEventLocationPoint;
@@ -437,10 +438,10 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                 case CALENDAR_LOADER_ID:
 
                     Pair<Integer, EventToCalendarLink> calendarResult = (Pair<Integer, EventToCalendarLink>) result;
-                    mEventToCalendarLink = calendarResult.second;
                     int messageId = 0;
                     if (calendarResult.first == EventToCalendarLoader.ADD) {
                         messageId = R.string.add_to_calendar_message;
+                        mEventToCalendarLink = calendarResult.second;
                     } else if (calendarResult.first == EventToCalendarLoader.REMOVE) {
                         messageId = R.string.remove_from_calendar_message;
                     }
@@ -989,7 +990,9 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
                 EventStats eventStats = mEventModel.obtainEventStatsByEventId(mEvent.id);
                 if (eventStats != null && eventStats.myLikeStatus == 0) {
-                    showAddToCalendarDialog();
+                    if (mEventToCalendarLink == null) {
+                        showAddToCalendarDialog();
+                    }
                     initEventApiExecutor(EventApiExecutor.METHOD_LIKE, mEvent.id);
                 }
 
