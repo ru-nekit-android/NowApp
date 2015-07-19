@@ -207,7 +207,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        mHandler.postDelayed(new Runnable() {
+        mHandler.post(new Runnable() {
             @Override
             public void run() {
                 if (isResumed()) {
@@ -215,7 +215,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
                     //showHand();
                 }
             }
-        }, getResources().getInteger(R.integer.slide_animation_duration) * 2);
+        });
 
     }
 
@@ -439,9 +439,9 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
 
                     Pair<Integer, EventToCalendarLink> calendarResult = (Pair<Integer, EventToCalendarLink>) result;
                     int messageId = 0;
+                    mEventToCalendarLink = calendarResult.second;
                     if (calendarResult.first == EventToCalendarLoader.ADD) {
                         messageId = R.string.add_to_calendar_message;
-                        mEventToCalendarLink = calendarResult.second;
                     } else if (calendarResult.first == EventToCalendarLoader.REMOVE) {
                         messageId = R.string.remove_from_calendar_message;
                     }
