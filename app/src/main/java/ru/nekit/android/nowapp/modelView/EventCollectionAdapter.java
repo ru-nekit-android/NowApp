@@ -12,6 +12,7 @@ import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -63,6 +64,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     @Nullable
     private EventItemWrapper mLoadingItem;
     private BroadcastReceiver mUpdateReceiver;
+    private boolean mIsRefreshing;
 
     public EventCollectionAdapter(@NonNull Context context, int columns) {
         mContext = context;
@@ -119,6 +121,18 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 }
             }
         };
+        recyclerView.setOnTouchListener(
+                new View.OnTouchListener() {
+                    @Override
+                    public boolean onTouch(View v, MotionEvent event) {
+                        if (mIsRefreshing) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    }
+                }
+        );
         recyclerView.addOnScrollListener(mScrollListener);
         mEventModel.registerForFiveMinuteUpdateNotification(mUpdateReceiver = new BroadcastReceiver() {
             @Override
@@ -159,33 +173,15 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         if (mScrollListener != null) {
             recyclerView.removeOnScrollListener(mScrollListener);
         }
+        recyclerView.setOnTouchListener(null);
         mEventItems.clear();
         mScrollListener = null;
         mEventModel.unregisterForFiveMinuteUpdateNotification(mUpdateReceiver);
     }
 
-    public void addItems(ArrayList<Event> events) {
-        int fistItemIndex = mEventItems.size();
-        boolean hasLoading = false;
-        if (isLoading()) {
-            hasLoading = true;
-            fistItemIndex--;
-            removeLoading();
-        }
-        if (setItems(events, true)) {
-            for (int i = fistItemIndex; i < mEventItems.size(); i++) {
-                notifyItemInserted(i);
-            }
-        }
-        if (hasLoading) {
-            addLoading();
-        }
-    }
-
-    private boolean setItems(@Nullable ArrayList<Event> events, boolean addState) {
-        if (!addState) {
-            mEventItems.clear();
-        }
+    public void setItems(@Nullable ArrayList<Event> events) {
+        mIsRefreshing = true;
+        mEventItems.clear();
         if (events != null && events.size() > 0) {
             for (Event event : events) {
                 long dateDelta = event.date - getCurrentDateTime(mContext, true);
@@ -193,19 +189,9 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                     mEventItems.add(new EventItemWrapper(event));
                 }
             }
-            if (!addState) {
-                notifyDataSetChanged();
-            }
-            return true;
-        } else {
-            notifyDataSetChanged();
         }
-        return false;
-    }
-
-    public void setItems(ArrayList<Event> events) {
-
-        setItems(events, false);
+        notifyDataSetChanged();
+        mIsRefreshing = false;
     }
 
     @NonNull
@@ -222,6 +208,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 return new EventCollectionItemViewHolder(view, this);
         }
     }
+
 
     @Override
     public void onBindViewHolder(@NonNull final RecyclerView.ViewHolder viewHolder, final int position) {
@@ -317,7 +304,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     @Override
     public int getItemCount() {
-        return mEventItems == null ? 0 : mEventItems.size();
+        return mEventItems.size();
     }
 
     @Override
@@ -339,7 +326,7 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         if (mLoadingItem != null) {
             int position = getItemCount();
             mEventItems.remove(position - 1);
-            notifyItemRemoved(position);
+            notifyDataSetChanged();
             mLoadingItem = null;
         }
     }
@@ -397,12 +384,13 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         public int cachedNameLineCount;
         public boolean posterLoaded;
         private Event event;
-        private boolean isLoadingItem = false;
+        private boolean isLoadingItem;
 
         EventItemWrapper(Event event) {
             cachedName = null;
             cachedNameLineCount = 0;
             posterLoaded = false;
+            isLoadingItem = false;
             this.event = event;
         }
 
