@@ -32,6 +32,7 @@ dependencies {
     compile 'com.pnikosis:materialish-progress:1.4'
     compile 'com.squareup:seismic:1.0.1'
     compile 'org.osmdroid:osmdroid-android:4.3'
+    compile 'com.badoo.mobile:android-weak-handler:1.0'
     compile 'org.slf4j:slf4j-simple:1.6.1'
     compile project(':robototextview')
     compile project(':updatechecker')
