@@ -21,6 +21,8 @@
     <dimen name="logo_max_width">96dp</dimen>
     <dimen name="logo_max_height">54dp</dimen>
     <dimen name="event_stats_icon_size">16dp</dimen>
+    <dimen name="hand_width">210dp</dimen>
+    <dimen name="hand_height">309dp</dimen>
     <item name="event_name_line_spacing_multiplier" format="float" type="dimen">0.8</item>
     <item name="event_item_view_height_ratio" format="float" type="dimen">1.0</item>
 

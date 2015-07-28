@@ -14,5 +14,7 @@
     <dimen name="advert_block_icon_width">72dp</dimen>
     <dimen name="advert_block_icon_height">54dp</dimen>
     <dimen name="event_stats_icon_size">14dp</dimen>
+    <dimen name="hand_width">210dp</dimen>
+    <dimen name="hand_height">309dp</dimen>
 
 </resources>

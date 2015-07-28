@@ -66,6 +66,8 @@ import com.bumptech.glide.request.target.Target;
 import com.pnikosis.materialishprogress.ProgressWheel;
 import com.squareup.seismic.ShakeDetector;
 
+import junit.framework.Assert;
+
 import org.osmdroid.DefaultResourceProxyImpl;
 import org.osmdroid.api.IGeoPoint;
 import org.osmdroid.events.MapListener;
@@ -126,7 +128,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     private final EventsModel mEventModel;
     private Timer mTimer;
     //private Timer mTimerForHand;
-    @Nullable
+    @NonNull
     private Event mEvent, mEventLinkToAdvert;
     @Nullable
     private EventAdvert mEventAdvert;
@@ -166,7 +168,6 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     private long obtainAdvertCallTime;
     private ShakeDetector mShakeDetector;
     private ImageView mHandView;
-    //private int mHandFrameIndex;
 
     public EventDetailFragment() {
         mFloatingActionButtonBehavior = new FloatingActionButtonBehavior(this);
@@ -207,15 +208,15 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        mHandler.post(new Runnable() {
+        mHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 if (isResumed()) {
                     createMap();
-                    //showHand();
+                    showHand();
                 }
             }
-        });
+        }, getResources().getInteger(R.integer.slide_animation_duration));
 
     }
 
@@ -302,29 +303,11 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
         });
     }
 
-    /*private void showHand() {
+    private void showHand() {
         if (isResumed()) {
-            mHandFrameIndex = 0;
-            mTimerForHand = new Timer();
-            mTimerForHand.scheduleAtFixedRate(
-                    new TimerTask() {
-                        @Override
-                        public void run() {
-                            getActivity().runOnUiThread(new Runnable() {
-                                public void run() {
-                                    mHandFrameIndex = (mHandFrameIndex + 1) % 79;
-                                    if (mHandFrameIndex % 4 == 0) {
-                                        mHandView.setImageResource(EventsModel.HAND.get(mHandFrameIndex));
-                                        VTAG.call("run");
-                                    }
-                                }
-                            });
-                        }
-                    },
-                    0,
-                    25);
+            Glide.with(this).load(R.raw.hand_shake).dontTransform().dontAnimate().into(mHandView);
         }
-    }*/
+    }
 
     private void showAdvertBlockWithDelay(long delay) {
         if (isResumed()) {
@@ -647,6 +630,7 @@ public class EventDetailFragment extends Fragment implements View.OnClickListene
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         mEvent = getArguments().getParcelable(KEY_EVENT_ITEM);
+        Assert.assertNotNull(mEvent);
         mInflater = inflater;
         return constructInterface(inflater.inflate(R.layout.fragment_event_detail, container, false));
     }

@@ -108,7 +108,6 @@ public class EventsModel {
 
     private static final HashMap<String, Integer> CATEGORY_TYPE_COLOR = new HashMap<>();
     private static final HashMap<String, Integer> CATEGORY_TYPE_BIG = new HashMap<>();
-    public static ArrayList<Integer> HAND;
     @NonNull
     private static ArrayList<Pair<String, long[]>> PERIODS = new ArrayList<Pair<String, long[]>>(4) {{
         add(new Pair<>("ночью", NIGHT_PERIOD));
@@ -611,20 +610,6 @@ public class EventsModel {
     int performEventsLoad(@Nullable String loadingType) throws IOException, JSONException {
 
         Integer result = RESULT_OK;
-
-        if (HAND == null) {
-            HAND = new ArrayList<>();
-            for (int i = 0; i < 80; i++) {
-                String imagePostfixIndex = Integer.toString(i);
-                String imagePostfix = "";
-                for (int j = imagePostfixIndex.length(); j < 5; j++) {
-                    imagePostfix += "0";
-                }
-                imagePostfix += imagePostfixIndex;
-                HAND.add(mContext.getResources()
-                        .getIdentifier("appphone_seichas_" + imagePostfix, "drawable", mContext.getPackageName()));
-            }
-        }
 
         boolean requestNewEvents = REQUEST_NEW_EVENTS.equals(loadingType);
 

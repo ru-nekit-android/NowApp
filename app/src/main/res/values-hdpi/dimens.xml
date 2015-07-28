@@ -18,5 +18,7 @@
     <dimen name="logo_max_height">48dp</dimen>
     <dimen name="event_stats_icon_size">14dp</dimen>
     <dimen name="advert_text">15sp</dimen>
+    <dimen name="hand_width">210px</dimen>
+    <dimen name="hand_height">309px</dimen>
 
 </resources>
