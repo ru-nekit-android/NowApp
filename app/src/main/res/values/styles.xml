@@ -209,7 +209,8 @@
     </style>
 
     <style name="OfflineView">
-        <item name="typeface">roboto_regular</item>
+        <item name="android:textSize">12sp</item>
+        <item name="typeface">roboto_light</item>
     </style>
 
     <style name="NothingFound">
@@ -242,8 +243,7 @@
         <item name="android:textColor">@android:color/black</item>
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:singleLine">true</item>
-        <item name="android:maxLines">1</item>
+        <item name="android:maxLines">2</item>
         <item name="android:textSize">@dimen/advert_text</item>
     </style>
 
