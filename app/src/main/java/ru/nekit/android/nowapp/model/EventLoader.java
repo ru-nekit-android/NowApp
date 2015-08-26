@@ -10,15 +10,16 @@ import org.json.JSONException;
 import java.io.IOException;
 
 import ru.nekit.android.nowapp.NowApplication;
+import ru.nekit.android.nowapp.VTAG;
 
 /**
  * Created by chuvac on 13.03.15.
  */
-public class EventItemsLoader extends AsyncTaskLoader<Integer> {
+public class EventLoader extends AsyncTaskLoader<Integer> {
 
     private Bundle mArgs;
 
-    public EventItemsLoader(@NonNull Context context, Bundle args) {
+    public EventLoader(@NonNull Context context, Bundle args) {
         super(context);
         mArgs = args;
     }
