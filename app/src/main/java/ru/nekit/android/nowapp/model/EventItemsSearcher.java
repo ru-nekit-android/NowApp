@@ -17,9 +17,10 @@ public class EventItemsSearcher extends AsyncTaskLoader<ArrayList<Event>> {
 
     public static final String KEY_EVENT_ITEMS_SEARCH = "event_items_search_key";
 
+    @NonNull
     private Bundle mArgs;
 
-    public EventItemsSearcher(@NonNull Context context, Bundle args) {
+    public EventItemsSearcher(@NonNull Context context, @NonNull Bundle args) {
         super(context);
         mArgs = args;
     }
