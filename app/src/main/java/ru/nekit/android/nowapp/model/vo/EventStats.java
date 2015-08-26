@@ -16,10 +16,11 @@ public class EventStats {
     public int id;
     public int viewCount;
     public int likeCount;
+    public boolean likedByMe;
     public int myLikeStatus;
 
     private int getLikeCount() {
-        return likeCount + (myLikeStatus == EventsModel.LIKE_NOT_CONFIRMED ? 1 : 0);
+        return likeCount + (myLikeStatus == EventsModel.LIKE_NOT_CONFIRMED || likedByMe ? 1 : 0);
     }
 
     @NonNull
@@ -28,14 +29,10 @@ public class EventStats {
         return likes > MAX_LIKES ? Integer.toString(MAX_LIKES) + "+" : Integer.toString(likes);
     }
 
-    private int getViewCount(boolean online, boolean confirmed) {
-        return viewCount + (!online || !confirmed ? 1 : 0);
-    }
 
     @NonNull
-    public String getViews(boolean online, boolean confirmed) {
-        int views = getViewCount(online, confirmed);
-        return views > MAX_VIEWS ? Integer.toString(MAX_VIEWS) + "+" : Integer.toString(views);
+    public String getViews() {
+        return viewCount > MAX_VIEWS ? Integer.toString(MAX_VIEWS) + "+" : Integer.toString(viewCount);
     }
 
 }
