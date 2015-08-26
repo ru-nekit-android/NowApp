@@ -7,7 +7,9 @@ public class EventBase {
 
     public int id;
     public String logoThumb;
-    public String name;
-    public String placeName;
-    public long startAt;
+    public String posterThumb;
+    public String posterBlur;
+    public String posterOriginal;
+    public String logoOriginal;
+    public String flayer;
 }
