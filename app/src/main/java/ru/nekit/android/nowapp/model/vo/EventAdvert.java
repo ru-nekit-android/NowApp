@@ -6,8 +6,11 @@ package ru.nekit.android.nowapp.model.vo;
 public class EventAdvert extends EventBase {
 
     public int eventId;
-    public String link;
+    public String text;
     public int showChanceLow;
     public int showChanceHigh;
-    public String adType;
+    public long advertEndAt;
+    public long advertStartAt;
+    public long eventEndAt;
+    public long eventStartAt;
 }
