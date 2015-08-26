@@ -11,6 +11,7 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.CalendarContract;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
@@ -19,14 +20,6 @@ import android.text.TextUtils;
 
 import junit.framework.Assert;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -35,6 +28,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.DateFormatSymbols;
@@ -88,15 +82,21 @@ public class EventsModel {
     private static final String TAG_EVENTS = "events";
     private static final String TAG_ADVERTS = "adverts";
     private static final String SITE_NAME = "nowapp.ru";
-    private static final String API_ROOT = "api/event";
-    private static final String API_REQUEST_GET_EVENTS = API_ROOT + "s.get";
-    private static final String API_REQUEST_GET_EVENT = API_ROOT + ".get";
-    private static final String API_REQUEST_GET_STATS = API_REQUEST_GET_EVENT + ".stats";
-    private static final String API_REQUEST_UPDATE = API_ROOT + ".update";
-    private static final String API_REQUEST_UPDATE_LIKE = API_REQUEST_UPDATE + ".like";
-    private static final String API_REQUEST_UPDATE_VIEW = API_REQUEST_UPDATE + ".view";
+    private static final String API_ROOT = "api/v2";
+    private static final String API_EVENT = API_ROOT + "/event";
+    private static final String API_DEVICE = API_ROOT + "/device";
+    private static final String API_REQUEST_REGISTER_DEVICE = API_DEVICE + "/register";
+    private static final String API_REQUEST_GET_EVENTS = API_EVENT + "s";
+    private static final String API_REQUEST_GET_ADVERTS = API_ROOT + "/adverts";
+    private static final String API_REQUEST_GET_EVENT = API_EVENT;
+    private static final String API_REQUEST_GET_STATISTICS = API_EVENT + "/statistics";
+    private static final String API_REQUEST_LIKE = API_EVENT + "/like";
+    private static final int COUNT = 12;
+
+    public String deviceToken;
+
     private static final String DATABASE_NAME = "nowapp.db";
-    private static final int DATABASE_VERSION = 10;
+    private static final int DATABASE_VERSION = 14;
     private static final HashMap<String, String> CATEGORY_TYPE_KEYWORDS = new HashMap<>();
     private static final HashMap<String, Integer> CATEGORY_TYPE = new HashMap<>();
     private static final String CATEGORY_SPORT = "category_sport";
@@ -104,7 +104,7 @@ public class EventsModel {
     private static final String CATEGORY_OTHER = "category_other";
     private static final String CATEGORY_EDUCATION = "category_education";
     private static final String CATEGORY_DISCOUNT = "category_discount";
-    private static final String CATEGORY_MUSIC = "category_music";
+    private static final String CATEGORY_CULTURE = "category_culture";
 
     private static final HashMap<String, Integer> CATEGORY_TYPE_COLOR = new HashMap<>();
     private static final HashMap<String, Integer> CATEGORY_TYPE_BIG = new HashMap<>();
@@ -130,16 +130,13 @@ public class EventsModel {
     private final Runnable mBackgroundLoadTask;
     @NonNull
     private final EventToCalendarDataSource mEventToCalendarDataSource;
-    @NonNull
-    private final Timer mTimer;
-    private int mAvailableEventCount;
     private int mCurrentPage;
-    private boolean mReachEndOfDataList;
     private boolean mDataIsActual;
     private int mLoadedInBackgroundPage;
     private int mEventsCountPerPage;
     private Event mLastAddedInBackgroundEvent;
     private Thread mBackgroundThread;
+    private Boolean mHasNext;
 
     private EventsModel(@NonNull final Context context) {
         mContext = context;
@@ -147,20 +144,19 @@ public class EventsModel {
         mCurrentPage = 1;
         mLoadedInBackgroundPage = 1;
         mEventsCountPerPage = 0;
-        mReachEndOfDataList = false;
 
         CATEGORY_TYPE.put(CATEGORY_SPORT, R.drawable.event_category_sport);
         CATEGORY_TYPE.put(CATEGORY_ENTERTAINMENT, R.drawable.event_category_entertainment);
         CATEGORY_TYPE.put(CATEGORY_OTHER, R.drawable.event_category_other);
         CATEGORY_TYPE.put(CATEGORY_EDUCATION, R.drawable.event_category_education);
         CATEGORY_TYPE.put(CATEGORY_DISCOUNT, R.drawable.event_category_discount);
-        CATEGORY_TYPE.put(CATEGORY_MUSIC, R.drawable.event_category_music);
+        CATEGORY_TYPE.put(CATEGORY_CULTURE, R.drawable.event_category_culture);
 
         CATEGORY_TYPE_KEYWORDS.put(CATEGORY_SPORT, context.getResources().getString(R.string.event_category_sport_keywords));
         CATEGORY_TYPE_KEYWORDS.put(CATEGORY_ENTERTAINMENT, context.getResources().getString(R.string.event_category_entertainment_keywords));
         CATEGORY_TYPE_KEYWORDS.put(CATEGORY_OTHER, context.getResources().getString(R.string.event_category_other_keywords));
         CATEGORY_TYPE_KEYWORDS.put(CATEGORY_EDUCATION, context.getResources().getString(R.string.event_category_education_keywords));
-        CATEGORY_TYPE_KEYWORDS.put(CATEGORY_MUSIC, context.getResources().getString(R.string.event_category_music_keywords));
+        CATEGORY_TYPE_KEYWORDS.put(CATEGORY_CULTURE, context.getResources().getString(R.string.event_category_culture_keywords));
         CATEGORY_TYPE_KEYWORDS.put(CATEGORY_DISCOUNT, context.getResources().getString(R.string.event_category_discount_keywords));
 
         CATEGORY_TYPE_BIG.put(CATEGORY_SPORT, R.drawable.event_category_sport_big);
@@ -168,13 +164,13 @@ public class EventsModel {
         CATEGORY_TYPE_BIG.put(CATEGORY_OTHER, R.drawable.event_category_other_big);
         CATEGORY_TYPE_BIG.put(CATEGORY_EDUCATION, R.drawable.event_category_education_big);
         CATEGORY_TYPE_BIG.put(CATEGORY_DISCOUNT, R.drawable.event_category_discount_big);
-        CATEGORY_TYPE_BIG.put(CATEGORY_MUSIC, R.drawable.event_category_music_big);
+        CATEGORY_TYPE_BIG.put(CATEGORY_CULTURE, R.drawable.event_category_culture_big);
 
         CATEGORY_TYPE_COLOR.put(CATEGORY_SPORT, context.getResources().getColor(R.color.event_category_sport));
         CATEGORY_TYPE_COLOR.put(CATEGORY_ENTERTAINMENT, context.getResources().getColor(R.color.event_category_entertainment));
         CATEGORY_TYPE_COLOR.put(CATEGORY_OTHER, context.getResources().getColor(R.color.event_category_other));
         CATEGORY_TYPE_COLOR.put(CATEGORY_EDUCATION, context.getResources().getColor(R.color.event_category_education));
-        CATEGORY_TYPE_COLOR.put(CATEGORY_MUSIC, context.getResources().getColor(R.color.event_category_music));
+        CATEGORY_TYPE_COLOR.put(CATEGORY_CULTURE, context.getResources().getColor(R.color.event_category_culture));
         CATEGORY_TYPE_COLOR.put(CATEGORY_DISCOUNT, context.getResources().getColor(R.color.event_category_discount));
 
         mEventDataSource = new EventDataSource(context, DATABASE_NAME, DATABASE_VERSION);
@@ -186,20 +182,19 @@ public class EventsModel {
             @Override
             public void run() {
                 int result = RESULT_OK;
-                while (!Thread.interrupted() && mLoadedInBackgroundPage < getAvailablePageCount() && mLoadedInBackgroundPage <= PAGE_LIMIT_LOAD_IN_BACKGROUND() && result == RESULT_OK) {
+                while (!Thread.interrupted() && mHasNext && mLoadedInBackgroundPage <= PAGE_LIMIT_LOAD_IN_BACKGROUND() && result == RESULT_OK) {
                     try {
                         result = performEventsLoad(LOAD_IN_BACKGROUND);
                     } catch (@NonNull IOException | JSONException exp) {
                         //empty
                     }
                     LocalBroadcastManager.getInstance(mContext).sendBroadcast(new Intent(LOAD_IN_BACKGROUND_NOTIFICATION));
-                    VTAG.call("Background Load Task: " + mLoadedInBackgroundPage + " : " + getAvailablePageCount() + " : " + result);
+                    VTAG.call("Background Load Task: " + mLoadedInBackgroundPage + " : " + result);
                 }
             }
         };
 
-
-        mTimer = new Timer();
+        Timer mTimer = new Timer();
 
         mTimer.scheduleAtFixedRate(
 
@@ -207,7 +202,8 @@ public class EventsModel {
 
                     @Override
                     public void run() {
-                        if (getCurrentDayTimeInSeconds() % TimeUnit.MINUTES.toSeconds(1) == 0 && TimeUnit.SECONDS.toMinutes(getCurrentDayTime(mContext, false)) % mContext.getResources().getInteger(R.integer.event_time_precision_in_minutes) == 0) {
+                        long dayTime = getDayTimeInSeconds();
+                        if (dayTime % TimeUnit.MINUTES.toSeconds(1) == 0 && TimeUnit.SECONDS.toMinutes(dayTime) % mContext.getResources().getInteger(R.integer.event_time_precision_in_minutes) == 0) {
                             LocalBroadcastManager.getInstance(mContext).sendBroadcast(new Intent(UPDATE_FIVE_MINUTE_TIMER_NOTIFICATION));
                         }
                     }
@@ -233,31 +229,30 @@ public class EventsModel {
     }
 
     public static String getStartTimeAliasForAdvert(@NonNull Context context, @NonNull Event event) {
-        return createEventStartTimeString(context, event.date, event.startAt, event.endAt, false, true).toLowerCase();
+        return createEventStartTimeString(context, event, false, true).toLowerCase();
     }
 
     public static String getStartTimeAlias(@NonNull Context context, @NonNull Event event) {
-        return createEventStartTimeString(context, event.date, event.startAt, event.endAt, false, false);
+        return createEventStartTimeString(context, event, false, false);
     }
 
     public static String getStartTimeKeywords(@NonNull Context context, @NonNull Event event) {
-        return createEventStartTimeString(context, event.date, event.startAt, event.endAt, true, false);
+        return createEventStartTimeString(context, event, true, false);
     }
 
-    private static String createEventStartTimeString(@NonNull Context context, long date, long startAt, long endAt, boolean createForKeywords, boolean creteForAdvert) {
+    private static String createEventStartTimeString(@NonNull Context context, Event event, boolean createForKeywords, boolean creteForAdvert) {
         Resources resources = context.getResources();
-        long currentTimeTimestamp = getCurrentDayTime(context, true);
-        long startAfterSeconds = startAt - currentTimeTimestamp;
-        long dateDelta = date - getCurrentDateTime(context, true);
+        long timeStampInSeconds = getTimeStampInSeconds();
+        long startAfterSeconds = event.startAt - timeStampInSeconds;
         String startTimeAliasString;
-        startAfterSeconds += dateDelta;
         if (startAfterSeconds <= 0) {
-            if (endAt > currentTimeTimestamp || endAt == 0) {
+            if (event.endAt > timeStampInSeconds || event.endAt == 0) {
                 startTimeAliasString = resources.getString(createForKeywords ? R.string.going_right_now_keywords : creteForAdvert ? R.string.going_right_now_advert : R.string.going_right_now);
             } else {
                 startTimeAliasString = resources.getString(R.string.already_ended);
             }
         } else if (startAfterSeconds <= MAXIMUM_TIME_PERIOD_FOR_DATE_ALIAS_SUPPORT) {
+            startAfterSeconds = getTimeWithPrecision(context, startAfterSeconds);
             long startAfterMinutesFull = TimeUnit.SECONDS.toMinutes(startAfterSeconds);
             long startAfterHours = TimeUnit.MINUTES.toHours(startAfterMinutesFull);
             long startAfterMinutes = startAfterMinutesFull % TimeUnit.HOURS.toMinutes(1);
@@ -269,29 +264,33 @@ public class EventsModel {
                 startTimeAliasString += String.format(" %d мин", startAfterMinutes);
             }
         } else {
-            if (currentTimeTimestamp <= NIGHT_PERIOD[1] && startAt >= MORNING_PERIOD[0]) {
-                dateDelta += TimeUnit.DAYS.toSeconds(1);
+            long currentDate = TimeUnit.SECONDS.toDays(timeStampInSeconds);
+            long eventDate = TimeUnit.SECONDS.toDays(event.startAt);
+            if (timeStampInSeconds <= NIGHT_PERIOD[1]) {
+                eventDate--;
             }
+            long dateDelta = eventDate - currentDate;
             if (dateDelta == 0) {
-                startTimeAliasString = String.format("%s %s", resources.getString(R.string.today), getDayPeriodAlias(startAt));
-            } else if (dateDelta >= TimeUnit.DAYS.toSeconds(1) && dateDelta < TimeUnit.DAYS.toSeconds(2)) {
-                startTimeAliasString = String.format("%s %s", resources.getString(R.string.tomorrow), getDayPeriodAlias(startAt));
-            } else if (dateDelta >= TimeUnit.DAYS.toSeconds(2) && dateDelta < TimeUnit.DAYS.toSeconds(3)) {
+                startTimeAliasString = String.format("%s %s", resources.getString(R.string.today), getDayPeriodAlias(getEventDayTimeInSeconds(event)));
+            } else if (dateDelta == 1) {
+                startTimeAliasString = String.format("%s %s", resources.getString(R.string.tomorrow), getDayPeriodAlias(getEventDayTimeInSeconds(event)));
+            } else if (dateDelta == 2) {
                 startTimeAliasString = resources.getString(R.string.day_after_tomorrow);
             } else {
                 Calendar calendar = Calendar.getInstance();
-                calendar.setTimeInMillis(TimeUnit.SECONDS.toMillis(date));
+                calendar.setTimeZone(calendar.getTimeZone());
+                calendar.setTimeInMillis(TimeUnit.SECONDS.toMillis(event.startAt));
                 startTimeAliasString = String.format("%s %s", calendar.get(Calendar.DAY_OF_MONTH), new DateFormatSymbols().getMonths()[calendar.get(Calendar.MONTH)].toLowerCase());
             }
         }
         return startTimeAliasString;
     }
 
-    private static String getDayPeriodAlias(long dayTimeInSeconds) {
+    private static String getDayPeriodAlias(long time) {
         String alias = PERIODS.get(0).first;
         for (int i = 1; i < PERIODS.size(); i++) {
             long[] periodTime = PERIODS.get(i).second;
-            if (dayTimeInSeconds >= periodTime[0] && dayTimeInSeconds <= periodTime[1]) {
+            if (time >= periodTime[0] && time <= periodTime[1]) {
                 alias = PERIODS.get(i).first;
             }
         }
@@ -303,15 +302,18 @@ public class EventsModel {
     }
 
     public static int getCategoryDrawable(String category) {
-        return CATEGORY_TYPE.get(category);
+        Integer value = CATEGORY_TYPE.get(category);
+        return value == null ? 0 : value;
     }
 
     public static int getCategoryBigDrawable(String category) {
         return CATEGORY_TYPE_BIG.get(category);
     }
 
+    @NonNull
     public static String getCategoryKeywords(String category) {
-        return CATEGORY_TYPE_KEYWORDS.get(category);
+        String value = CATEGORY_TYPE_KEYWORDS.get(category);
+        return value == null ? "" : value;
     }
 
     public static synchronized EventsModel getInstance(@NonNull Context context) {
@@ -326,46 +328,29 @@ public class EventsModel {
         return sInstance;
     }
 
-    public static long getCurrentDayTime(@NonNull Context context, boolean usePrecision) {
+    public static long getEventDayTimeInSeconds(@NonNull Event event) {
         Calendar calendar = Calendar.getInstance();
-        int minutes = calendar.get(Calendar.MINUTE);
-        int hours = calendar.get(Calendar.HOUR_OF_DAY);
-        long currentTimeTimestamp = TimeUnit.HOURS.toSeconds(hours) + TimeUnit.MINUTES.toSeconds(minutes);
-        if (usePrecision) {
-            long precision = TimeUnit.MINUTES.toSeconds(context.getResources().getInteger(R.integer.event_time_precision_in_minutes));
-            currentTimeTimestamp = ((int) currentTimeTimestamp / precision) * precision;
-        }
-        return currentTimeTimestamp;
+        calendar.setTimeZone(calendar.getTimeZone());
+        calendar.setTimeInMillis(TimeUnit.SECONDS.toMillis(event.startAt));
+        return TimeUnit.HOURS.toSeconds(calendar.get(Calendar.HOUR_OF_DAY)) + TimeUnit.MINUTES.toSeconds(calendar.get(Calendar.MINUTE));
     }
 
-    private static long getCurrentDayTimeInSeconds() {
-        return Calendar.getInstance().get(Calendar.SECOND);
-    }
-
-    public static long getCurrentDateTime(@NonNull Context context, boolean usePrecision) {
+    public static long getTimeStampInSeconds() {
         Calendar calendar = Calendar.getInstance();
-        long currentTime = TimeUnit.MILLISECONDS.toSeconds(calendar.getTimeInMillis()) - getCurrentDayTime(context, false);
-        if (usePrecision) {
-            long precision = TimeUnit.MINUTES.toSeconds(context.getResources().getInteger(R.integer.event_time_precision_in_minutes));
-            currentTime = ((int) currentTime / precision) * precision;
-        }
-        return currentTime + getTimeZoneOffsetInSeconds();
+        calendar.setTimeZone(calendar.getTimeZone());
+        return TimeUnit.MILLISECONDS.toSeconds(calendar.getTimeInMillis());
     }
 
-    private static long getTimeZoneOffsetInSeconds() {
-        return TimeUnit.MILLISECONDS.toSeconds(Calendar.getInstance().getTimeZone().getRawOffset());
+    public static long getTimeWithPrecision(@NonNull Context context, long time) {
+        long precision = TimeUnit.MINUTES.toSeconds(context.getResources().getInteger(R.integer.event_time_precision_in_minutes));
+        time = ((int) time / precision) * precision;
+        return time;
     }
 
-    public static long getEventStartTimeInSeconds(@NonNull Event event) {
-        return event.date + event.startAt - getTimeZoneOffsetInSeconds();
-    }
-
-    public static long getEventEndTimeInSeconds(@NonNull Event event) {
-        return event.date + event.endAt - getTimeZoneOffsetInSeconds();
-    }
-
-    public void destroy() {
-        mTimer.cancel();
+    private static long getDayTimeInSeconds() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeZone(calendar.getTimeZone());
+        return TimeUnit.HOURS.toSeconds(calendar.get(Calendar.HOUR_OF_DAY)) + TimeUnit.MINUTES.toSeconds(calendar.get(Calendar.MINUTE)) + calendar.get(Calendar.SECOND);
     }
 
     private boolean FEATURE_LOAD_IN_BACKGROUND() {
@@ -407,7 +392,7 @@ public class EventsModel {
     }
 
     private boolean eventIsActual(@NonNull Event event) {
-        return (event.date + event.endAt) > (getCurrentDayTime(mContext, true) + getCurrentDateTime(mContext, true));
+        return event.endAt > getDayTimeInSeconds();
     }
 
     @Nullable
@@ -441,7 +426,7 @@ public class EventsModel {
     }
 
     public boolean isAvailableLoad() {
-        return mEvents.size() < mAvailableEventCount && !mReachEndOfDataList;
+        return mHasNext;
     }
 
     public int getCurrentPage() {
@@ -470,19 +455,16 @@ public class EventsModel {
         }
     }
 
-    private int getAvailablePageCount() {
-        return mAvailableEventCount / mEventsCountPerPage + (mAvailableEventCount % mEventsCountPerPage == 0 ? 0 : 1);
-    }
-
     @NonNull
-    ArrayList<Event> performSearch(@NonNull String query) {
+    ArrayList<Event> performSearch(String query) {
         String[] splitQuery = query.split(" ");
         ArrayList<String> queryList = new ArrayList<>();
         for (String item : splitQuery) {
             queryList.add(item + "*");
         }
-        String queryResult = TextUtils.join(" ", queryList);
-        return mEventDataSource.fullTextSearch(queryResult);
+        String queryString = TextUtils.join(" ", queryList);
+        assert queryString != null;
+        return mEventDataSource.fullTextSearch(queryString);
     }
 
     @Nullable
@@ -492,16 +474,24 @@ public class EventsModel {
         EventStats eventStats = obtainEventStatsByEventId(eventId);
         if (NowApplication.getState() == NowApplication.APP_STATE.ONLINE) {
             try {
-                Uri.Builder uriBuilder = createApiUriBuilder(API_REQUEST_GET_STATS);
+                Uri.Builder uriBuilder = createApiUriBuilder(API_REQUEST_GET_STATISTICS);
                 uriBuilder.appendQueryParameter("id", Integer.toString(eventId));
+                uriBuilder.appendQueryParameter("token", deviceToken);
                 HttpURLConnection urlConnection = (HttpURLConnection) new URL(uriBuilder.build().toString()).openConnection();
                 int responseCode = urlConnection.getResponseCode();
                 if (responseCode == HttpURLConnection.HTTP_OK) {
                     String jsonString = readStream(urlConnection.getInputStream());
                     urlConnection.disconnect();
                     JSONObject jsonRootObject = new JSONObject(jsonString);
-                    eventStats.likeCount = jsonRootObject.getInt(EventFieldNameDictionary.LIKES);
-                    eventStats.viewCount = jsonRootObject.getInt(EventFieldNameDictionary.VIEWS);
+                    String code = jsonRootObject.getString("code");
+                    if ("Success".equals(code)) {
+                        if (eventStats != null) {
+                            JSONObject jsonStatisticsObject = jsonRootObject.getJSONObject("data").getJSONObject("statistics");
+                            eventStats.likedByMe = jsonStatisticsObject.getBoolean(EventFieldNameDictionary.LIKED_BY_ME);
+                            eventStats.likeCount = jsonStatisticsObject.getInt(EventFieldNameDictionary.LIKES);
+                            eventStats.viewCount = jsonStatisticsObject.getInt(EventFieldNameDictionary.VIEWS);
+                        }
+                    }
                 }
             } catch (@NonNull IOException | JSONException exp) {
                 result = RESULT_BAD;
@@ -511,7 +501,9 @@ public class EventsModel {
         if (event == null) {
             event = mEventDataSource.getByEventId(eventId);
         }
-        mEventStatsDataSource.createOrUpdateEventStats(eventStats);
+        if (eventStats != null) {
+            mEventStatsDataSource.createOrUpdateEventStats(eventStats);
+        }
         return new EventApiCallResult(result, event);
     }
 
@@ -523,14 +515,15 @@ public class EventsModel {
             try {
                 Uri.Builder uriBuilder = createApiUriBuilder(API_REQUEST_GET_EVENT);
                 uriBuilder.appendQueryParameter("id", Integer.toString(eventId));
+                uriBuilder.appendQueryParameter("token", deviceToken);
                 HttpURLConnection urlConnection = (HttpURLConnection) new URL(uriBuilder.build().toString()).openConnection();
                 int responseCode = urlConnection.getResponseCode();
                 if (responseCode == HttpURLConnection.HTTP_OK) {
                     String jsonString = readStream(urlConnection.getInputStream());
                     urlConnection.disconnect();
                     JSONObject jsonRootObject = new JSONObject(jsonString);
-                    String response = jsonRootObject.getString("response");
-                    if ("ok".equals(response)) {
+                    String code = jsonRootObject.getString("code");
+                    if ("Success".equals(code)) {
                         JSONObject eventJsonObject = jsonRootObject.getJSONObject("event");
                         event = createEventFromJson(eventJsonObject);
                         createEventStats(event.id, eventJsonObject.optInt(EventFieldNameDictionary.VIEWS), eventJsonObject.optInt(EventFieldNameDictionary.LIKES));
@@ -549,86 +542,138 @@ public class EventsModel {
         return new EventApiCallResult(result, event);
     }
 
-    @Nullable
-    EventApiCallResult performUpdateEventLike(int eventId) {
+    int performRegisterDevice() {
         int result = RESULT_OK;
-        ArrayList<NameValuePair> parameters = new ArrayList<>();
-        parameters.add(new BasicNameValuePair("key", "78GlLJhL"));
-        EventStats eventStats = obtainEventStatsByEventId(eventId);
-        eventStats.myLikeStatus = LIKE_NOT_CONFIRMED;
-        if (NowApplication.getState() == NowApplication.APP_STATE.ONLINE) {
-            result = performPostApiCall(API_REQUEST_UPDATE_LIKE, eventId, parameters);
-            if (result == RESULT_OK) {
-                eventStats.myLikeStatus = LIKE_CONFIRMED;
-            }
-        }
-        mEventStatsDataSource.createOrUpdateEventStats(eventStats);
-        return new EventApiCallResult(result, null);
-    }
-
-    @Nullable
-    EventApiCallResult performUpdateEventView(int eventId) {
-        return new EventApiCallResult(performPostApiCall(API_REQUEST_UPDATE_VIEW, eventId, null), null);
-    }
-
-    private int performPostApiCall(String api, int eventId, @Nullable ArrayList<NameValuePair> parameters) {
-        int result = RESULT_OK;
-        DefaultHttpClient httpClient = new DefaultHttpClient();
-        ArrayList<NameValuePair> fullParameters = new ArrayList<>();
-        fullParameters.add(new BasicNameValuePair("id", Integer.toString(eventId)));
-        if (parameters != null && parameters.size() > 0) {
-            fullParameters.addAll(parameters);
-        }
-        HttpPost httpPost = new HttpPost(getApiQuery(api));
-        try {
-            httpPost.setEntity(new UrlEncodedFormEntity(fullParameters));
-            HttpResponse httpResponse = httpClient.execute(httpPost);
-            HttpEntity httpEntity = httpResponse.getEntity();
-            String jsonString = EntityUtils.toString(httpEntity);
-            JSONObject jsonRootObject = new JSONObject(jsonString);
-            String response = jsonRootObject.getString("response");
-            if (!("ok".equals(response))) {
+        if (NowApplication.getState() == ONLINE) {
+            try {
+                Uri.Builder uriBuilder = createApiUriBuilder(API_REQUEST_REGISTER_DEVICE);
+                uriBuilder.appendQueryParameter("city_id", Integer.toString(1));
+                uriBuilder.appendQueryParameter("device_id", Settings.Secure.getString(mContext.getContentResolver(),
+                        Settings.Secure.ANDROID_ID));
+                uriBuilder.appendQueryParameter("platform", "android");
+                uriBuilder.appendQueryParameter("version", Integer.toString(NowApplication.VERSION));
+                HttpURLConnection urlConnection = (HttpURLConnection) new URL(uriBuilder.build().toString()).openConnection();
+                int responseCode = urlConnection.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    String jsonString = readStream(urlConnection.getInputStream());
+                    urlConnection.disconnect();
+                    JSONObject jsonRootObject = new JSONObject(jsonString);
+                    String code = jsonRootObject.getString("code");
+                    if ("Success".equals(code)) {
+                        deviceToken = jsonRootObject.getJSONObject("data").getString("token");
+                    } else {
+                        result = RESULT_BAD;
+                    }
+                } else {
+                    result = RESULT_BAD;
+                }
+            } catch (@NonNull IOException | JSONException exp) {
                 result = RESULT_BAD;
             }
-        } catch (@NonNull IOException | JSONException e) {
-            result = RESULT_BAD;
         }
         return result;
     }
 
-    private Uri.Builder createApiUriBuilder(String apiMethod) {
-        return new Uri.Builder()
-                .scheme("http")
-                .authority(SITE_NAME)
-                .path(apiMethod);
+    @Nullable
+    EventApiCallResult performEventLike(int eventId) {
+        int result = RESULT_OK;
+        Uri.Builder uriBuilder = createApiUriBuilder(API_REQUEST_LIKE);
+        try {
+            HttpURLConnection urlConnection = (HttpURLConnection) new URL(uriBuilder.build().toString()).openConnection();
+            urlConnection.setDoOutput(true);
+            urlConnection.setRequestMethod("POST");
+            urlConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            String postParameters = "id=" + eventId + "&token=" + deviceToken;
+            PrintWriter out = new PrintWriter(urlConnection.getOutputStream());
+            out.print(postParameters);
+            out.close();
+            int responseCode = urlConnection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                String jsonString = readStream(urlConnection.getInputStream());
+                urlConnection.disconnect();
+                JSONObject jsonRootObject = new JSONObject(jsonString);
+                String code = jsonRootObject.getString("code");
+                EventStats eventStats = obtainEventStatsByEventId(eventId);
+                assert eventStats != null;
+                eventStats.myLikeStatus = LIKE_NOT_CONFIRMED;
+                if ("Success".equals(code)) {
+                    eventStats.likedByMe = true;
+                    eventStats.myLikeStatus = LIKE_CONFIRMED;
+                } else {
+                    result = RESULT_BAD;
+                }
+                mEventStatsDataSource.createOrUpdateEventStats(eventStats);
+            }
+        } catch (@NonNull IOException | JSONException exp) {
+            result = RESULT_BAD;
+        }
+        return new EventApiCallResult(result, null);
     }
 
-    private String getApiQuery(String apiMethod) {
-        return createApiUriBuilder(apiMethod).build().toString();
+    private Uri.Builder createApiUriBuilder(String apiMethod) {
+        Uri.Builder builder = new Uri.Builder();
+        builder.scheme("http");
+        builder.authority(SITE_NAME);
+        builder.path(apiMethod);
+        return builder;
+    }
+
+    void loadAdverts() {
+        if (NowApplication.getState() == NowApplication.APP_STATE.ONLINE) {
+            Uri.Builder uriBuilder = createApiUriBuilder(API_REQUEST_GET_ADVERTS);
+            uriBuilder.appendQueryParameter("token", deviceToken);
+            try {
+                HttpURLConnection urlConnection = (HttpURLConnection) new URL(uriBuilder.build().toString()).openConnection();
+                int responseCode = urlConnection.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    String jsonString = readStream(urlConnection.getInputStream());
+                    urlConnection.disconnect();
+                    JSONObject jsonRootObject = new JSONObject(jsonString);
+                    String code = jsonRootObject.getString("code");
+                    if ("Success".equals(code)) {
+                        JSONObject jsonDataObject = jsonRootObject.getJSONObject("data");
+                        JSONArray eventAdvertsJsonArray = jsonDataObject.getJSONArray(TAG_ADVERTS);
+                        if (eventAdvertsJsonArray.length() > 0) {
+                            mEventAdvertDataSource.clear();
+                            for (int i = 0; i < eventAdvertsJsonArray.length(); i++) {
+                                mEventAdvertDataSource.createEventAdvert(createEventAdvertFromJson(eventAdvertsJsonArray.getJSONObject(i)));
+                            }
+                        }
+                    }
+                }
+            } catch (IOException | JSONException exp) {
+                //empty
+            }
+        }
     }
 
     int performEventsLoad(@Nullable String loadingType) throws IOException, JSONException {
-
-        Integer result = RESULT_OK;
+        if (deviceToken == null) {
+            performRegisterDevice();
+        }
+        int result = RESULT_OK;
 
         boolean requestNewEvents = REQUEST_NEW_EVENTS.equals(loadingType);
 
         if (FEATURE_LOAD_IN_BACKGROUND()) {
             if (requestNewEvents) {
                 if (mLoadedInBackgroundPage > 1 && mCurrentPage <= mLoadedInBackgroundPage) {
-                    if (mCurrentPage <= getAvailablePageCount()) {
-                        mCurrentPage = mLoadedInBackgroundPage;
-                        setEvents(sortByStartTime(mEventDataSource.getAllEvents()));
-                        return result;
-                    }
-                } else {
-                    mReachEndOfDataList = true;
+                    //int availablePageCount = mEvents.size() / mEventsCountPerPage + (mEvents.size() % mEventsCountPerPage == 0 ? 0 : 1);
+                    //if (mCurrentPage <= availablePageCount) {
+                    mCurrentPage = mLoadedInBackgroundPage;
+                    setEvents(sortByStartTime(mEventDataSource.getAllEvents()));
+                    return result;
+                    //}
                 }
             }
         }
 
         boolean loadInBackground = LOAD_IN_BACKGROUND.equals(loadingType);
         boolean refreshEvents = REFRESH_EVENTS.equals(loadingType) || loadingType == null;
+
+        if (refreshEvents) {
+            loadAdverts();
+        }
 
         ArrayList<Event> eventList = new ArrayList<>();
 
@@ -637,44 +682,27 @@ public class EventsModel {
             if (requestNewEvents || loadInBackground) {
                 Event lastEvent = requestNewEvents ? mEvents.get(mEvents.size() - 1) : mLastAddedInBackgroundEvent;
                 if (lastEvent != null) {
-                    String lastEventId = String.format("%d", lastEvent.id);
-                    uriBuilder
-                            .appendQueryParameter("fl", "0")
-                            .appendQueryParameter("date", String.format("%d", lastEvent.date))
-                            .appendQueryParameter("startAt", String.format("%d", lastEvent.startAt))
-                            .appendQueryParameter("id", lastEventId);
+                    uriBuilder.appendQueryParameter("start_at", Long.toString(lastEvent.startAt));
                 }
-            } else {
-                uriBuilder
-                        .appendQueryParameter("fl", "1")
-                        .appendQueryParameter("date", String.format("%d", getCurrentDateTime(mContext, true)))
-                        .appendQueryParameter("startAt", String.format("%d", getCurrentDayTime(mContext, true)));
             }
+            uriBuilder.appendQueryParameter("n", Integer.toString(COUNT));
+            uriBuilder.appendQueryParameter("token", deviceToken);
             HttpURLConnection urlConnection = (HttpURLConnection) new URL(uriBuilder.build().toString()).openConnection();
             int responseCode = urlConnection.getResponseCode();
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 String jsonString = readStream(urlConnection.getInputStream());
                 urlConnection.disconnect();
                 JSONObject jsonRootObject = new JSONObject(jsonString);
-                String response = jsonRootObject.getString("response");
-                mAvailableEventCount = jsonRootObject.getInt("events_count");
-
-                if ("ok".equals(response)) {
-                    JSONArray eventJsonArray = jsonRootObject.getJSONArray(TAG_EVENTS);
-                    JSONArray eventAdvertsJsonArray = jsonRootObject.getJSONArray(TAG_ADVERTS);
+                String code = jsonRootObject.getString("code");
+                if ("Success".equals(code)) {
+                    JSONObject jsonDataObject = jsonRootObject.getJSONObject("data");
+                    mHasNext = jsonDataObject.getBoolean("hasNext");
+                    JSONArray eventJsonArray = jsonDataObject.getJSONArray(TAG_EVENTS);
                     for (int i = 0; i < eventJsonArray.length(); i++) {
                         JSONObject eventJsonObject = eventJsonArray.getJSONObject(i);
                         Event event = createEventFromJson(eventJsonObject);
                         createEventStats(event.id, eventJsonObject.optInt(EventFieldNameDictionary.VIEWS), eventJsonObject.optInt(EventFieldNameDictionary.LIKES));
                         eventList.add(event);
-                    }
-                    if (eventAdvertsJsonArray.length() > 0) {
-                        mEventAdvertDataSource.clear();
-                        for (int i = 0; i < eventAdvertsJsonArray.length(); i++) {
-                            JSONObject eventAdvertJsonObject = eventAdvertsJsonArray.getJSONObject(i);
-                            EventAdvert eventAdvert = createEventAdvertFromJson(eventAdvertJsonObject);
-                            mEventAdvertDataSource.createEventAdvert(eventAdvert);
-                        }
                     }
                     if (eventList.size() > 0) {
                         if (requestNewEvents) {
@@ -682,7 +710,6 @@ public class EventsModel {
                             mCurrentPage++;
                         } else if (refreshEvents) {
                             setEvents(eventList);
-                            mReachEndOfDataList = false;
                             mCurrentPage = 1;
                             mLoadedInBackgroundPage = 1;
                         } else if (loadInBackground) {
@@ -705,12 +732,11 @@ public class EventsModel {
                         }
                         mDataIsActual = true;
                     } else {
-                        mReachEndOfDataList = !loadInBackground;
+                        mHasNext = false;
                         result = DATA_IS_EMPTY;
                     }
                 } else {
                     setEventsFromLocalDataSource(mEventDataSource.getAllEvents());
-                    mAvailableEventCount = getEvents().size();
                 }
             }
         }
@@ -720,8 +746,9 @@ public class EventsModel {
     @NonNull
     private Event createEventFromJson(@NonNull JSONObject jsonObject) {
         Event event = new Event();
-        event.date = jsonObject.optLong(EventFieldNameDictionary.DATE, 0);
         event.eventDescription = jsonObject.optString(EventFieldNameDictionary.EVENT_DESCRIPTION);
+        event.flayer = jsonObject.optString(EventFieldNameDictionary.FLAYER);
+        VTAG.call("FLAYER: " + event.flayer);
         event.placeName = jsonObject.optString(EventFieldNameDictionary.PLACE_NAME);
         event.placeId = jsonObject.optInt(EventFieldNameDictionary.PLACE_ID);
         event.id = jsonObject.optInt(EventFieldNameDictionary.ID);
@@ -749,15 +776,20 @@ public class EventsModel {
     private EventAdvert createEventAdvertFromJson(@NonNull JSONObject jsonObject) {
         EventAdvert eventAdvert = new EventAdvert();
         eventAdvert.id = jsonObject.optInt(EventFieldNameDictionary.ID, 0);
-        eventAdvert.placeName = jsonObject.optString(EventFieldNameDictionary.ADVERT.PLACE_NAME);
-        eventAdvert.startAt = jsonObject.optLong(EventFieldNameDictionary.ADVERT.START_AT);
-        eventAdvert.name = jsonObject.optString(EventFieldNameDictionary.ADVERT.NAME);
+        eventAdvert.flayer = jsonObject.optString(EventFieldNameDictionary.ADVERT.FLAYER);
+        eventAdvert.eventStartAt = jsonObject.optLong(EventFieldNameDictionary.ADVERT.EVENT_START_AT);
+        eventAdvert.eventEndAt = jsonObject.optLong(EventFieldNameDictionary.ADVERT.EVENT_END_AT);
+        eventAdvert.advertStartAt = jsonObject.optLong(EventFieldNameDictionary.ADVERT.ADVERT_START_AT);
+        eventAdvert.advertEndAt = jsonObject.optLong(EventFieldNameDictionary.ADVERT.ADVERT_END_AT);
+        eventAdvert.text = jsonObject.optString(EventFieldNameDictionary.ADVERT.TEXT);
         eventAdvert.eventId = jsonObject.optInt(EventFieldNameDictionary.ADVERT.EVENT_ID);
-        eventAdvert.adType = jsonObject.optString(EventFieldNameDictionary.ADVERT.AD_TYPE);
-        eventAdvert.link = jsonObject.optString(EventFieldNameDictionary.ADVERT.LINK);
+        eventAdvert.posterBlur = jsonObject.optString(EventFieldNameDictionary.ADVERT.POSTER_BLUR);
+        eventAdvert.posterOriginal = jsonObject.optString(EventFieldNameDictionary.ADVERT.POSTER_ORIGINAL);
+        eventAdvert.posterThumb = jsonObject.optString(EventFieldNameDictionary.ADVERT.POSTER_THUMB);
+        eventAdvert.logoOriginal = jsonObject.optString(EventFieldNameDictionary.ADVERT.LOGO_ORIGINAL);
+        eventAdvert.logoThumb = jsonObject.optString(EventFieldNameDictionary.ADVERT.LOGO_THUMB);
         eventAdvert.showChanceHigh = jsonObject.optInt(EventFieldNameDictionary.ADVERT.SHOW_CHANCE_HIGH);
         eventAdvert.showChanceLow = jsonObject.optInt(EventFieldNameDictionary.ADVERT.SHOW_CHANCE_LOW);
-        eventAdvert.logoThumb = jsonObject.optString(EventFieldNameDictionary.ADVERT.LOGO_THUMB);
         return eventAdvert;
     }
 
@@ -794,6 +826,7 @@ public class EventsModel {
             if (result != null) {
                 calendarEventID = result.getCalendarEventID();
                 Cursor cursor = contentResolver.query(ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, calendarEventID), null, null, null, null);
+                assert cursor != null;
                 if (!cursor.moveToFirst()) {
                     result = null;
                     removeEventToCalendarLinkByEventId(eventId);
@@ -802,28 +835,32 @@ public class EventsModel {
             }
         } else if (method == EventToCalendarLoader.ADD) {
             Event event = getEventById(eventId);
-            TimeZone timeZone = Calendar.getInstance().getTimeZone();
-            ContentValues values = new ContentValues();
-            values.put(CalendarContract.Events.DTSTART, TimeUnit.SECONDS.toMillis(getEventStartTimeInSeconds(event)));
-            values.put(CalendarContract.Events.DTEND, TimeUnit.SECONDS.toMillis(getEventEndTimeInSeconds(event)));
-            values.put(CalendarContract.Events.TITLE, event.name);
-            values.put(CalendarContract.Events.EVENT_LOCATION, event.placeName);
-            if (!"".equals(event.email)) {
-                values.put(CalendarContract.Events.ORGANIZER, event.email);
+            if (event != null) {
+                TimeZone timeZone = Calendar.getInstance().getTimeZone();
+                ContentValues values = new ContentValues();
+                values.put(CalendarContract.Events.DTSTART, TimeUnit.SECONDS.toMillis(event.startAt));
+                values.put(CalendarContract.Events.DTEND, TimeUnit.SECONDS.toMillis(event.endAt));
+                values.put(CalendarContract.Events.TITLE, event.name);
+                values.put(CalendarContract.Events.EVENT_LOCATION, event.placeName);
+                if (!"".equals(event.email)) {
+                    values.put(CalendarContract.Events.ORGANIZER, event.email);
+                }
+                values.put(CalendarContract.Events.DESCRIPTION, event.eventDescription);
+                values.put(CalendarContract.Events.EVENT_COLOR, getCategoryColor(event.category));
+                values.put(CalendarContract.Events.EVENT_TIMEZONE, timeZone.getID());
+                values.put(CalendarContract.Events.CALENDAR_ID, 1);
+                Uri insertToCalendarURI = contentResolver.insert(CalendarContract.Events.CONTENT_URI, values);
+                assert insertToCalendarURI != null;
+                calendarEventID = Long.parseLong(insertToCalendarURI.getLastPathSegment());
+                result = addEventToCalendarLink(event, calendarEventID);
             }
-            values.put(CalendarContract.Events.DESCRIPTION, event.eventDescription);
-            values.put(CalendarContract.Events.EVENT_COLOR, getCategoryColor(event.category));
-            values.put(CalendarContract.Events.EVENT_TIMEZONE, timeZone.getID());
-            values.put(CalendarContract.Events.CALENDAR_ID, 1);
-            Uri insertToCalendarURI = contentResolver.insert(CalendarContract.Events.CONTENT_URI, values);
-            calendarEventID = Long.parseLong(insertToCalendarURI.getLastPathSegment());
-            result = addEventToCalendarLink(event, calendarEventID);
         } else if (method == EventToCalendarLoader.REMOVE) {
             result = getEventToCalendarLinkByEventId(eventId);
             if (result != null) {
                 calendarEventID = result.getCalendarEventID();
                 Cursor cursor = contentResolver.query(ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, calendarEventID), null, null, null, null);
                 removeEventToCalendarLinkByEventId(eventId);
+                assert cursor != null;
                 if (cursor.moveToFirst()) {
                     int status = contentResolver.delete(ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, calendarEventID), null, null);
                     Assert.assertTrue(status != 0);
@@ -859,15 +896,16 @@ public class EventsModel {
 
     @Nullable
     public EventAdvert generateAdvertExcludeByEventId(int eventId) {
-        long currentTime = getCurrentDayTime(mContext, true) + getCurrentDateTime(mContext, true);
+        long currentTime = getTimeStampInSeconds();
         ArrayList<EventAdvert> eventAdvertsSource = mEventAdvertDataSource.getAllEventAdverts();
         ArrayList<EventAdvert> eventAdverts = new ArrayList<>();
         EventAdvert eventAdvert;
         EventAdvert result = null;
         int i = 0;
-        for (; i < eventAdvertsSource.size(); i++) {
+        final int length = eventAdvertsSource.size();
+        for (; i < length; i++) {
             eventAdvert = eventAdvertsSource.get(i);
-            if (eventAdvert.eventId != eventId && checkOnEventAvailableInOffline(eventAdvert.eventId) && currentTime < eventAdvert.startAt) {
+            if (eventAdvert.eventId != eventId && checkOnEventAvailableInOffline(eventAdvert.eventId) && currentTime >= eventAdvert.advertStartAt && currentTime < eventAdvert.advertEndAt) {
                 eventAdverts.add(eventAdvert);
             }
         }
@@ -880,11 +918,10 @@ public class EventsModel {
                 }
             }
         }
-        /*for debug
+        //for debug
         if (result == null && eventAdvertsSource.size() > 0) {
             result = eventAdvertsSource.get(0);
         }
-        */
         return result;
     }
 
@@ -894,7 +931,7 @@ public class EventsModel {
 
     private class EventNameComparator implements Comparator<Event> {
         public int compare(@NonNull Event left, @NonNull Event right) {
-            return Long.valueOf(left.date + left.startAt).compareTo(right.date + right.startAt);
+            return Long.valueOf(left.startAt).compareTo(right.startAt);
         }
     }
 }
