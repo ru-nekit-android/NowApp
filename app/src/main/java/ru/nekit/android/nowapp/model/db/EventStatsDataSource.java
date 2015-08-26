@@ -20,6 +20,7 @@ public class EventStatsDataSource {
             {
                     EventSQLiteHelper.EVENT_ID,
                     EventFieldNameDictionary.LIKES,
+                    EventFieldNameDictionary.LIKED_BY_ME,
                     EventFieldNameDictionary.VIEWS,
                     EventSQLiteHelper.MY_LIKE_STATUS,
             };
@@ -39,6 +40,7 @@ public class EventStatsDataSource {
         ContentValues contentValues = new ContentValues();
         contentValues.put(EventSQLiteHelper.EVENT_ID, eventStats.id);
         contentValues.put(EventFieldNameDictionary.LIKES, eventStats.likeCount);
+        contentValues.put(EventFieldNameDictionary.LIKED_BY_ME, eventStats.likedByMe ? 1 : 0);
         contentValues.put(EventFieldNameDictionary.VIEWS, eventStats.viewCount);
         contentValues.put(EventSQLiteHelper.MY_LIKE_STATUS, eventStats.myLikeStatus);
         database.insertWithOnConflict(EventSQLiteHelper.EVENT_STATS_TABLE_NAME, EventSQLiteHelper.EVENT_ID, contentValues, SQLiteDatabase.CONFLICT_REPLACE);
@@ -49,11 +51,13 @@ public class EventStatsDataSource {
         EventStats eventStats = null;
         Cursor cursor = database.query(EventSQLiteHelper.EVENT_STATS_TABLE_NAME,
                 ALL_COLUMNS, EventSQLiteHelper.EVENT_ID + "=" + id, null, null, null, null);
-        cursor.moveToFirst();
-        if (!cursor.isAfterLast()) {
-            eventStats = cursorToEventItemStats(cursor);
+        if (cursor != null) {
+            cursor.moveToFirst();
+            if (!cursor.isAfterLast()) {
+                eventStats = cursorToEventItemStats(cursor);
+            }
+            cursor.close();
         }
-        cursor.close();
         return eventStats;
     }
 
@@ -63,12 +67,13 @@ public class EventStatsDataSource {
         eventStats.id = cursor.getInt(cursor.getColumnIndex(EventSQLiteHelper.EVENT_ID));
         eventStats.viewCount = cursor.getInt(cursor.getColumnIndex(EventFieldNameDictionary.VIEWS));
         eventStats.likeCount = cursor.getInt(cursor.getColumnIndex(EventFieldNameDictionary.LIKES));
+        eventStats.likedByMe = cursor.getInt(cursor.getColumnIndex(EventFieldNameDictionary.LIKED_BY_ME)) == 1 ? true : false;
         eventStats.myLikeStatus = cursor.getInt(cursor.getColumnIndex(EventSQLiteHelper.MY_LIKE_STATUS));
         return eventStats;
     }
 
     public void removeEventByEventId(int id) {
-    database.delete(EventSQLiteHelper.EVENT_STATS_TABLE_NAME, String.format("%s = %s", EventSQLiteHelper.EVENT_ID, id), null);
+        database.delete(EventSQLiteHelper.EVENT_STATS_TABLE_NAME, String.format("%s = %s", EventSQLiteHelper.EVENT_ID, id), null);
     }
 
     public void clear() {

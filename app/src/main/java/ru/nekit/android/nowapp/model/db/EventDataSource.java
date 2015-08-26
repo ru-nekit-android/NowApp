@@ -11,6 +11,7 @@ import android.text.TextUtils;
 
 import java.util.ArrayList;
 
+import ru.nekit.android.nowapp.VTAG;
 import ru.nekit.android.nowapp.model.EventFieldNameDictionary;
 import ru.nekit.android.nowapp.model.vo.Event;
 import ru.nekit.android.nowapp.model.EventsModel;
@@ -25,7 +26,6 @@ public class EventDataSource {
                     EventSQLiteHelper._ID,
                     EventFieldNameDictionary.ADDRESS,
                     EventFieldNameDictionary.ALL_NIGHT_PARTY,
-                    EventFieldNameDictionary.DATE,
                     EventFieldNameDictionary.EMAIL,
                     EventFieldNameDictionary.END_AT,
                     EventFieldNameDictionary.START_AT,
@@ -72,7 +72,6 @@ public class EventDataSource {
         contentValues.put(EventSQLiteHelper._ID, event.id);
         contentValues.put(EventFieldNameDictionary.ADDRESS, event.address);
         contentValues.put(EventFieldNameDictionary.ALL_NIGHT_PARTY, event.allNightParty);
-        contentValues.put(EventFieldNameDictionary.DATE, event.date);
         contentValues.put(EventFieldNameDictionary.EMAIL, event.email);
         contentValues.put(EventFieldNameDictionary.END_AT, event.endAt);
         contentValues.put(EventFieldNameDictionary.START_AT, event.startAt);
@@ -100,7 +99,7 @@ public class EventDataSource {
         contentValuesFTS.put(EventFieldNameDictionary.ADDRESS, normalizeForSearch(event.address));
         contentValuesFTS.put(EventSQLiteHelper.FTS_EVENT_START_TIME_ALIAS, EventsModel.getStartTimeKeywords(mContext, event).toLowerCase());
         contentValuesFTS.put(EventSQLiteHelper.FTS_EVENT_CATEGORY_KEYWORD, EventsModel.getCategoryKeywords(event.category).toLowerCase());
-        contentValuesFTS.put(EventSQLiteHelper.FTS_EVENT_START_TIME, event.startAt + event.date);
+        contentValuesFTS.put(EventSQLiteHelper.FTS_EVENT_START_TIME, event.startAt);
         database.insert(EventSQLiteHelper.FTS_TABLE_NAME, null, contentValuesFTS);
     }
 
@@ -113,13 +112,15 @@ public class EventDataSource {
         ArrayList<Event> eventList = new ArrayList<>();
         Cursor cursor = database.query(EventSQLiteHelper.EVENT_TABLE_NAME,
                 ALL_COLUMNS, null, null, null, null, null);
-        cursor.moveToFirst();
-        while (!cursor.isAfterLast()) {
-            Event event = cursorToEventItem(cursor);
-            eventList.add(event);
-            cursor.moveToNext();
+        if(cursor != null) {
+            cursor.moveToFirst();
+            while (!cursor.isAfterLast()) {
+                Event event = cursorToEventItem(cursor);
+                eventList.add(event);
+                cursor.moveToNext();
+            }
+            cursor.close();
         }
-        cursor.close();
         return eventList;
     }
 
@@ -159,7 +160,6 @@ public class EventDataSource {
         event.id = cursor.getInt(cursor.getColumnIndex(EventSQLiteHelper._ID));
         event.address = cursor.getString(cursor.getColumnIndex(EventFieldNameDictionary.ADDRESS));
         event.allNightParty = cursor.getInt(cursor.getColumnIndex(EventFieldNameDictionary.ALL_NIGHT_PARTY));
-        event.date = cursor.getLong(cursor.getColumnIndex(EventFieldNameDictionary.DATE));
         event.email = cursor.getString(cursor.getColumnIndex(EventFieldNameDictionary.EMAIL));
         event.endAt = cursor.getLong(cursor.getColumnIndex(EventFieldNameDictionary.END_AT));
         event.startAt = cursor.getInt(cursor.getColumnIndex(EventFieldNameDictionary.START_AT));
