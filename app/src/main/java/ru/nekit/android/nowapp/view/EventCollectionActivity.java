@@ -25,7 +25,6 @@ import ru.nekit.android.nowapp.modelView.listeners.IBackPressedListener;
 import ru.nekit.android.nowapp.modelView.listeners.IEventClickListener;
 import ru.nekit.android.nowapp.modelView.listeners.IEventPosterSelectListener;
 
-
 public class EventCollectionActivity extends AppCompatActivity implements IEventClickListener, IEventPosterSelectListener {
 
     private BroadcastReceiver mChangeApplicationStateReceiver;
@@ -66,7 +65,6 @@ public class EventCollectionActivity extends AppCompatActivity implements IEvent
             mOfflineView.setVisibility(View.VISIBLE);
         }
     }
-
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {

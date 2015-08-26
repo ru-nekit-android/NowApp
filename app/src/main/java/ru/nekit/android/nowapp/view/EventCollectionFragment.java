@@ -7,7 +7,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -45,7 +44,7 @@ import java.util.ArrayList;
 
 import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
-import ru.nekit.android.nowapp.model.EventItemsLoader;
+import ru.nekit.android.nowapp.model.EventLoader;
 import ru.nekit.android.nowapp.model.EventItemsSearcher;
 import ru.nekit.android.nowapp.model.EventsModel;
 import ru.nekit.android.nowapp.model.vo.Event;
@@ -513,7 +512,7 @@ public class EventCollectionFragment extends Fragment implements LoaderManager.L
         switch (id) {
             case LOADER_ID:
 
-                loader = new EventItemsLoader(getActivity(), args);
+                loader = new EventLoader(getActivity(), args);
 
                 break;
             case SEARCHER_ID:
