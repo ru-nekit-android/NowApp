@@ -18,8 +18,7 @@ public class EventApiExecutor extends AsyncTaskLoader<EventApiCallResult> {
 
     public static final int METHOD_OBTAIN_STATS = 1;
     public static final int METHOD_LIKE = 2;
-    public static final int METHOD_UPDATE_VIEWS = 3;
-    public static final int METHOD_OBTAIN_EVENT = 4;
+    public static final int METHOD_OBTAIN_EVENT = 3;
 
     private Bundle mArgs;
 
@@ -37,6 +36,10 @@ public class EventApiExecutor extends AsyncTaskLoader<EventApiCallResult> {
         EventApiCallResult result = null;
         EventsModel model = NowApplication.getEventModel();
 
+        if(model.deviceToken == null){
+            model.performRegisterDevice();
+        }
+
         switch (method) {
             case METHOD_OBTAIN_STATS:
 
@@ -46,13 +49,7 @@ public class EventApiExecutor extends AsyncTaskLoader<EventApiCallResult> {
 
             case METHOD_LIKE:
 
-                result = model.performUpdateEventLike(eventId);
-
-                break;
-
-            case METHOD_UPDATE_VIEWS:
-
-                result = model.performUpdateEventView(eventId);
+                result = model.performEventLike(eventId);
 
                 break;
 
