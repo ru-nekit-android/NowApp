@@ -5,8 +5,8 @@ package ru.nekit.android.nowapp.model;
  */
 public class EventFieldNameDictionary {
 
-    public static final String DATE = "date";
     public static final String EVENT_DESCRIPTION = "eventDescription";
+    public static final String FLAYER = "flayer";
     public static final String PLACE_NAME = "placeName";
     public static final String PLACE_ID = "placeId";
     public static final String ID = "id";
@@ -28,17 +28,23 @@ public class EventFieldNameDictionary {
     public static final String LOGO_ORIGINAL = "logoOriginal";
     public static final String ALL_NIGHT_PARTY = "all_night_party";
     public static final String LIKES = "likes";
+    public static final String LIKED_BY_ME = "likedByMe";
     public static final String VIEWS = "views";
 
     public static class ADVERT {
         public static final String EVENT_ID = "eventId";
-        public static final String START_AT = EventFieldNameDictionary.START_AT;
-        public static final String LOGO_THUMB = EventFieldNameDictionary.LOGO_THUMB;
-        public static final String LINK = "link";
-        public static final String NAME = EventFieldNameDictionary.NAME;
-        public static final String PLACE_NAME = EventFieldNameDictionary.PLACE_NAME;
+        public static final String EVENT_START_AT = "eventStartAt";
+        public static final String EVENT_END_AT = "eventEndAt";
+        public static final String ADVERT_START_AT = "advertStartAt";
+        public static final String ADVERT_END_AT = "advertEndAt";
+        public static final String FLAYER = EventFieldNameDictionary.FLAYER;
         public static final String SHOW_CHANCE_LOW = "showChanceLow";
         public static final String SHOW_CHANCE_HIGH = "showChanceHigh";
-        public static final String AD_TYPE = "adType";
+        public static final String TEXT = "text";
+        public static final String POSTER_THUMB = EventFieldNameDictionary.POSTER_THUMB;
+        public static final String POSTER_BLUR = EventFieldNameDictionary.POSTER_BLUR;
+        public static final String POSTER_ORIGINAL = EventFieldNameDictionary.POSTER_ORIGINAL;
+        public static final String LOGO_THUMB = EventFieldNameDictionary.LOGO_THUMB;
+        public static final String LOGO_ORIGINAL = EventFieldNameDictionary.LOGO_ORIGINAL;
     }
 }
