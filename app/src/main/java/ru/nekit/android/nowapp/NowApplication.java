@@ -29,6 +29,7 @@ public class NowApplication extends Application implements ConnectivityReceiver.
 
     public static final String CHANGE_APPLICATION_STATE_NOTIFICATION = "ru.nekit.android.change_application_state";
     public static final int VALID_DATA_PERIOD_HOURS = 24;
+    public static final int VERSION = 18;
 
     private static final String LAST_UPDATE_TIME_KEY = "last_update_time_key";
     private static NowApplication instance;
@@ -91,6 +92,10 @@ public class NowApplication extends Application implements ConnectivityReceiver.
         }
     }
 
+    public static void checkForUpdate() {
+        new UpdateChecker(instance, instance).start();
+    }
+
     @Override
     public void onCreate() {
 
@@ -103,10 +108,6 @@ public class NowApplication extends Application implements ConnectivityReceiver.
 
         DisplayMetrics metrics = getResources().getDisplayMetrics();
         VTAG.call("metrics density: " + metrics.density);
-    }
-
-    public static void checkForUpdate() {
-        new UpdateChecker(instance, instance).start();
     }
 
     @Override
