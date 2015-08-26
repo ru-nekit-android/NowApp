@@ -3,12 +3,11 @@ package ru.nekit.android.nowapp.view;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
-import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.AppCompatDialog;
 import android.view.View;
 import android.widget.TextView;
@@ -18,14 +17,14 @@ import com.pnikosis.materialishprogress.ProgressWheel;
 
 import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
-import ru.nekit.android.nowapp.model.EventItemsLoader;
+import ru.nekit.android.nowapp.model.EventLoader;
 import ru.nekit.android.nowapp.utils.ConnectionUtil;
 
 import static ru.nekit.android.nowapp.NowApplication.APP_STATE;
 import static ru.nekit.android.nowapp.NowApplication.getOfflineState;
 import static ru.nekit.android.nowapp.NowApplication.setState;
 
-public class SplashScreenActivity extends ActionBarActivity implements LoaderManager.LoaderCallbacks<Integer> {
+public class SplashScreenActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Integer> {
 
     private static final int LOADER_ID = 1;
     private ProgressWheel mProgressWheel;
@@ -114,7 +113,7 @@ public class SplashScreenActivity extends ActionBarActivity implements LoaderMan
     @Override
     public Loader<Integer> onCreateLoader(int id, Bundle args) {
         if (id == LOADER_ID) {
-            EventItemsLoader loader = new EventItemsLoader(this, args);
+            EventLoader loader = new EventLoader(this, args);
             loader.forceLoad();
             return loader;
         }
