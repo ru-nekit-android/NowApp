@@ -38,7 +38,7 @@
     <string name="event_category_other_keywords">другое корона</string>
     <string name="event_category_entertainment_keywords">развлечения веселье вечер</string>
     <string name="event_category_education_keywords">обучение книг* знания наука</string>
-    <string name="event_category_music_keywords">музыка культура исскуство</string>
+    <string name="event_category_culture_keywords">музыка культура исскуство</string>
     <string name="event_category_discount_keywords">скидка</string>
     <string name="enterance_title">\"ВХОД:\"</string>
     <string name="share_title">Поделиться</string>
