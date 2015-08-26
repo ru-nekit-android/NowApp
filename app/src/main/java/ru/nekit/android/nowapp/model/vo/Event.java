@@ -21,7 +21,8 @@ public class Event extends EventBase implements Parcelable {
         }
     };
     public int placeId;
-    public long date;
+    public String placeName;
+    public String name;
     public String eventDescription;
     public String category;
     public String entrance;
@@ -30,13 +31,10 @@ public class Event extends EventBase implements Parcelable {
     public String site;
     public String email;
     public long endAt;
-    public String posterThumb;
-    public String posterBlur;
-    public String posterOriginal;
-    public String logoOriginal;
     public int allNightParty;
     public double lat;
     public double lng;
+    public long startAt;
 
     public Event() {
     }
@@ -44,7 +42,6 @@ public class Event extends EventBase implements Parcelable {
     private Event(@NonNull Parcel in) {
         this.placeId = in.readInt();
         this.id = in.readInt();
-        this.date = in.readLong();
         this.eventDescription = in.readString();
         this.category = in.readString();
         this.entrance = in.readString();
@@ -53,6 +50,7 @@ public class Event extends EventBase implements Parcelable {
         this.phone = in.readString();
         this.site = in.readString();
         this.email = in.readString();
+        this.flayer = in.readString();
         this.name = in.readString();
         this.startAt = in.readLong();
         this.endAt = in.readLong();
@@ -75,7 +73,6 @@ public class Event extends EventBase implements Parcelable {
     public void writeToParcel(@NonNull Parcel dest, int flags) {
         dest.writeInt(this.placeId);
         dest.writeInt(this.id);
-        dest.writeLong(this.date);
         dest.writeString(this.eventDescription);
         dest.writeString(this.category);
         dest.writeString(this.entrance);
@@ -84,6 +81,7 @@ public class Event extends EventBase implements Parcelable {
         dest.writeString(this.phone);
         dest.writeString(this.site);
         dest.writeString(this.email);
+        dest.writeString(this.flayer);
         dest.writeString(this.name);
         dest.writeLong(this.startAt);
         dest.writeLong(this.endAt);
