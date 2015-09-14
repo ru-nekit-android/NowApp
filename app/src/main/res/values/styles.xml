@@ -235,7 +235,6 @@
         <item name="android:layout_margin">@dimen/fab_compat_margin</item>
         <item name="android:layout_gravity">bottom|end</item>
         <item name="borderWidth">0dp</item>
-        <item name="elevation">@dimen/fab_elevation</item>
     </style>
 
     <style name="AdvertText">
@@ -253,6 +252,11 @@
         <item name="android:windowSoftInputMode">stateAlwaysHidden</item>
         <item name="android:windowActionModeOverlay">true</item>
         <item name="android:windowIsTranslucent">true</item>
+    </style>
+
+    <style name="DialogFragment" parent="Theme.AppCompat.Light.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+
     </style>
 
 </resources>

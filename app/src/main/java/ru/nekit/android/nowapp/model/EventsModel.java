@@ -45,15 +45,16 @@ import java.util.concurrent.TimeUnit;
 
 import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
-import ru.nekit.android.nowapp.VTAG;
 import ru.nekit.android.nowapp.model.db.EventAdvertDataSource;
 import ru.nekit.android.nowapp.model.db.EventDataSource;
 import ru.nekit.android.nowapp.model.db.EventStatsDataSource;
 import ru.nekit.android.nowapp.model.db.EventToCalendarDataSource;
+import ru.nekit.android.nowapp.model.loaders.EventToCalendarLoader;
 import ru.nekit.android.nowapp.model.vo.Event;
 import ru.nekit.android.nowapp.model.vo.EventAdvert;
 import ru.nekit.android.nowapp.model.vo.EventStats;
 import ru.nekit.android.nowapp.model.vo.EventToCalendarLink;
+import ru.nekit.android.nowapp.utils.VTAG;
 
 import static ru.nekit.android.nowapp.NowApplication.APP_STATE.OFFLINE;
 import static ru.nekit.android.nowapp.NowApplication.APP_STATE.ONLINE;
@@ -65,9 +66,9 @@ public class EventsModel {
 
     public static final int RESULT_OK = 0;
     public static final int RESULT_BAD = -1;
+    public static final int INTERNAL_ERROR = -2;
     public static final int LIKE_CONFIRMED = 2;
     public static final int LIKE_NOT_CONFIRMED = 1;
-    public static final int DATA_IS_EMPTY = 1;
     public static final String LOADING_TYPE = "loading_type";
     public static final String REQUEST_NEW_EVENTS = "request_new_event_items";
     public static final String REFRESH_EVENTS = "refresh_event_items";
@@ -115,9 +116,10 @@ public class EventsModel {
         add(new Pair<>("днем", DAY_PERIOD));
         add(new Pair<>("вечером", EVENING_PERIOD));
     }};
-    private static EventsModel sInstance;
     @NonNull
     private final Context mContext;
+    @NonNull
+    private final LocalBroadcastManager mLocalBroadcastManager;
     @NonNull
     private final ArrayList<Event> mEvents;
     @NonNull
@@ -138,12 +140,14 @@ public class EventsModel {
     private Thread mBackgroundThread;
     private Boolean mHasNext;
 
-    private EventsModel(@NonNull final Context context) {
+    public EventsModel(@NonNull final Context context) {
         mContext = context;
         mEvents = new ArrayList<>();
         mCurrentPage = 1;
         mLoadedInBackgroundPage = 1;
         mEventsCountPerPage = 0;
+        mHasNext = true;
+        mLocalBroadcastManager = LocalBroadcastManager.getInstance(mContext);
 
         CATEGORY_TYPE.put(CATEGORY_SPORT, R.drawable.event_category_sport);
         CATEGORY_TYPE.put(CATEGORY_ENTERTAINMENT, R.drawable.event_category_entertainment);
@@ -188,7 +192,7 @@ public class EventsModel {
                     } catch (@NonNull IOException | JSONException exp) {
                         //empty
                     }
-                    LocalBroadcastManager.getInstance(mContext).sendBroadcast(new Intent(LOAD_IN_BACKGROUND_NOTIFICATION));
+                    sendBroadcast(LOAD_IN_BACKGROUND_NOTIFICATION);
                     VTAG.call("Background Load Task: " + mLoadedInBackgroundPage + " : " + result);
                 }
             }
@@ -204,7 +208,7 @@ public class EventsModel {
                     public void run() {
                         long dayTime = getDayTimeInSeconds();
                         if (dayTime % TimeUnit.MINUTES.toSeconds(1) == 0 && TimeUnit.SECONDS.toMinutes(dayTime) % mContext.getResources().getInteger(R.integer.event_time_precision_in_minutes) == 0) {
-                            LocalBroadcastManager.getInstance(mContext).sendBroadcast(new Intent(UPDATE_FIVE_MINUTE_TIMER_NOTIFICATION));
+                            sendBroadcast(UPDATE_FIVE_MINUTE_TIMER_NOTIFICATION);
                         }
                     }
                 },
@@ -226,6 +230,10 @@ public class EventsModel {
         }
 
         setEventsFromLocalDataSource(allEvents);
+    }
+
+    private void sendBroadcast(String action) {
+        mLocalBroadcastManager.sendBroadcast(new Intent(action));
     }
 
     public static String getStartTimeAliasForAdvert(@NonNull Context context, @NonNull Event event) {
@@ -316,18 +324,6 @@ public class EventsModel {
         return value == null ? "" : value;
     }
 
-    public static synchronized EventsModel getInstance(@NonNull Context context) {
-        if (sInstance == null) {
-            sInstance = new EventsModel(context);
-        }
-        return sInstance;
-    }
-
-    public static synchronized EventsModel getInstance() {
-        assert sInstance != null;
-        return sInstance;
-    }
-
     public static long getEventDayTimeInSeconds(@NonNull Event event) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeZone(calendar.getTimeZone());
@@ -376,19 +372,19 @@ public class EventsModel {
     }
 
     public void registerForLoadInBackgroundResultNotification(BroadcastReceiver receiver) {
-        LocalBroadcastManager.getInstance(mContext).registerReceiver(receiver, new IntentFilter(LOAD_IN_BACKGROUND_NOTIFICATION));
+        mLocalBroadcastManager.registerReceiver(receiver, new IntentFilter(LOAD_IN_BACKGROUND_NOTIFICATION));
     }
 
     public void unregisterForLoadInBackgroundResultNotification(BroadcastReceiver receiver) {
-        LocalBroadcastManager.getInstance(mContext).unregisterReceiver(receiver);
+        mLocalBroadcastManager.unregisterReceiver(receiver);
     }
 
     public void registerForFiveMinuteUpdateNotification(BroadcastReceiver receiver) {
-        LocalBroadcastManager.getInstance(mContext).registerReceiver(receiver, new IntentFilter(UPDATE_FIVE_MINUTE_TIMER_NOTIFICATION));
+        mLocalBroadcastManager.registerReceiver(receiver, new IntentFilter(UPDATE_FIVE_MINUTE_TIMER_NOTIFICATION));
     }
 
     public void unregisterForFiveMinuteUpdateNotification(BroadcastReceiver receiver) {
-        LocalBroadcastManager.getInstance(mContext).unregisterReceiver(receiver);
+        mLocalBroadcastManager.unregisterReceiver(receiver);
     }
 
     private boolean eventIsActual(@NonNull Event event) {
@@ -456,7 +452,7 @@ public class EventsModel {
     }
 
     @NonNull
-    ArrayList<Event> performSearch(String query) {
+    public ArrayList<Event> performSearch(String query) {
         String[] splitQuery = query.split(" ");
         ArrayList<String> queryList = new ArrayList<>();
         for (String item : splitQuery) {
@@ -468,11 +464,11 @@ public class EventsModel {
     }
 
     @Nullable
-    EventApiCallResult performObtainEventStats(int eventId) {
+    public EventApiCallResult performObtainEventStats(int eventId) {
         int result = RESULT_OK;
         Event event;
         EventStats eventStats = obtainEventStatsByEventId(eventId);
-        if (NowApplication.getState() == NowApplication.APP_STATE.ONLINE) {
+        if (NowApplication.getInstance().getState() == NowApplication.APP_STATE.ONLINE) {
             try {
                 Uri.Builder uriBuilder = createApiUriBuilder(API_REQUEST_GET_STATISTICS);
                 uriBuilder.appendQueryParameter("id", Integer.toString(eventId));
@@ -494,7 +490,7 @@ public class EventsModel {
                     }
                 }
             } catch (@NonNull IOException | JSONException exp) {
-                result = RESULT_BAD;
+                result = INTERNAL_ERROR;
             }
         }
         event = getEventById(eventId);
@@ -508,10 +504,10 @@ public class EventsModel {
     }
 
     @Nullable
-    EventApiCallResult performObtainEvent(int eventId) {
+    public EventApiCallResult performObtainEvent(int eventId) {
         int result = RESULT_OK;
         Event event = getEventById(eventId);
-        if (NowApplication.getState() == ONLINE && event == null) {
+        if (NowApplication.getInstance().getState() == ONLINE && event == null) {
             try {
                 Uri.Builder uriBuilder = createApiUriBuilder(API_REQUEST_GET_EVENT);
                 uriBuilder.appendQueryParameter("id", Integer.toString(eventId));
@@ -524,7 +520,7 @@ public class EventsModel {
                     JSONObject jsonRootObject = new JSONObject(jsonString);
                     String code = jsonRootObject.getString("code");
                     if ("Success".equals(code)) {
-                        JSONObject eventJsonObject = jsonRootObject.getJSONObject("event");
+                        JSONObject eventJsonObject = jsonRootObject.getJSONObject("data").getJSONObject("event");
                         event = createEventFromJson(eventJsonObject);
                         createEventStats(event.id, eventJsonObject.optInt(EventFieldNameDictionary.VIEWS), eventJsonObject.optInt(EventFieldNameDictionary.LIKES));
                         mEventDataSource.createOrUpdateEvent(event);
@@ -536,15 +532,15 @@ public class EventsModel {
                     result = RESULT_BAD;
                 }
             } catch (@NonNull IOException | JSONException exp) {
-                result = RESULT_BAD;
+                result = INTERNAL_ERROR;
             }
         }
         return new EventApiCallResult(result, event);
     }
 
-    int performRegisterDevice() {
+    public int performRegisterDevice() {
         int result = RESULT_OK;
-        if (NowApplication.getState() == ONLINE) {
+        if (NowApplication.getInstance().getState() == ONLINE) {
             try {
                 Uri.Builder uriBuilder = createApiUriBuilder(API_REQUEST_REGISTER_DEVICE);
                 uriBuilder.appendQueryParameter("city_id", Integer.toString(1));
@@ -568,14 +564,14 @@ public class EventsModel {
                     result = RESULT_BAD;
                 }
             } catch (@NonNull IOException | JSONException exp) {
-                result = RESULT_BAD;
+                result = INTERNAL_ERROR;
             }
         }
         return result;
     }
 
     @Nullable
-    EventApiCallResult performEventLike(int eventId) {
+    public EventApiCallResult performEventLike(int eventId) {
         int result = RESULT_OK;
         Uri.Builder uriBuilder = createApiUriBuilder(API_REQUEST_LIKE);
         try {
@@ -605,7 +601,7 @@ public class EventsModel {
                 mEventStatsDataSource.createOrUpdateEventStats(eventStats);
             }
         } catch (@NonNull IOException | JSONException exp) {
-            result = RESULT_BAD;
+            result = INTERNAL_ERROR;
         }
         return new EventApiCallResult(result, null);
     }
@@ -619,7 +615,7 @@ public class EventsModel {
     }
 
     void loadAdverts() {
-        if (NowApplication.getState() == NowApplication.APP_STATE.ONLINE) {
+        if (NowApplication.getInstance().getState() == NowApplication.APP_STATE.ONLINE) {
             Uri.Builder uriBuilder = createApiUriBuilder(API_REQUEST_GET_ADVERTS);
             uriBuilder.appendQueryParameter("token", deviceToken);
             try {
@@ -647,7 +643,7 @@ public class EventsModel {
         }
     }
 
-    int performEventsLoad(@Nullable String loadingType) throws IOException, JSONException {
+    public int performEventsLoad(@Nullable String loadingType) throws IOException, JSONException {
         if (deviceToken == null) {
             performRegisterDevice();
         }
@@ -658,12 +654,9 @@ public class EventsModel {
         if (FEATURE_LOAD_IN_BACKGROUND()) {
             if (requestNewEvents) {
                 if (mLoadedInBackgroundPage > 1 && mCurrentPage <= mLoadedInBackgroundPage) {
-                    //int availablePageCount = mEvents.size() / mEventsCountPerPage + (mEvents.size() % mEventsCountPerPage == 0 ? 0 : 1);
-                    //if (mCurrentPage <= availablePageCount) {
                     mCurrentPage = mLoadedInBackgroundPage;
                     setEvents(sortByStartTime(mEventDataSource.getAllEvents()));
                     return result;
-                    //}
                 }
             }
         }
@@ -677,7 +670,7 @@ public class EventsModel {
 
         ArrayList<Event> eventList = new ArrayList<>();
 
-        if (NowApplication.getState() == NowApplication.APP_STATE.ONLINE) {
+        if (NowApplication.getInstance().getState() == NowApplication.APP_STATE.ONLINE) {
             Uri.Builder uriBuilder = createApiUriBuilder(API_REQUEST_GET_EVENTS);
             if (requestNewEvents || loadInBackground) {
                 Event lastEvent = requestNewEvents ? mEvents.get(mEvents.size() - 1) : mLastAddedInBackgroundEvent;
@@ -713,6 +706,7 @@ public class EventsModel {
                             mCurrentPage = 1;
                             mLoadedInBackgroundPage = 1;
                         } else if (loadInBackground) {
+                            addEvents(eventList);
                             mLoadedInBackgroundPage++;
                         }
                         if (refreshEvents || loadInBackground) {
@@ -728,12 +722,9 @@ public class EventsModel {
                                 Event event = eventList.get(i);
                                 mEventDataSource.createOrUpdateEvent(event);
                             }
-                            NowApplication.updateDataTimestamp();
+                            NowApplication.getInstance().updateDataTimestamp();
                         }
                         mDataIsActual = true;
-                    } else {
-                        mHasNext = false;
-                        result = DATA_IS_EMPTY;
                     }
                 } else {
                     setEventsFromLocalDataSource(mEventDataSource.getAllEvents());
@@ -748,7 +739,6 @@ public class EventsModel {
         Event event = new Event();
         event.eventDescription = jsonObject.optString(EventFieldNameDictionary.EVENT_DESCRIPTION);
         event.flayer = jsonObject.optString(EventFieldNameDictionary.FLAYER);
-        VTAG.call("FLAYER: " + event.flayer);
         event.placeName = jsonObject.optString(EventFieldNameDictionary.PLACE_NAME);
         event.placeId = jsonObject.optInt(EventFieldNameDictionary.PLACE_ID);
         event.id = jsonObject.optInt(EventFieldNameDictionary.ID);
@@ -803,13 +793,13 @@ public class EventsModel {
                 response.append(line);
             }
         } catch (IOException exp) {
-            //empty
+            //
         } finally {
             if (reader != null) {
                 try {
                     reader.close();
                 } catch (IOException exp) {
-                    //empty
+                    //
                 }
             }
         }
@@ -905,7 +895,7 @@ public class EventsModel {
         final int length = eventAdvertsSource.size();
         for (; i < length; i++) {
             eventAdvert = eventAdvertsSource.get(i);
-            if (eventAdvert.eventId != eventId && checkOnEventAvailableInOffline(eventAdvert.eventId) && currentTime >= eventAdvert.advertStartAt && currentTime < eventAdvert.advertEndAt) {
+            if (eventAdvert.eventId != eventId && checkOnEventAvailableInOffline(eventAdvert.eventId) && currentTime >= eventAdvert.advertStartAt && currentTime < (eventAdvert.advertStartAt == eventAdvert.advertEndAt ? eventAdvert.eventEndAt : eventAdvert.advertEndAt)) {
                 eventAdverts.add(eventAdvert);
             }
         }
@@ -919,14 +909,14 @@ public class EventsModel {
             }
         }
         //for debug
-        if (result == null && eventAdvertsSource.size() > 0) {
+        /*if (result == null && eventAdvertsSource.size() > 0) {
             result = eventAdvertsSource.get(0);
-        }
+        }*/
         return result;
     }
 
     private boolean checkOnEventAvailableInOffline(int eventId) {
-        return NowApplication.getState() != OFFLINE || mEventDataSource.getByEventId(eventId) != null;
+        return NowApplication.getInstance().getState() != OFFLINE || mEventDataSource.getByEventId(eventId) != null;
     }
 
     private class EventNameComparator implements Comparator<Event> {

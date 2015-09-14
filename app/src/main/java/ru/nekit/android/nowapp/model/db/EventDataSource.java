@@ -11,7 +11,6 @@ import android.text.TextUtils;
 
 import java.util.ArrayList;
 
-import ru.nekit.android.nowapp.VTAG;
 import ru.nekit.android.nowapp.model.EventFieldNameDictionary;
 import ru.nekit.android.nowapp.model.vo.Event;
 import ru.nekit.android.nowapp.model.EventsModel;

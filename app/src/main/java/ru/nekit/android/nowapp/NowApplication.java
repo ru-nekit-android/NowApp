@@ -12,12 +12,15 @@ import android.util.DisplayMetrics;
 
 import com.madx.updatechecker.lib.UpdateChecker;
 import com.madx.updatechecker.lib.UpdateCheckerListener;
+//import com.squareup.leakcanary.LeakCanary;
+//import com.squareup.leakcanary.RefWatcher;
 
 import java.util.concurrent.TimeUnit;
 
 import ru.nekit.android.nowapp.model.EventsModel;
 import ru.nekit.android.nowapp.utils.ConnectionUtil;
 import ru.nekit.android.nowapp.utils.ConnectivityReceiver;
+import ru.nekit.android.nowapp.utils.VTAG;
 
 import static ru.nekit.android.nowapp.NowApplication.APP_STATE.OFFLINE;
 import static ru.nekit.android.nowapp.NowApplication.APP_STATE.ONLINE;
@@ -33,26 +36,26 @@ public class NowApplication extends Application implements ConnectivityReceiver.
 
     private static final String LAST_UPDATE_TIME_KEY = "last_update_time_key";
     private static NowApplication instance;
-    private static APP_STATE mState;
-    private static EventsModel mEventModel;
-    private static SharedPreferences mSharedPreferences;
-    private static ConnectivityReceiver mConnectivityReceiver;
+    private APP_STATE mState;
+    private SharedPreferences mSharedPreferences;
+    private ConnectivityReceiver mConnectivityReceiver;
+    private EventsModel mEventModel;
+    //private RefWatcher mWatcher;
+
+    /*public RefWatcher getWatcher() {
+        return mWatcher;
+    }*/
 
     public NowApplication() {
         super();
-        instance = this;
     }
 
-    public static void updateDataTimestamp() {
+    public void updateDataTimestamp() {
         mSharedPreferences.edit().putLong(LAST_UPDATE_TIME_KEY, System.currentTimeMillis()).apply();
     }
 
-    public static EventsModel getEventModel() {
-        return mEventModel;
-    }
-
     @NonNull
-    public static OFFLINE_STATE getOfflineState() {
+    public OFFLINE_STATE getOfflineState() {
         long lastDataUpdateTimestamp = mSharedPreferences.getLong(LAST_UPDATE_TIME_KEY, -1);
         if (lastDataUpdateTimestamp == -1) {
             return OFFLINE_STATE.DATA_IS_EMPTY;
@@ -60,28 +63,28 @@ public class NowApplication extends Application implements ConnectivityReceiver.
         return Math.abs(System.currentTimeMillis() - lastDataUpdateTimestamp) < TimeUnit.HOURS.toMillis(VALID_DATA_PERIOD_HOURS) ? OFFLINE_STATE.DATA_IS_UP_TO_DATE : OFFLINE_STATE.DATA_IS_OUT_OF_DATE;
     }
 
-    public static APP_STATE getState() {
+    public APP_STATE getState() {
         return mState;
     }
 
-    public static void setState(APP_STATE state) {
+    public void setState(APP_STATE state) {
         if (mState != state) {
             mState = state;
-            LocalBroadcastManager.getInstance(instance).sendBroadcast(new Intent(CHANGE_APPLICATION_STATE_NOTIFICATION));
+            LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent(CHANGE_APPLICATION_STATE_NOTIFICATION));
         }
     }
 
-    public static void registerForAppChangeStateNotification(BroadcastReceiver changeApplicationStateReceiver) {
-        LocalBroadcastManager.getInstance(instance).registerReceiver(changeApplicationStateReceiver, new IntentFilter(NowApplication.CHANGE_APPLICATION_STATE_NOTIFICATION));
+    public void registerForAppChangeStateNotification(BroadcastReceiver changeApplicationStateReceiver) {
+        LocalBroadcastManager.getInstance(this).registerReceiver(changeApplicationStateReceiver, new IntentFilter(NowApplication.CHANGE_APPLICATION_STATE_NOTIFICATION));
     }
 
-    public static void unregisterForAppChangeStateNotification(BroadcastReceiver changeApplicationStateReceiver) {
-        LocalBroadcastManager.getInstance(instance).unregisterReceiver(changeApplicationStateReceiver);
+    public void unregisterForAppChangeStateNotification(BroadcastReceiver changeApplicationStateReceiver) {
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(changeApplicationStateReceiver);
     }
 
-    public static void setConnectionReceiverActive(boolean value) {
+    public void setConnectionReceiverActive(boolean value) {
         if (value) {
-            if (ConnectionUtil.isInternetAvailable(instance)) {
+            if (ConnectionUtil.isInternetAvailable(this)) {
                 setState(APP_STATE.ONLINE);
             } else {
                 setState(APP_STATE.OFFLINE);
@@ -92,8 +95,8 @@ public class NowApplication extends Application implements ConnectivityReceiver.
         }
     }
 
-    public static void checkForUpdate() {
-        new UpdateChecker(instance, instance).start();
+    public void checkForUpdate() {
+        new UpdateChecker(this, this).start();
     }
 
     @Override
@@ -101,7 +104,12 @@ public class NowApplication extends Application implements ConnectivityReceiver.
 
         super.onCreate();
 
-        mEventModel = EventsModel.getInstance(this);
+        instance = this;
+
+        mEventModel = new EventsModel(this);
+
+        //mWatcher = LeakCanary.install(this);
+
         mSharedPreferences = getSharedPreferences("nowapp", Context.MODE_PRIVATE);
         mConnectivityReceiver = new ConnectivityReceiver(this);
         mConnectivityReceiver.setOnNetworkAvailableListener(this);
@@ -134,5 +142,13 @@ public class NowApplication extends Application implements ConnectivityReceiver.
         DATA_IS_UP_TO_DATE,
         DATA_IS_OUT_OF_DATE,
         DATA_IS_EMPTY
+    }
+
+    public EventsModel getEventModel() {
+        return mEventModel;
+    }
+
+    public static NowApplication getInstance() {
+        return instance;
     }
 }

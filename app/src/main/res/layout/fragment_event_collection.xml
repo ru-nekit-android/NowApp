@@ -1,9 +1,9 @@
-<ru.nekit.android.nowapp.widget.SoftKeyboardListenerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ru.nekit.android.nowapp.views.widgets.SoftKeyboardListenerLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/root_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="ru.nekit.android.nowapp.view.EventCollectionFragment">
+    tools:context="ru.nekit.android.nowapp.fragments.EventCollectionFragment">
 
     <android.support.v4.widget.SwipeRefreshLayout
         android:id="@+id/refresh_layout"
@@ -36,5 +36,5 @@
         style="@style/FabStyle"
         android:src="@drawable/ic_search" />
 
-</ru.nekit.android.nowapp.widget.SoftKeyboardListenerLayout>
+</ru.nekit.android.nowapp.views.widgets.SoftKeyboardListenerLayout>
 

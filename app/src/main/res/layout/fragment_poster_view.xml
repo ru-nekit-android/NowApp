@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="@dimen/large_space"
-    tools:context="ru.nekit.android.nowapp.view.EventPosterViewFragment">
+    tools:context="ru.nekit.android.nowapp.fragments.EventPosterViewFragment">
 
     <com.pnikosis.materialishprogress.ProgressWheel
         android:id="@+id/progress_wheel"

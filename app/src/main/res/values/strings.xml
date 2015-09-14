@@ -34,7 +34,7 @@
     <string name="search">Поиск</string>
     <string name="nothing_found">Ничего не найдено</string>
     <string name="search_hint">Поиск</string>
-    <string name="event_category_sport_keywords">спорт бег здоровье</string>
+    <string name="event.category.sport.keywords">спорт бег здоровье</string>
     <string name="event_category_other_keywords">другое корона</string>
     <string name="event_category_entertainment_keywords">развлечения веселье вечер</string>
     <string name="event_category_education_keywords">обучение книг* знания наука</string>

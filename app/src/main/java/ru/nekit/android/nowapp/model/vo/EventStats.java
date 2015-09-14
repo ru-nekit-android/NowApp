@@ -9,7 +9,6 @@ import ru.nekit.android.nowapp.model.EventsModel;
  */
 public class EventStats {
 
-
     public static final int MAX_VIEWS = 10000;
     public static final int MAX_LIKES = 1000;
 
@@ -20,7 +19,7 @@ public class EventStats {
     public int myLikeStatus;
 
     private int getLikeCount() {
-        return likeCount + (myLikeStatus == EventsModel.LIKE_NOT_CONFIRMED || likedByMe ? 1 : 0);
+        return likeCount + (myLikeStatus == EventsModel.LIKE_NOT_CONFIRMED && likedByMe ? 1 : 0);
     }
 
     @NonNull

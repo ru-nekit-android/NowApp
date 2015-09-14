@@ -4,7 +4,7 @@
     android:id="@+id/root_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="ru.nekit.android.nowapp.view.EventDetailFragment">
+    tools:context="ru.nekit.android.nowapp.fragments.EventDetailFragment">
 
     <ScrollView
         android:id="@+id/scroll_view"
@@ -47,7 +47,7 @@
 
                 <View
                     android:layout_width="match_parent"
-                    android:layout_height="1dp"
+                    android:layout_height="1px"
                     android:background="@color/divide_line" />
 
             </LinearLayout>
@@ -99,7 +99,7 @@
                             android:layout_weight="3"
                             android:orientation="vertical">
 
-                            <ru.nekit.android.nowapp.widget.AutoResizeTextView
+                            <ru.nekit.android.nowapp.views.widgets.AutoResizeTextView
                                 android:id="@+id/title_view"
                                 style="@style/EventName.Detail"
                                 android:layout_width="match_parent"
@@ -351,7 +351,7 @@
                                 android:paddingTop="@dimen/small_space"
                                 android:scaleType="fitCenter" />
 
-                            <ru.nekit.android.nowapp.widget.AutoResizeTextView
+                            <ru.nekit.android.nowapp.views.widgets.AutoResizeTextView
                                 android:id="@+id/place_name_view"
                                 style="@style/Place_TextBlock"
                                 android:layout_width="match_parent"
