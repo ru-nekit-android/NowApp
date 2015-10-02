@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'retrolambda'
 
 android {
     compileSdkVersion 23
@@ -34,18 +35,6 @@ android {
 dependencies {
     compile project(':robototextview')
     compile project(':updatechecker')
-    compile 'com.android.support:appcompat-v7:23.0.1'
-    compile 'com.android.support:recyclerview-v7:23.0.1'
-    compile 'com.android.support:design:23.0.1'
-    compile 'com.android.support:support-v4:23.0.1'
-    compile 'com.google.android.gms:play-services-gcm:7.8.0'
-    compile 'com.github.bumptech.glide:glide:3.6.0'
-    compile 'com.pnikosis:materialish-progress:1.4'
-    compile 'com.squareup:seismic:1.0.1'
-    compile 'org.osmdroid:osmdroid-android:4.3'
-    compile 'com.badoo.mobile:android-weak-handler:1.0'
-    compile 'org.slf4j:slf4j-simple:1.6.1'
-    compile 'com.android.support:support-annotations:23.0.1'
     //debugCompile 'com.squareup.leakcanary:leakcanary-android:1.3.1'
     //releaseCompile 'com.squareup.leakcanary:leakcanary-android-no-op:1.3.1'
     testCompile 'junit:junit:4.12'
@@ -55,28 +44,20 @@ dependencies {
         exclude group: 'commons-logging', module: 'commons-logging'
         exclude group: 'org.apache.httpcomponents', module: 'httpclient'
     }
+    compile 'com.android.support:appcompat-v7:23.0.1'
+    compile 'com.android.support:recyclerview-v7:23.0.1'
+    compile 'com.android.support:design:23.0.1'
+    compile 'com.android.support:support-v4:23.0.1'
+    compile 'com.google.android.gms:play-services-gcm:8.1.0'
+    compile 'com.github.bumptech.glide:glide:3.6.0'
+    compile 'com.pnikosis:materialish-progress:1.4'
+    compile 'com.squareup:seismic:1.0.1'
+    compile 'org.osmdroid:osmdroid-android:4.3'
+    compile 'com.badoo.mobile:android-weak-handler:1.0'
+    compile 'org.slf4j:slf4j-simple:1.6.1'
+    compile 'com.android.support:support-annotations:23.0.1'
 }
-
-buildscript {
-    repositories {
-        jcenter()
-        mavenCentral()
-    }
-
-    dependencies {
-        classpath 'com.android.tools.build:gradle:1.3.0'
-        classpath 'me.tatarka:gradle-retrolambda:2.5.0'
-    }
-}
-
-apply plugin: 'retrolambda'
 
 retrolambda {
-    try {
-        jdk JAVA8_HOME
-        oldJdk JAVA7_HOME
-    }
-    catch (exception) {
-        throw new InvalidUserDataException("You should define JAVA8_HOME and JAVA7_HOME in gradle.properties.")
-    }
+    javaVersion JavaVersion.VERSION_1_7
 }
