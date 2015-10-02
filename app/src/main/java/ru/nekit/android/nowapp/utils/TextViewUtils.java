@@ -35,7 +35,7 @@ public class TextViewUtils {
         } else {
             scaledDensity *= 0;
         }
-        int baseHeight = TextViewUtils.getTextBounds(baseText, baseTextSize - scaledDensity, Typeface.DEFAULT).height();
+        int baseHeight = getTextBounds(baseText, baseTextSize - scaledDensity, Typeface.DEFAULT).height();
         return new SuperscriptSpanAdjuster(baseHeight);
     }
 

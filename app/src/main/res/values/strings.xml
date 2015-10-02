@@ -56,6 +56,7 @@
     <string name="update_app_later">В следующий раз</string>
     <string name="update_app_title">Доступно обновление</string>
     <string name="update_app_message">Доступна новая версия для приложения. Пожалуйста, обновите до версии \"%s\" сейчас.</string>
+    <string name="contentDescriptionStub">contentDescriptionStub</string>
 
     <string-array name="day_of_week">
         <item>ВС</item>

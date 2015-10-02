@@ -1,4 +1,4 @@
-package ru.nekit.android.nowapp.fragments;
+package ru.nekit.android.nowapp.mvvm.view.fragments;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -104,7 +104,7 @@ import ru.nekit.android.nowapp.model.vo.EventToCalendarLink;
 import ru.nekit.android.nowapp.utils.RobotoTextAppearanceSpan;
 import ru.nekit.android.nowapp.utils.TextViewUtils;
 
-import static ru.nekit.android.nowapp.NowApplication.APP_STATE.ONLINE;
+import static ru.nekit.android.nowapp.NowApplication.AppState.ONLINE;
 
 @SuppressWarnings("ResourceType")
 public class EventDetailFragment extends Fragment implements View.OnClickListener, LoaderManager.LoaderCallbacks, ShakeDetector.Listener, IFlayerDialogListener {

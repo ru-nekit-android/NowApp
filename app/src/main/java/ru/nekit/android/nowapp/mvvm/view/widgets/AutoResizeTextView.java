@@ -1,4 +1,4 @@
-package ru.nekit.android.nowapp.views.widgets;
+package ru.nekit.android.nowapp.mvvm.view.widgets;
 
 import android.content.Context;
 import android.content.res.TypedArray;

@@ -1,4 +1,4 @@
-package ru.nekit.android.nowapp.fragments;
+package ru.nekit.android.nowapp.mvvm.view.fragments;
 
 import android.animation.Animator;
 import android.app.Activity;
@@ -48,14 +48,14 @@ import ru.nekit.android.nowapp.model.loaders.EventLoader;
 import ru.nekit.android.nowapp.model.loaders.EventItemsLoader;
 import ru.nekit.android.nowapp.model.EventsModel;
 import ru.nekit.android.nowapp.model.vo.Event;
-import ru.nekit.android.nowapp.views.adapters.EventCollectionAdapter;
+import ru.nekit.android.nowapp.mvvm.view.adapters.EventCollectionAdapter;
 import ru.nekit.android.nowapp.listeners.IBackPressedListener;
 import ru.nekit.android.nowapp.listeners.IEventClickListener;
-import ru.nekit.android.nowapp.views.widgets.FloatingActionButtonAnimator;
-import ru.nekit.android.nowapp.views.widgets.ScrollingGridLayoutManager;
-import ru.nekit.android.nowapp.views.widgets.SoftKeyboardListenerLayout;
+import ru.nekit.android.nowapp.mvvm.view.widgets.FloatingActionButtonAnimator;
+import ru.nekit.android.nowapp.mvvm.view.widgets.ScrollingGridLayoutManager;
+import ru.nekit.android.nowapp.mvvm.view.widgets.SoftKeyboardListenerLayout;
 
-import static ru.nekit.android.nowapp.NowApplication.APP_STATE.ONLINE;
+import static ru.nekit.android.nowapp.NowApplication.AppState.ONLINE;
 
 public class EventCollectionFragment extends Fragment implements LoaderManager.LoaderCallbacks, IEventClickListener, View.OnClickListener, SearchView.OnQueryTextListener, IBackPressedListener, TextView.OnEditorActionListener, SoftKeyboardListenerLayout.OnSoftKeyboardListener, EventCollectionAdapter.OnLoadMorelListener {
 

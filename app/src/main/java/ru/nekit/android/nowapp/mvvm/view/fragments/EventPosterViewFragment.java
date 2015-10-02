@@ -1,4 +1,4 @@
-package ru.nekit.android.nowapp.fragments;
+package ru.nekit.android.nowapp.mvvm.view.fragments;
 
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -27,7 +27,7 @@ public class EventPosterViewFragment extends Fragment {
     private static final String IMAGE_URL = "ru.nekit.android.image_url";
 
     private ProgressWheel mProgressWheel;
-    private Target<GlideDrawable> mLodaingTarget;
+    private Target<GlideDrawable> mLoadingTarget;
 
     @Nullable
     private String mImageUrl;
@@ -68,10 +68,10 @@ public class EventPosterViewFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
-        if (mLodaingTarget != null) {
-            if (!mLodaingTarget.getRequest().isComplete()) {
-                Glide.clear(mLodaingTarget);
-                mLodaingTarget = null;
+        if (mLoadingTarget != null) {
+            if (!mLoadingTarget.getRequest().isComplete()) {
+                Glide.clear(mLoadingTarget);
+                mLoadingTarget = null;
             }
         }
     }
@@ -82,7 +82,7 @@ public class EventPosterViewFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_poster_view, container, false);
         mProgressWheel = (ProgressWheel) view.findViewById(R.id.progress_wheel);
         final ImageView posterView = (ImageView) view.findViewById(R.id.poster_view);
-        mLodaingTarget = Glide.with(getActivity()).load(mImageUrl).listener(new RequestListener<String, GlideDrawable>() {
+        mLoadingTarget = Glide.with(getActivity()).load(mImageUrl).listener(new RequestListener<String, GlideDrawable>() {
 
             @Override
             public boolean onException(Exception e, String model, Target<GlideDrawable> target, boolean isFirstResource) {

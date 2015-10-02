@@ -1,4 +1,4 @@
-package ru.nekit.android.nowapp.fragments;
+package ru.nekit.android.nowapp.mvvm.view.fragments;
 
 import android.app.Dialog;
 import android.content.DialogInterface;

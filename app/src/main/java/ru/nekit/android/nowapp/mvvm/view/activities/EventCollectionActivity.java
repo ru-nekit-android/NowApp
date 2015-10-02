@@ -1,4 +1,4 @@
-package ru.nekit.android.nowapp.activities;
+package ru.nekit.android.nowapp.mvvm.view.activities;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -20,9 +20,9 @@ import android.widget.TextView;
 
 import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
-import ru.nekit.android.nowapp.fragments.EventCollectionFragment;
-import ru.nekit.android.nowapp.fragments.EventDetailFragment;
-import ru.nekit.android.nowapp.fragments.EventPosterViewFragment;
+import ru.nekit.android.nowapp.mvvm.view.fragments.EventCollectionFragment;
+import ru.nekit.android.nowapp.mvvm.view.fragments.EventDetailFragment;
+import ru.nekit.android.nowapp.mvvm.view.fragments.EventPosterViewFragment;
 import ru.nekit.android.nowapp.listeners.IBackPressedListener;
 import ru.nekit.android.nowapp.listeners.IEventClickListener;
 import ru.nekit.android.nowapp.listeners.IEventPosterSelectListener;
@@ -62,7 +62,7 @@ public class EventCollectionActivity extends AppCompatActivity implements IEvent
     }
 
     private void updateOfflineView() {
-        if (NowApplication.getInstance().getState() == NowApplication.APP_STATE.ONLINE) {
+        if (NowApplication.getInstance().getState() == NowApplication.AppState.ONLINE) {
             mOfflineView.setVisibility(View.GONE);
         } else {
             mOfflineView.setVisibility(View.VISIBLE);

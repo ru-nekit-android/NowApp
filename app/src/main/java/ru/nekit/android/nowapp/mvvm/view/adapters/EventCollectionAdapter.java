@@ -1,4 +1,4 @@
-package ru.nekit.android.nowapp.views.adapters;
+package ru.nekit.android.nowapp.mvvm.view.adapters;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -12,7 +12,6 @@ import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -26,6 +25,7 @@ import com.bumptech.glide.request.target.Target;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.List;
 
 import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
@@ -174,10 +174,11 @@ public class EventCollectionAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         mEventModel.unregisterForFiveMinuteUpdateNotification(mUpdateReceiver);
     }
 
-    public void setItems(@Nullable ArrayList<Event> events) {
+    public void setItems(@Nullable List<Event> events) {
         mIsRefreshing = true;
         mEventItems.clear();
         if (events != null && events.size() > 0) {
+            events.iterator();
             for (Event event : events) {
                 if (event.endAt > EventsModel.getTimeStampInSeconds()) {
                     mEventItems.add(new EventItemWrapper(event));

@@ -18,6 +18,9 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.util.Pair;
 import android.text.TextUtils;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.squareup.okhttp.OkHttpClient;
+
 import junit.framework.Assert;
 
 import org.json.JSONArray;
@@ -37,12 +40,16 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Random;
 import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
+import retrofit.JacksonConverterFactory;
+import retrofit.Retrofit;
+import retrofit.RxJavaCallAdapterFactory;
 import ru.nekit.android.nowapp.NowApplication;
 import ru.nekit.android.nowapp.R;
 import ru.nekit.android.nowapp.model.db.EventAdvertDataSource;
@@ -54,10 +61,14 @@ import ru.nekit.android.nowapp.model.vo.Event;
 import ru.nekit.android.nowapp.model.vo.EventAdvert;
 import ru.nekit.android.nowapp.model.vo.EventStats;
 import ru.nekit.android.nowapp.model.vo.EventToCalendarLink;
+import ru.nekit.android.nowapp.mvvm.EventListApiCallResult;
+import ru.nekit.android.nowapp.network.NowService;
 import ru.nekit.android.nowapp.utils.VTAG;
+import rx.Observable;
+import rx.functions.Func1;
 
-import static ru.nekit.android.nowapp.NowApplication.APP_STATE.OFFLINE;
-import static ru.nekit.android.nowapp.NowApplication.APP_STATE.ONLINE;
+import static ru.nekit.android.nowapp.NowApplication.AppState.OFFLINE;
+import static ru.nekit.android.nowapp.NowApplication.AppState.ONLINE;
 
 /**
  * Created by chuvac on 15.03.15.
@@ -121,7 +132,7 @@ public class EventsModel {
     @NonNull
     private final LocalBroadcastManager mLocalBroadcastManager;
     @NonNull
-    private final ArrayList<Event> mEvents;
+    private final List<Event> mEvents;
     @NonNull
     private final EventDataSource mEventDataSource;
     @NonNull
@@ -142,7 +153,7 @@ public class EventsModel {
 
     public EventsModel(@NonNull final Context context) {
         mContext = context;
-        mEvents = new ArrayList<>();
+        mEvents = Collections.synchronizedList(new ArrayList<>());
         mCurrentPage = 1;
         mLoadedInBackgroundPage = 1;
         mEventsCountPerPage = 0;
@@ -408,7 +419,7 @@ public class EventsModel {
     }
 
     @NonNull
-    public ArrayList<Event> getEvents() {
+    public List<Event> getEvents() {
         return mEvents;
     }
 
@@ -468,7 +479,7 @@ public class EventsModel {
         int result = RESULT_OK;
         Event event;
         EventStats eventStats = obtainEventStatsByEventId(eventId);
-        if (NowApplication.getInstance().getState() == NowApplication.APP_STATE.ONLINE) {
+        if (NowApplication.getInstance().getState() == NowApplication.AppState.ONLINE) {
             try {
                 Uri.Builder uriBuilder = createApiUriBuilder(API_REQUEST_GET_STATISTICS);
                 uriBuilder.appendQueryParameter("id", Integer.toString(eventId));
@@ -615,7 +626,7 @@ public class EventsModel {
     }
 
     void loadAdverts() {
-        if (NowApplication.getInstance().getState() == NowApplication.APP_STATE.ONLINE) {
+        if (NowApplication.getInstance().getState() == NowApplication.AppState.ONLINE) {
             Uri.Builder uriBuilder = createApiUriBuilder(API_REQUEST_GET_ADVERTS);
             uriBuilder.appendQueryParameter("token", deviceToken);
             try {
@@ -642,6 +653,76 @@ public class EventsModel {
             }
         }
     }
+
+    //RX
+/*
+    private NowService getService() {
+        OkHttpClient client = new OkHttpClient();
+
+        Retrofit retrofit = new Retrofit.Builder().baseUrl("http://nowapp.ru")
+                .client(client)
+                .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
+                .addConverterFactory(JacksonConverterFactory.create())
+                .build();
+
+        return retrofit.create(NowService.class);
+    }
+
+    public Observable<EventListApiCallResult> getApiCallResult(Func1<String, Observable<EventListApiCallResult>> api) {
+
+        Observable<String> register = getService().registerDevice(1, Settings.Secure.getString(NowApplication.getInstance().getContentResolver(),
+                Settings.Secure.ANDROID_ID), "android", NowApplication.VERSION)
+                .map(result -> result.data.get("token").asText())
+                .doOnNext(value -> {
+                    deviceToken = value;
+                })
+                .cache();
+
+        return Observable
+                .concat(Observable.just(deviceToken), register)
+                .first(value -> !TextUtils.isEmpty(value)).flatMap(api::call);
+    }
+
+
+    public Observable<ObjectNode> getApiCallResultRaw(Func1<String, Observable<ObjectNode>> api) {
+        Observable<String> register = getService().registerDevice(1, Settings.Secure.getString(NowApplication.getInstance().getContentResolver(),
+                Settings.Secure.ANDROID_ID), "android", NowApplication.VERSION)
+                .map(result -> result.data.get("token").asText())
+                .doOnNext(value -> {
+                    deviceToken = value;
+                })
+                .cache();
+
+        return Observable
+                .concat(Observable.just(deviceToken), register)
+                .first(value -> !TextUtils.isEmpty(value)).flatMap(api::call);
+    }
+
+
+    public Observable<EventListApiCallResult> loadEvents() {
+        return getApiCallResult(value -> getService().getEvents(value, COUNT));
+    }
+
+    public Observable<ObjectNode> loadEventsRaw() {
+        return getApiCallResultRaw(value -> getService().getEventsRaw(value, COUNT));
+    }
+
+    public Observable<EventListApiCallResult> loadEvents2(){
+        return loadEvents();
+                //.map(value -> value.content.getAsJsonObject().get("events").getAsJsonArray())
+                //.flatMap(Observable::from)
+                //.map(this::createEventFromJsonRX)
+                //.retry(3);
+    }
+
+    @NonNull
+    private Event createEventFromJsonRX(@NonNull ObjectNode jsonObject) {
+        Event event = new Event();
+        event.id = jsonObject.get(EventFieldNameDictionary.ID).asInt();
+        return event;
+    }
+*/
+    //end RX
 
     public int performEventsLoad(@Nullable String loadingType) throws IOException, JSONException {
         if (deviceToken == null) {
@@ -670,7 +751,7 @@ public class EventsModel {
 
         ArrayList<Event> eventList = new ArrayList<>();
 
-        if (NowApplication.getInstance().getState() == NowApplication.APP_STATE.ONLINE) {
+        if (NowApplication.getInstance().getState() == NowApplication.AppState.ONLINE) {
             Uri.Builder uriBuilder = createApiUriBuilder(API_REQUEST_GET_EVENTS);
             if (requestNewEvents || loadInBackground) {
                 Event lastEvent = requestNewEvents ? mEvents.get(mEvents.size() - 1) : mLastAddedInBackgroundEvent;
